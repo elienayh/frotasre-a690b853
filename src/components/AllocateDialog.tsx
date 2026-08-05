@@ -1,0 +1,246 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { dateTimeToIso, friendlyDbError, fmtDateTime, type TripRow } from "@/lib/frota";
+
+export interface AllocateDialogProps {
+  trip: TripRow | null;
+  onClose: () => void;
+}
+
+/** Etapa "Definir Transporte": DAFI escolhe veículo, motorista e horário definitivo. */
+export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
+  const queryClient = useQueryClient();
+  const [vehicleId, setVehicleId] = useState<string>("");
+  const [driverId, setDriverId] = useState<string>("");
+
+  const departure = trip ? new Date(trip.departure_at) : null;
+  const ret = trip ? new Date(trip.return_at) : null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dateValue = departure
+    ? `${departure.getFullYear()}-${pad(departure.getMonth() + 1)}-${pad(departure.getDate())}`
+    : "";
+  const [date, setDate] = useState(dateValue);
+  const [start, setStart] = useState(
+    departure ? `${pad(departure.getHours())}:${pad(departure.getMinutes())}` : "",
+  );
+  const [end, setEnd] = useState(ret ? `${pad(ret.getHours())}:${pad(ret.getMinutes())}` : "");
+
+  const effectiveDate = date || dateValue;
+  const effectiveStart =
+    start || (departure ? `${pad(departure.getHours())}:${pad(departure.getMinutes())}` : "08:00");
+  const effectiveEnd = end || (ret ? `${pad(ret.getHours())}:${pad(ret.getMinutes())}` : "17:00");
+
+  const startIso = trip ? dateTimeToIso(effectiveDate, effectiveStart) : "";
+  const endIso = trip ? dateTimeToIso(effectiveDate, effectiveEnd) : "";
+
+  const { data: availability = [] } = useQuery({
+    queryKey: ["fleet-availability", startIso, endIso, trip?.passengers],
+    enabled: Boolean(trip && startIso && endIso && endIso > startIso),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("fleet_availability", {
+        p_start: startIso,
+        p_end: endIso,
+        p_passengers: trip!.passengers,
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: drivers = [] } = useQuery({
+    queryKey: ["drivers-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("drivers")
+        .select("id, full_name, is_authorized")
+        .eq("is_active", true)
+        .order("full_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const approve = useMutation({
+    mutationFn: async (notes: string) => {
+      if (!vehicleId) throw new Error("Selecione o veículo.");
+      const { error } = await supabase
+        .from("trip_requests")
+        .update({
+          vehicle_id: vehicleId,
+          driver_id: driverId || null,
+          departure_at: startIso,
+          return_at: endIso,
+          admin_notes: notes || null,
+          rejection_reason: null,
+          status: "APROVADA",
+        })
+        .eq("id", trip!.id);
+      if (error) throw new Error(friendlyDbError(error.message));
+    },
+    onSuccess: () => {
+      toast.success("Viagem aprovada e transporte definido.");
+      void queryClient.invalidateQueries();
+      onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={Boolean(trip)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Definir transporte</DialogTitle>
+          <DialogDescription>
+            {trip
+              ? `#${trip.code} · ${trip.destination_text} · ${trip.passengers} ocupante(s)`
+              : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          id="allocate-form"
+          className="space-y-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = new FormData(e.currentTarget);
+            approve.mutate(String(form.get("admin_notes") ?? ""));
+          }}
+        >
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="al-date">Data</Label>
+              <Input
+                id="al-date"
+                type="date"
+                value={effectiveDate}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="al-start">Saída</Label>
+              <Input
+                id="al-start"
+                type="time"
+                value={effectiveStart}
+                onChange={(e) => setStart(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="al-end">Retorno</Label>
+              <Input
+                id="al-end"
+                type="time"
+                value={effectiveEnd}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Veículos no período</Label>
+            <ul className="grid gap-2">
+              {availability.map((v) => {
+                const selected = vehicleId === v.vehicle_id;
+                return (
+                  <li key={v.vehicle_id}>
+                    <button
+                      type="button"
+                      disabled={!v.is_available}
+                      onClick={() => setVehicleId(v.vehicle_id)}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-md border p-3 text-left text-sm transition-colors",
+                        selected ? "border-primary bg-primary/5" : "border-border",
+                        !v.is_available && "cursor-not-allowed opacity-60",
+                      )}
+                    >
+                      <span>
+                        <span className="font-medium">
+                          {v.manufacturer} {v.model} — {v.plate}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {v.capacity} lugares
+                          {v.detail ? ` · ${v.detail}` : ""}
+                          {v.conflict_start
+                            ? ` · ocupado ${fmtDateTime(v.conflict_start)} – ${fmtDateTime(v.conflict_end)}`
+                            : ""}
+                        </span>
+                      </span>
+                      <Badge variant={v.is_available ? "default" : "destructive"}>
+                        {v.is_available ? "Disponível" : v.reason}
+                      </Badge>
+                    </button>
+                  </li>
+                );
+              })}
+              {availability.length === 0 ? (
+                <li className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
+                  Informe data e horários válidos para calcular a disponibilidade.
+                </li>
+              ) : null}
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="al-driver">Motorista</Label>
+            <Select value={driverId} onValueChange={setDriverId}>
+              <SelectTrigger id="al-driver">
+                <SelectValue placeholder="Selecione o motorista" />
+              </SelectTrigger>
+              <SelectContent>
+                {drivers.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.full_name}
+                    {d.is_authorized ? "" : " (não autorizado)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {trip?.suggested_driver ? (
+              <p className="text-xs text-muted-foreground">
+                Sugerido pelo solicitante: {trip.suggested_driver}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin_notes">Observações ao solicitante</Label>
+            <Textarea id="admin_notes" name="admin_notes" rows={2} maxLength={400} />
+          </div>
+        </form>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} type="button">
+            Fechar
+          </Button>
+          <Button type="submit" form="allocate-form" disabled={approve.isPending || !vehicleId}>
+            Aprovar viagem
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
