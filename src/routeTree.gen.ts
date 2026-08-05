@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedAdminAgendaRouteImport } from './routes/_authenticated/admin.agenda'
+import { Route as AuthenticatedAdminDestinosRouteImport } from './routes/_authenticated/admin.destinos'
 import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/_authenticated/admin.disponibilidade'
 import { Route as AuthenticatedAdminMotoristasRouteImport } from './routes/_authenticated/admin.motoristas'
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
@@ -53,6 +54,12 @@ const AuthenticatedAdminAgendaRoute =
   AuthenticatedAdminAgendaRouteImport.update({
     id: '/admin/agenda',
     path: '/admin/agenda',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminDestinosRoute =
+  AuthenticatedAdminDestinosRouteImport.update({
+    id: '/admin/destinos',
+    path: '/admin/destinos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDisponibilidadeRoute =
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/_authenticated/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/_authenticated/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/agenda-publica'
     | '/painel'
     | '/admin/agenda'
+    | '/admin/destinos'
     | '/admin/disponibilidade'
     | '/admin/motoristas'
     | '/admin/solicitacoes'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/agenda-publica'
     | '/painel'
     | '/admin/agenda'
+    | '/admin/destinos'
     | '/admin/disponibilidade'
     | '/admin/motoristas'
     | '/admin/solicitacoes'
@@ -190,6 +202,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agenda-publica'
     | '/_authenticated/painel'
     | '/_authenticated/admin/agenda'
+    | '/_authenticated/admin/destinos'
     | '/_authenticated/admin/disponibilidade'
     | '/_authenticated/admin/motoristas'
     | '/_authenticated/admin/solicitacoes'
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/agenda'
       fullPath: '/admin/agenda'
       preLoaderRoute: typeof AuthenticatedAdminAgendaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/destinos': {
+      id: '/_authenticated/admin/destinos'
+      path: '/admin/destinos'
+      fullPath: '/admin/destinos'
+      preLoaderRoute: typeof AuthenticatedAdminDestinosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/disponibilidade': {
@@ -313,6 +333,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedAdminAgendaRoute: typeof AuthenticatedAdminAgendaRoute
+  AuthenticatedAdminDestinosRoute: typeof AuthenticatedAdminDestinosRoute
   AuthenticatedAdminDisponibilidadeRoute: typeof AuthenticatedAdminDisponibilidadeRoute
   AuthenticatedAdminMotoristasRoute: typeof AuthenticatedAdminMotoristasRoute
   AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
@@ -327,6 +348,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaPublicaRoute: AuthenticatedAgendaPublicaRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedAdminAgendaRoute: AuthenticatedAdminAgendaRoute,
+  AuthenticatedAdminDestinosRoute: AuthenticatedAdminDestinosRoute,
   AuthenticatedAdminDisponibilidadeRoute:
     AuthenticatedAdminDisponibilidadeRoute,
   AuthenticatedAdminMotoristasRoute: AuthenticatedAdminMotoristasRoute,
