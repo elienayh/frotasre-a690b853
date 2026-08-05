@@ -48,7 +48,7 @@ const ADMIN_ITEMS: NavItem[] = [
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCoordinator } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const render = (items: NavItem[]) =>
@@ -75,6 +75,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1 px-3" aria-label="Navegação principal">
       {render(SERVER_ITEMS)}
+      {isCoordinator
+        ? render([{ to: "/setor", label: "Viagens do Setor", icon: Users }])
+        : null}
       {isAdmin ? (
         <>
           <p className="mt-5 px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
