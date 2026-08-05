@@ -180,7 +180,7 @@ export function TripForm({ trip }: TripFormProps) {
                   {destinations.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
                       {d.name}
-                      {d.distance_km ? ` · ${d.distance_km} km` : ""}
+                      {d.city ? ` · ${d.city}` : ""}
                     </SelectItem>
                   ))}
                   <SelectItem value="custom">Outro destino…</SelectItem>
