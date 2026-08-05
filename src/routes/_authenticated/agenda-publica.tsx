@@ -49,7 +49,7 @@ function AgendaPublica() {
     mutationFn: async ({ tripId, seats, note }: { tripId: string; seats: number; note: string }) => {
       const { error } = await supabase.from("ride_requests").insert({
         trip_id: tripId,
-        requester_id: user?.id ?? null,
+        requester_id: user!.id,
         seats,
         note: note || null,
       });

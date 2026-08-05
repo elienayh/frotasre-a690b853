@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_authenticated/solicitacoes.index'
 import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
@@ -31,6 +32,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAgendaPublicaRoute =
+  AuthenticatedAgendaPublicaRouteImport.update({
+    id: '/agenda-publica',
+    path: '/agenda-publica',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -58,6 +65,7 @@ const AuthenticatedSolicitacoesTripIdEditarRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/_authenticated/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/agenda-publica'
     | '/painel'
     | '/solicitacoes/nova'
     | '/solicitacoes/'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/agenda-publica'
     | '/painel'
     | '/solicitacoes/nova'
     | '/solicitacoes'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/agenda-publica'
     | '/_authenticated/painel'
     | '/_authenticated/solicitacoes/nova'
     | '/_authenticated/solicitacoes/'
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/agenda-publica': {
+      id: '/_authenticated/agenda-publica'
+      path: '/agenda-publica'
+      fullPath: '/agenda-publica'
+      preLoaderRoute: typeof AuthenticatedAgendaPublicaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -170,6 +190,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedSolicitacoesNovaRoute: typeof AuthenticatedSolicitacoesNovaRoute
   AuthenticatedSolicitacoesIndexRoute: typeof AuthenticatedSolicitacoesIndexRoute
@@ -177,6 +198,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgendaPublicaRoute: AuthenticatedAgendaPublicaRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedSolicitacoesNovaRoute: AuthenticatedSolicitacoesNovaRoute,
   AuthenticatedSolicitacoesIndexRoute: AuthenticatedSolicitacoesIndexRoute,
