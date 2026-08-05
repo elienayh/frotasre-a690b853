@@ -51,7 +51,7 @@ function AgendaPublica() {
         trip_id: tripId,
         requester_id: user!.id,
         seats,
-        note: note || null,
+        reason: note || null,
       });
       if (error) throw new Error(error.message);
     },
