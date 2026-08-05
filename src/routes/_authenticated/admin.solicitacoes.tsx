@@ -44,7 +44,15 @@ function AdminSolicitacoes() {
   });
 
   const decide = useMutation({
-    mutationFn: async ({ id, kind, reason }: { id: string; kind: string; reason: string }) => {
+    mutationFn: async ({
+      id,
+      kind,
+      reason,
+    }: {
+      id: string;
+      kind: "REJEITADA" | "CORRECAO";
+      reason: string;
+    }) => {
       const { error } = await supabase
         .from("trip_requests")
         .update({ status: kind, rejection_reason: reason })
