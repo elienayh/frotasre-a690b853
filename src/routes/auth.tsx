@@ -45,6 +45,7 @@ function AuthPage() {
   const search = useSearch({ from: "/auth" });
   const { session, loading } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [sector, setSector] = useState<string>("");
 
   const target = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/painel";
 
