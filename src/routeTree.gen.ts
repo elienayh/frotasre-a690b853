@@ -19,6 +19,7 @@ import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
 import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_authenticated/solicitacoes.index'
 import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
+import { Route as AuthenticatedAdminVeiculosIndexRouteImport } from './routes/_authenticated/admin.veiculos.index'
 import { Route as AuthenticatedSolicitacoesTripIdEditarRouteImport } from './routes/_authenticated/solicitacoes.$tripId.editar'
 
 const IndexRoute = IndexRouteImport.update({
@@ -76,6 +77,12 @@ const AuthenticatedSolicitacoesNovaRoute =
     path: '/solicitacoes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminVeiculosIndexRoute =
+  AuthenticatedAdminVeiculosIndexRouteImport.update({
+    id: '/admin/veiculos/',
+    path: '/admin/veiculos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSolicitacoesTripIdEditarRoute =
   AuthenticatedSolicitacoesTripIdEditarRouteImport.update({
     id: '/solicitacoes/$tripId/editar',
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
   '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  '/admin/veiculos/': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
   '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  '/admin/veiculos': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -120,6 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/_authenticated/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
   '/_authenticated/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  '/_authenticated/admin/veiculos/': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/solicitacoes/nova'
     | '/solicitacoes/'
     | '/solicitacoes/$tripId/editar'
+    | '/admin/veiculos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/solicitacoes/nova'
     | '/solicitacoes'
     | '/solicitacoes/$tripId/editar'
+    | '/admin/veiculos'
   id:
     | '__root__'
     | '/'
@@ -159,6 +171,7 @@ export interface FileRouteTypes {
     | '/_authenticated/solicitacoes/nova'
     | '/_authenticated/solicitacoes/'
     | '/_authenticated/solicitacoes/$tripId/editar'
+    | '/_authenticated/admin/veiculos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSolicitacoesNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/veiculos/': {
+      id: '/_authenticated/admin/veiculos/'
+      path: '/admin/veiculos'
+      fullPath: '/admin/veiculos/'
+      preLoaderRoute: typeof AuthenticatedAdminVeiculosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/solicitacoes/$tripId/editar': {
       id: '/_authenticated/solicitacoes/$tripId/editar'
       path: '/solicitacoes/$tripId/editar'
@@ -258,6 +278,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSolicitacoesNovaRoute: typeof AuthenticatedSolicitacoesNovaRoute
   AuthenticatedSolicitacoesIndexRoute: typeof AuthenticatedSolicitacoesIndexRoute
   AuthenticatedSolicitacoesTripIdEditarRoute: typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  AuthenticatedAdminVeiculosIndexRoute: typeof AuthenticatedAdminVeiculosIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -271,6 +292,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSolicitacoesIndexRoute: AuthenticatedSolicitacoesIndexRoute,
   AuthenticatedSolicitacoesTripIdEditarRoute:
     AuthenticatedSolicitacoesTripIdEditarRoute,
+  AuthenticatedAdminVeiculosIndexRoute: AuthenticatedAdminVeiculosIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
