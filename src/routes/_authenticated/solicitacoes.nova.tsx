@@ -1,0 +1,19 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+import { AppShell } from "@/components/AppShell";
+import { TripForm } from "@/components/TripForm";
+
+export const Route = createFileRoute("/_authenticated/solicitacoes/nova")({
+  component: NovaSolicitacao,
+});
+
+function NovaSolicitacao() {
+  return (
+    <AppShell
+      title="Nova Solicitação de Viagem"
+      description="Informe data, horários, destino e ocupantes. O DAFI define o veículo."
+    >
+      <TripForm />
+    </AppShell>
+  );
+}
