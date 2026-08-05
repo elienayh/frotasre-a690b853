@@ -10,33 +10,238 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedViagensRouteImport } from './routes/_authenticated/viagens'
+import { Route as AuthenticatedAdminAgendaRouteImport } from './routes/_authenticated/admin.agenda'
+import { Route as AuthenticatedAdminDestinosRouteImport } from './routes/_authenticated/admin.destinos'
+import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/_authenticated/admin.disponibilidade'
+import { Route as AuthenticatedAdminManutencoesRouteImport } from './routes/_authenticated/admin.manutencoes'
+import { Route as AuthenticatedAdminMotoristasRouteImport } from './routes/_authenticated/admin.motoristas'
+import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
+import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_authenticated/solicitacoes.index'
+import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
+import { Route as AuthenticatedAdminVeiculosIndexRouteImport } from './routes/_authenticated/admin.veiculos.index'
+import { Route as AuthenticatedAdminVeiculosVehicleIdRouteImport } from './routes/_authenticated/admin.veiculos.$vehicleId'
+import { Route as AuthenticatedSolicitacoesTripIdEditarRouteImport } from './routes/_authenticated/solicitacoes.$tripId.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAgendaPublicaRoute =
+  AuthenticatedAgendaPublicaRouteImport.update({
+    id: '/agenda-publica',
+    path: '/agenda-publica',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedViagensRoute = AuthenticatedViagensRouteImport.update({
+  id: '/viagens',
+  path: '/viagens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminAgendaRoute =
+  AuthenticatedAdminAgendaRouteImport.update({
+    id: '/admin/agenda',
+    path: '/admin/agenda',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminDestinosRoute =
+  AuthenticatedAdminDestinosRouteImport.update({
+    id: '/admin/destinos',
+    path: '/admin/destinos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminDisponibilidadeRoute =
+  AuthenticatedAdminDisponibilidadeRouteImport.update({
+    id: '/admin/disponibilidade',
+    path: '/admin/disponibilidade',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminManutencoesRoute =
+  AuthenticatedAdminManutencoesRouteImport.update({
+    id: '/admin/manutencoes',
+    path: '/admin/manutencoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminMotoristasRoute =
+  AuthenticatedAdminMotoristasRouteImport.update({
+    id: '/admin/motoristas',
+    path: '/admin/motoristas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSolicitacoesRoute =
+  AuthenticatedAdminSolicitacoesRouteImport.update({
+    id: '/admin/solicitacoes',
+    path: '/admin/solicitacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSolicitacoesIndexRoute =
+  AuthenticatedSolicitacoesIndexRouteImport.update({
+    id: '/solicitacoes/',
+    path: '/solicitacoes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSolicitacoesNovaRoute =
+  AuthenticatedSolicitacoesNovaRouteImport.update({
+    id: '/solicitacoes/nova',
+    path: '/solicitacoes/nova',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminVeiculosIndexRoute =
+  AuthenticatedAdminVeiculosIndexRouteImport.update({
+    id: '/admin/veiculos/',
+    path: '/admin/veiculos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminVeiculosVehicleIdRoute =
+  AuthenticatedAdminVeiculosVehicleIdRouteImport.update({
+    id: '/admin/veiculos/$vehicleId',
+    path: '/admin/veiculos/$vehicleId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSolicitacoesTripIdEditarRoute =
+  AuthenticatedSolicitacoesTripIdEditarRouteImport.update({
+    id: '/solicitacoes/$tripId/editar',
+    path: '/solicitacoes/$tripId/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/viagens': typeof AuthenticatedViagensRoute
+  '/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
+  '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
+  '/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
+  '/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
+  '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
+  '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
+  '/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
+  '/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
+  '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  '/admin/veiculos/': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/viagens': typeof AuthenticatedViagensRoute
+  '/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
+  '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
+  '/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
+  '/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
+  '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
+  '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
+  '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
+  '/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
+  '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  '/admin/veiculos': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/viagens': typeof AuthenticatedViagensRoute
+  '/_authenticated/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/_authenticated/admin/destinos': typeof AuthenticatedAdminDestinosRoute
+  '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
+  '/_authenticated/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
+  '/_authenticated/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
+  '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
+  '/_authenticated/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
+  '/_authenticated/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
+  '/_authenticated/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
+  '/_authenticated/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  '/_authenticated/admin/veiculos/': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/agenda-publica'
+    | '/painel'
+    | '/viagens'
+    | '/admin/agenda'
+    | '/admin/destinos'
+    | '/admin/disponibilidade'
+    | '/admin/manutencoes'
+    | '/admin/motoristas'
+    | '/admin/solicitacoes'
+    | '/solicitacoes/nova'
+    | '/solicitacoes/'
+    | '/admin/veiculos/$vehicleId'
+    | '/solicitacoes/$tripId/editar'
+    | '/admin/veiculos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/agenda-publica'
+    | '/painel'
+    | '/viagens'
+    | '/admin/agenda'
+    | '/admin/destinos'
+    | '/admin/disponibilidade'
+    | '/admin/manutencoes'
+    | '/admin/motoristas'
+    | '/admin/solicitacoes'
+    | '/solicitacoes/nova'
+    | '/solicitacoes'
+    | '/admin/veiculos/$vehicleId'
+    | '/solicitacoes/$tripId/editar'
+    | '/admin/veiculos'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/agenda-publica'
+    | '/_authenticated/painel'
+    | '/_authenticated/viagens'
+    | '/_authenticated/admin/agenda'
+    | '/_authenticated/admin/destinos'
+    | '/_authenticated/admin/disponibilidade'
+    | '/_authenticated/admin/manutencoes'
+    | '/_authenticated/admin/motoristas'
+    | '/_authenticated/admin/solicitacoes'
+    | '/_authenticated/solicitacoes/nova'
+    | '/_authenticated/solicitacoes/'
+    | '/_authenticated/admin/veiculos/$vehicleId'
+    | '/_authenticated/solicitacoes/$tripId/editar'
+    | '/_authenticated/admin/veiculos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +253,166 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/agenda-publica': {
+      id: '/_authenticated/agenda-publica'
+      path: '/agenda-publica'
+      fullPath: '/agenda-publica'
+      preLoaderRoute: typeof AuthenticatedAgendaPublicaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/painel': {
+      id: '/_authenticated/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/viagens': {
+      id: '/_authenticated/viagens'
+      path: '/viagens'
+      fullPath: '/viagens'
+      preLoaderRoute: typeof AuthenticatedViagensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/agenda': {
+      id: '/_authenticated/admin/agenda'
+      path: '/admin/agenda'
+      fullPath: '/admin/agenda'
+      preLoaderRoute: typeof AuthenticatedAdminAgendaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/destinos': {
+      id: '/_authenticated/admin/destinos'
+      path: '/admin/destinos'
+      fullPath: '/admin/destinos'
+      preLoaderRoute: typeof AuthenticatedAdminDestinosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/disponibilidade': {
+      id: '/_authenticated/admin/disponibilidade'
+      path: '/admin/disponibilidade'
+      fullPath: '/admin/disponibilidade'
+      preLoaderRoute: typeof AuthenticatedAdminDisponibilidadeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/manutencoes': {
+      id: '/_authenticated/admin/manutencoes'
+      path: '/admin/manutencoes'
+      fullPath: '/admin/manutencoes'
+      preLoaderRoute: typeof AuthenticatedAdminManutencoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/motoristas': {
+      id: '/_authenticated/admin/motoristas'
+      path: '/admin/motoristas'
+      fullPath: '/admin/motoristas'
+      preLoaderRoute: typeof AuthenticatedAdminMotoristasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/solicitacoes': {
+      id: '/_authenticated/admin/solicitacoes'
+      path: '/admin/solicitacoes'
+      fullPath: '/admin/solicitacoes'
+      preLoaderRoute: typeof AuthenticatedAdminSolicitacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/solicitacoes/': {
+      id: '/_authenticated/solicitacoes/'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes/'
+      preLoaderRoute: typeof AuthenticatedSolicitacoesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/solicitacoes/nova': {
+      id: '/_authenticated/solicitacoes/nova'
+      path: '/solicitacoes/nova'
+      fullPath: '/solicitacoes/nova'
+      preLoaderRoute: typeof AuthenticatedSolicitacoesNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/veiculos/': {
+      id: '/_authenticated/admin/veiculos/'
+      path: '/admin/veiculos'
+      fullPath: '/admin/veiculos/'
+      preLoaderRoute: typeof AuthenticatedAdminVeiculosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/veiculos/$vehicleId': {
+      id: '/_authenticated/admin/veiculos/$vehicleId'
+      path: '/admin/veiculos/$vehicleId'
+      fullPath: '/admin/veiculos/$vehicleId'
+      preLoaderRoute: typeof AuthenticatedAdminVeiculosVehicleIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/solicitacoes/$tripId/editar': {
+      id: '/_authenticated/solicitacoes/$tripId/editar'
+      path: '/solicitacoes/$tripId/editar'
+      fullPath: '/solicitacoes/$tripId/editar'
+      preLoaderRoute: typeof AuthenticatedSolicitacoesTripIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedViagensRoute: typeof AuthenticatedViagensRoute
+  AuthenticatedAdminAgendaRoute: typeof AuthenticatedAdminAgendaRoute
+  AuthenticatedAdminDestinosRoute: typeof AuthenticatedAdminDestinosRoute
+  AuthenticatedAdminDisponibilidadeRoute: typeof AuthenticatedAdminDisponibilidadeRoute
+  AuthenticatedAdminManutencoesRoute: typeof AuthenticatedAdminManutencoesRoute
+  AuthenticatedAdminMotoristasRoute: typeof AuthenticatedAdminMotoristasRoute
+  AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
+  AuthenticatedSolicitacoesNovaRoute: typeof AuthenticatedSolicitacoesNovaRoute
+  AuthenticatedSolicitacoesIndexRoute: typeof AuthenticatedSolicitacoesIndexRoute
+  AuthenticatedAdminVeiculosVehicleIdRoute: typeof AuthenticatedAdminVeiculosVehicleIdRoute
+  AuthenticatedSolicitacoesTripIdEditarRoute: typeof AuthenticatedSolicitacoesTripIdEditarRoute
+  AuthenticatedAdminVeiculosIndexRoute: typeof AuthenticatedAdminVeiculosIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgendaPublicaRoute: AuthenticatedAgendaPublicaRoute,
+  AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedViagensRoute: AuthenticatedViagensRoute,
+  AuthenticatedAdminAgendaRoute: AuthenticatedAdminAgendaRoute,
+  AuthenticatedAdminDestinosRoute: AuthenticatedAdminDestinosRoute,
+  AuthenticatedAdminDisponibilidadeRoute:
+    AuthenticatedAdminDisponibilidadeRoute,
+  AuthenticatedAdminManutencoesRoute: AuthenticatedAdminManutencoesRoute,
+  AuthenticatedAdminMotoristasRoute: AuthenticatedAdminMotoristasRoute,
+  AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
+  AuthenticatedSolicitacoesNovaRoute: AuthenticatedSolicitacoesNovaRoute,
+  AuthenticatedSolicitacoesIndexRoute: AuthenticatedSolicitacoesIndexRoute,
+  AuthenticatedAdminVeiculosVehicleIdRoute:
+    AuthenticatedAdminVeiculosVehicleIdRoute,
+  AuthenticatedSolicitacoesTripIdEditarRoute:
+    AuthenticatedSolicitacoesTripIdEditarRoute,
+  AuthenticatedAdminVeiculosIndexRoute: AuthenticatedAdminVeiculosIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
