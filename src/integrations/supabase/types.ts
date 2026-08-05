@@ -174,6 +174,8 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          is_active: boolean
+          is_coordinator: boolean
           phone: string | null
           registration: string | null
           sector: string | null
@@ -183,6 +185,8 @@ export type Database = {
           created_at?: string
           full_name?: string
           id: string
+          is_active?: boolean
+          is_coordinator?: boolean
           phone?: string | null
           registration?: string | null
           sector?: string | null
@@ -192,6 +196,8 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          is_active?: boolean
+          is_coordinator?: boolean
           phone?: string | null
           registration?: string | null
           sector?: string | null
@@ -599,7 +605,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active_user: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      is_coordinator_of: {
+        Args: { _sector: string; _user_id: string }
+        Returns: boolean
+      }
+      profile_sector: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "servidor"
