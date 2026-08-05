@@ -8,7 +8,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatDateTime } from "@/lib/frota";
+import { fmtDateTime } from "@/lib/frota";
 import { SECTORS } from "@/lib/setores";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -278,7 +278,7 @@ function Usuarios() {
                     <StatusBadge status={t.status} />
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {formatDateTime(t.departure_at)} → {formatDateTime(t.return_at)}
+                    {fmtDateTime(t.departure_at)} → {fmtDateTime(t.return_at)}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {t.vehicles ? `${t.vehicles.model} (${t.vehicles.plate})` : "Veículo a definir"}
