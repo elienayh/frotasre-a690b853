@@ -11,6 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SECTORS } from "@/lib/setores";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
@@ -83,14 +91,14 @@ function AuthPage() {
       .extend({
         full_name: z.string().trim().min(3, { message: "Informe seu nome completo" }).max(120),
         registration: z.string().trim().max(30).optional(),
-        sector: z.string().trim().max(80).optional(),
+        sector: z.string().trim().max(30).optional(),
       })
       .safeParse({
         email: form.get("email"),
         password: form.get("password"),
         full_name: form.get("full_name"),
         registration: form.get("registration") || undefined,
-        sector: form.get("sector") || undefined,
+        sector: sector || undefined,
       });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
@@ -186,7 +194,18 @@ function AuthPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="su-sector">Setor</Label>
-                      <Input id="su-sector" name="sector" maxLength={80} />
+                      <Select value={sector} onValueChange={setSector}>
+                        <SelectTrigger id="su-sector">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SECTORS.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="space-y-2">
