@@ -96,7 +96,7 @@ function FichaVeiculo() {
   return (
     <AppShell
       title={vehicle ? `${vehicle.manufacturer} ${vehicle.model}` : "Veículo"}
-      description={vehicle ? `Placa ${vehicle.plate}` : undefined}
+      description={vehicle ? `Placa ${vehicle.plate}` : "Ficha do veículo"}
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <div className="space-y-6">
