@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_authenticated/solicitacoes.index'
 import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
+import { Route as AuthenticatedSolicitacoesTripIdEditarRouteImport } from './routes/_authenticated/solicitacoes.$tripId.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,6 +48,12 @@ const AuthenticatedSolicitacoesNovaRoute =
     path: '/solicitacoes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSolicitacoesTripIdEditarRoute =
+  AuthenticatedSolicitacoesTripIdEditarRouteImport.update({
+    id: '/solicitacoes/$tripId/editar',
+    path: '/solicitacoes/$tripId/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
+  '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,6 +69,7 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
+  '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,12 +79,25 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/_authenticated/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
+  '/_authenticated/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel' | '/solicitacoes/nova' | '/solicitacoes/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/painel'
+    | '/solicitacoes/nova'
+    | '/solicitacoes/'
+    | '/solicitacoes/$tripId/editar'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel' | '/solicitacoes/nova' | '/solicitacoes'
+  to:
+    | '/'
+    | '/auth'
+    | '/painel'
+    | '/solicitacoes/nova'
+    | '/solicitacoes'
+    | '/solicitacoes/$tripId/editar'
   id:
     | '__root__'
     | '/'
@@ -84,6 +106,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/solicitacoes/nova'
     | '/_authenticated/solicitacoes/'
+    | '/_authenticated/solicitacoes/$tripId/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSolicitacoesNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/solicitacoes/$tripId/editar': {
+      id: '/_authenticated/solicitacoes/$tripId/editar'
+      path: '/solicitacoes/$tripId/editar'
+      fullPath: '/solicitacoes/$tripId/editar'
+      preLoaderRoute: typeof AuthenticatedSolicitacoesTripIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -143,12 +173,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedSolicitacoesNovaRoute: typeof AuthenticatedSolicitacoesNovaRoute
   AuthenticatedSolicitacoesIndexRoute: typeof AuthenticatedSolicitacoesIndexRoute
+  AuthenticatedSolicitacoesTripIdEditarRoute: typeof AuthenticatedSolicitacoesTripIdEditarRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedSolicitacoesNovaRoute: AuthenticatedSolicitacoesNovaRoute,
   AuthenticatedSolicitacoesIndexRoute: AuthenticatedSolicitacoesIndexRoute,
+  AuthenticatedSolicitacoesTripIdEditarRoute:
+    AuthenticatedSolicitacoesTripIdEditarRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
