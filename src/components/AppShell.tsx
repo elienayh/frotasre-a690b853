@@ -11,6 +11,7 @@ import {
   Menu,
   Route as RouteIcon,
   Users,
+  UserCog,
   Wrench,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -41,12 +42,13 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/agenda", label: "Agenda da Frota", icon: CalendarRange },
   { to: "/admin/veiculos", label: "Veículos", icon: CarFront },
   { to: "/admin/motoristas", label: "Motoristas", icon: Users },
+  { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
   { to: "/admin/destinos", label: "Destinos", icon: MapPin },
   { to: "/admin/manutencoes", label: "Manutenções", icon: Wrench },
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCoordinator } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const render = (items: NavItem[]) =>
@@ -73,6 +75,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1 px-3" aria-label="Navegação principal">
       {render(SERVER_ITEMS)}
+      {isCoordinator
+        ? render([{ to: "/setor", label: "Viagens do Setor", icon: Users }])
+        : null}
       {isAdmin ? (
         <>
           <p className="mt-5 px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
