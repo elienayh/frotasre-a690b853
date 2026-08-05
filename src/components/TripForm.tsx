@@ -60,8 +60,8 @@ export function TripForm({ trip }: TripFormProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("destinations")
-        .select("id, name, distance_km")
-        .eq("active", true)
+        .select("id, name, city")
+        .eq("is_active", true)
         .order("name");
       if (error) throw error;
       return data;
