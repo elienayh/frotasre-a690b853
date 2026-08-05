@@ -11,6 +11,7 @@ import {
   Menu,
   Route as RouteIcon,
   Users,
+  UserCog,
   Wrench,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -41,6 +42,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/agenda", label: "Agenda da Frota", icon: CalendarRange },
   { to: "/admin/veiculos", label: "Veículos", icon: CarFront },
   { to: "/admin/motoristas", label: "Motoristas", icon: Users },
+  { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
   { to: "/admin/destinos", label: "Destinos", icon: MapPin },
   { to: "/admin/manutencoes", label: "Manutenções", icon: Wrench },
 ];

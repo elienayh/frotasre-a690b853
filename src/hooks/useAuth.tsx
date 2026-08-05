@@ -8,6 +8,8 @@ export interface Profile {
   registration: string | null;
   sector: string | null;
   phone: string | null;
+  is_active: boolean;
+  is_coordinator: boolean;
 }
 
 interface AuthState {
@@ -16,6 +18,7 @@ interface AuthState {
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  isCoordinator: boolean;
   refresh: () => Promise<void>;
 }
 
@@ -25,6 +28,7 @@ const AuthContext = createContext<AuthState>({
   user: null,
   profile: null,
   isAdmin: false,
+  isCoordinator: false,
   refresh: async () => {},
 });
 
@@ -43,11 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, phone")
+        .select("id, full_name, registration, sector, phone, is_active, is_coordinator")
         .eq("id", userId)
         .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
+    if (prof && prof.is_active === false) {
+      // Acesso desativado pelo administrador: encerra a sessão imediatamente.
+      setProfile(null);
+      setIsAdmin(false);
+      await supabase.auth.signOut();
+      return;
+    }
     setProfile(prof ?? null);
     setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
   }
@@ -83,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     profile,
     isAdmin,
+    isCoordinator: Boolean(profile?.is_coordinator),
     refresh: async () => {
       await loadUserData(session?.user?.id);
     },
