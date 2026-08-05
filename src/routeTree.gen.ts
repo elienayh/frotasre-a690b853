@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/_authenticated/admin.disponibilidade'
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
 import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_authenticated/solicitacoes.index'
 import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
@@ -44,6 +45,12 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminDisponibilidadeRoute =
+  AuthenticatedAdminDisponibilidadeRouteImport.update({
+    id: '/admin/disponibilidade',
+    path: '/admin/disponibilidade',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSolicitacoesRoute =
   AuthenticatedAdminSolicitacoesRouteImport.update({
     id: '/admin/solicitacoes',
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/_authenticated/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/_authenticated/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/agenda-publica'
     | '/painel'
+    | '/admin/disponibilidade'
     | '/admin/solicitacoes'
     | '/solicitacoes/nova'
     | '/solicitacoes/'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/agenda-publica'
     | '/painel'
+    | '/admin/disponibilidade'
     | '/admin/solicitacoes'
     | '/solicitacoes/nova'
     | '/solicitacoes'
@@ -129,6 +141,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/agenda-publica'
     | '/_authenticated/painel'
+    | '/_authenticated/admin/disponibilidade'
     | '/_authenticated/admin/solicitacoes'
     | '/_authenticated/solicitacoes/nova'
     | '/_authenticated/solicitacoes/'
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/disponibilidade': {
+      id: '/_authenticated/admin/disponibilidade'
+      path: '/admin/disponibilidade'
+      fullPath: '/admin/disponibilidade'
+      preLoaderRoute: typeof AuthenticatedAdminDisponibilidadeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/solicitacoes': {
       id: '/_authenticated/admin/solicitacoes'
       path: '/admin/solicitacoes'
@@ -212,6 +232,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedAdminDisponibilidadeRoute: typeof AuthenticatedAdminDisponibilidadeRoute
   AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
   AuthenticatedSolicitacoesNovaRoute: typeof AuthenticatedSolicitacoesNovaRoute
   AuthenticatedSolicitacoesIndexRoute: typeof AuthenticatedSolicitacoesIndexRoute
@@ -221,6 +242,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaPublicaRoute: AuthenticatedAgendaPublicaRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedAdminDisponibilidadeRoute:
+    AuthenticatedAdminDisponibilidadeRoute,
   AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
   AuthenticatedSolicitacoesNovaRoute: AuthenticatedSolicitacoesNovaRoute,
   AuthenticatedSolicitacoesIndexRoute: AuthenticatedSolicitacoesIndexRoute,
