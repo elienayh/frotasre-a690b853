@@ -1,0 +1,179 @@
+import { ArrowDown, ArrowUp, MapPin, Plus, Trash2 } from "lucide-react";
+
+import { ComboBox, type ComboOption } from "@/components/ComboBox";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useCities, usePlaces } from "@/hooks/useFrotaOptions";
+
+export interface StopValue {
+  key: string;
+  cityId: string | null;
+  cityText: string | null;
+  destinationId: string | null;
+  placeText: string | null;
+}
+
+export function newStop(): StopValue {
+  return {
+    key: Math.random().toString(36).slice(2),
+    cityId: null,
+    cityText: null,
+    destinationId: null,
+    placeText: null,
+  };
+}
+
+export interface TripStopsProps {
+  value: StopValue[];
+  onChange: (stops: StopValue[]) => void;
+}
+
+/** Lista de paradas do itinerário: cada parada tem cidade e local próprios. */
+export function TripStops({ value, onChange }: TripStopsProps) {
+  const { data: cities = [] } = useCities();
+  const { data: places = [] } = usePlaces();
+
+  const cityOptions: ComboOption[] = cities.map((c) => ({ value: c.id, label: c.name }));
+
+  function update(index: number, patch: Partial<StopValue>) {
+    onChange(value.map((stop, i) => (i === index ? { ...stop, ...patch } : stop)));
+  }
+
+  function move(index: number, delta: number) {
+    const target = index + delta;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    const [item] = next.splice(index, 1);
+    if (item) next.splice(target, 0, item);
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-4">
+      {value.map((stop, index) => {
+        const cityName = stop.cityId
+          ? (cities.find((c) => c.id === stop.cityId)?.name ?? null)
+          : stop.cityText;
+        const placeOptions: ComboOption[] = places
+          .filter((p) => (stop.cityId ? p.city_id === stop.cityId : true))
+          .map((p) => ({
+            value: p.id,
+            label: p.name,
+            hint: p.city ?? undefined,
+          }));
+
+        return (
+          <div key={stop.key} className="rounded-lg border border-border bg-card/60 p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
+                Parada {index + 1}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Mover parada ${index + 1} para cima`}
+                  disabled={index === 0}
+                  onClick={() => move(index, -1)}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Mover parada ${index + 1} para baixo`}
+                  disabled={index === value.length - 1}
+                  onClick={() => move(index, 1)}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Remover parada ${index + 1}`}
+                  disabled={value.length === 1}
+                  onClick={() => onChange(value.filter((_, i) => i !== index))}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`city-${stop.key}`}>Cidade</Label>
+                <ComboBox
+                  id={`city-${stop.key}`}
+                  options={cityOptions}
+                  value={stop.cityId}
+                  customLabel={stop.cityText}
+                  placeholder="Selecione uma cidade"
+                  searchPlaceholder="Pesquisar ou digitar cidade…"
+                  emptyText="Nenhuma cidade encontrada."
+                  customPrefix="Outra cidade"
+                  onSelect={(option) =>
+                    update(index, {
+                      cityId: option.value,
+                      cityText: null,
+                      destinationId: null,
+                      placeText: null,
+                    })
+                  }
+                  onCustom={(text) =>
+                    update(index, {
+                      cityId: null,
+                      cityText: text,
+                      destinationId: null,
+                      placeText: null,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor={`place-${stop.key}`}>Local de destino</Label>
+                <ComboBox
+                  id={`place-${stop.key}`}
+                  options={placeOptions}
+                  value={stop.destinationId}
+                  customLabel={stop.placeText}
+                  placeholder={
+                    cityName ? "Selecione ou digite um local…" : "Escolha a cidade primeiro"
+                  }
+                  searchPlaceholder="Pesquisar local…"
+                  emptyText="Nenhum local cadastrado nesta cidade."
+                  customPrefix="Usar novo local"
+                  disabled={!cityName}
+                  onSelect={(option) =>
+                    update(index, { destinationId: option.value, placeText: null })
+                  }
+                  onCustom={(text) => update(index, { destinationId: null, placeText: text })}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      <Button type="button" variant="outline" onClick={() => onChange([...value, newStop()])}>
+        <Plus className="mr-1 h-4 w-4" /> Adicionar outro destino
+      </Button>
+    </div>
+  );
+}
+
+/** Rótulo legível de uma parada, no formato "Local · Cidade". */
+export function stopLabel(
+  stop: StopValue,
+  cityName: string | null,
+  placeName: string | null,
+): string {
+  const place = placeName ?? stop.placeText ?? "";
+  const city = cityName ?? stop.cityText ?? "";
+  if (place && city) return `${place} · ${city}`;
+  return place || city || "Destino não informado";
+}

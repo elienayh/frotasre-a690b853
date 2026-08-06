@@ -16,13 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { DriverPicker } from "@/components/DriverPicker";
+import { usePeople } from "@/hooks/useFrotaOptions";
 import { cn } from "@/lib/utils";
 import { dateTimeToIso, friendlyDbError, fmtDateTime, type TripRow } from "@/lib/frota";
 
@@ -35,7 +30,8 @@ export interface AllocateDialogProps {
 export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
   const queryClient = useQueryClient();
   const [vehicleId, setVehicleId] = useState<string>("");
-  const [driverId, setDriverId] = useState<string>("");
+  const [driverUserId, setDriverUserId] = useState<string | null>(null);
+  const { data: people = [] } = usePeople();
 
   const departure = trip ? new Date(trip.departure_at) : null;
   const ret = trip ? new Date(trip.return_at) : null;
@@ -71,16 +67,24 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     },
   });
 
-  const { data: drivers = [] } = useQuery({
-    queryKey: ["drivers-active"],
+  // Sugestão do solicitante e checagem de conflito de agenda do condutor escolhido.
+  const requestedDriverId = trip?.requested_driver_id ?? null;
+  const requestedDriverName = requestedDriverId
+    ? (people.find((p) => p.id === requestedDriverId)?.full_name ?? null)
+    : (trip?.suggested_driver ?? null);
+
+  const { data: driverConflicts = [] } = useQuery({
+    queryKey: ["driver-busy", driverUserId, startIso, endIso, trip?.id],
+    enabled: Boolean(driverUserId && startIso && endIso && endIso > startIso),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("drivers")
-        .select("id, full_name, is_authorized")
-        .eq("is_active", true)
-        .order("full_name");
+      const { data, error } = await supabase.rpc("driver_user_busy", {
+        _user_id: driverUserId!,
+        _start: startIso,
+        _end: endIso,
+        ...(trip?.id ? { _exclude_trip: trip.id } : {}),
+      });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
@@ -91,7 +95,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
         .from("trip_requests")
         .update({
           vehicle_id: vehicleId,
-          driver_id: driverId || null,
+          assigned_driver_user_id: driverUserId,
           departure_at: startIso,
           return_at: endIso,
           admin_notes: notes || null,
@@ -205,23 +209,33 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="al-driver">Motorista</Label>
-            <Select value={driverId} onValueChange={setDriverId}>
-              <SelectTrigger id="al-driver">
-                <SelectValue placeholder="Selecione o motorista" />
-              </SelectTrigger>
-              <SelectContent>
-                {drivers.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.full_name}
-                    {d.is_authorized ? "" : " (não autorizado)"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {trip?.suggested_driver ? (
-              <p className="text-xs text-muted-foreground">
-                Sugerido pelo solicitante: {trip.suggested_driver}
+            <Label htmlFor="al-driver">Condutor definido</Label>
+            <DriverPicker
+              id="al-driver"
+              value={driverUserId}
+              onChange={setDriverUserId}
+              placeholder="Selecione o condutor"
+            />
+            {requestedDriverName ? (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span>Indicado pelo solicitante: {requestedDriverName}</span>
+                {requestedDriverId && requestedDriverId !== driverUserId ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDriverUserId(requestedDriverId)}
+                  >
+                    Confirmar indicação
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+            {driverConflicts.length > 0 ? (
+              <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                Conflito de agenda: este condutor já está escalado na viagem #
+                {driverConflicts[0]?.code} ({fmtDateTime(driverConflicts[0]?.departure_at)} –{" "}
+                {fmtDateTime(driverConflicts[0]?.return_at)}).
               </p>
             ) : null}
           </div>
@@ -236,7 +250,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           <Button variant="ghost" onClick={onClose} type="button">
             Fechar
           </Button>
-          <Button type="submit" form="allocate-form" disabled={approve.isPending || !vehicleId}>
+          <Button type="submit" form="allocate-form" disabled={approve.isPending || !vehicleId || driverConflicts.length > 0}>
             Aprovar viagem
           </Button>
         </DialogFooter>

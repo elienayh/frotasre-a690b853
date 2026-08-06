@@ -14,29 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
-      destinations: {
+      cities: {
         Row: {
-          city: string | null
           created_at: string
           id: string
           is_active: boolean
           name: string
+          updated_at: string
         }
         Insert: {
-          city?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
+          updated_at?: string
         }
         Update: {
-          city?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name?: string
+          updated_at?: string
         }
         Relationships: []
+      }
+      destinations: {
+        Row: {
+          address: string | null
+          city: string | null
+          city_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          place_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          place_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          city_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          place_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "destinations_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       drivers: {
         Row: {
@@ -176,6 +220,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_coordinator: boolean
+          is_sre_driver: boolean
           phone: string | null
           registration: string | null
           sector: string | null
@@ -187,6 +232,7 @@ export type Database = {
           id: string
           is_active?: boolean
           is_coordinator?: boolean
+          is_sre_driver?: boolean
           phone?: string | null
           registration?: string | null
           sector?: string | null
@@ -198,6 +244,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_coordinator?: boolean
+          is_sre_driver?: boolean
           phone?: string | null
           registration?: string | null
           sector?: string | null
@@ -302,6 +349,9 @@ export type Database = {
         Row: {
           admin_notes: string | null
           allows_rides: boolean
+          assigned_driver_user_id: string | null
+          city_id: string | null
+          city_text: string | null
           code: number
           created_at: string
           departure_at: string
@@ -316,6 +366,7 @@ export type Database = {
           pw_number: string | null
           pw_registered_at: string | null
           rejection_reason: string | null
+          requested_driver_id: string | null
           requester_id: string | null
           requester_name: string | null
           requester_notes: string | null
@@ -328,6 +379,9 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           allows_rides?: boolean
+          assigned_driver_user_id?: string | null
+          city_id?: string | null
+          city_text?: string | null
           code?: number
           created_at?: string
           departure_at: string
@@ -342,6 +396,7 @@ export type Database = {
           pw_number?: string | null
           pw_registered_at?: string | null
           rejection_reason?: string | null
+          requested_driver_id?: string | null
           requester_id?: string | null
           requester_name?: string | null
           requester_notes?: string | null
@@ -354,6 +409,9 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           allows_rides?: boolean
+          assigned_driver_user_id?: string | null
+          city_id?: string | null
+          city_text?: string | null
           code?: number
           created_at?: string
           departure_at?: string
@@ -368,6 +426,7 @@ export type Database = {
           pw_number?: string | null
           pw_registered_at?: string | null
           rejection_reason?: string | null
+          requested_driver_id?: string | null
           requester_id?: string | null
           requester_name?: string | null
           requester_notes?: string | null
@@ -378,6 +437,20 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trip_requests_assigned_driver_user_id_fkey"
+            columns: ["assigned_driver_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_requests_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trip_requests_destination_id_fkey"
             columns: ["destination_id"]
@@ -393,6 +466,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "trip_requests_requested_driver_id_fkey"
+            columns: ["requested_driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "trip_requests_requester_id_fkey"
             columns: ["requester_id"]
             isOneToOne: false
@@ -404,6 +484,64 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_stops: {
+        Row: {
+          city_id: string | null
+          city_text: string | null
+          created_at: string
+          destination_id: string | null
+          id: string
+          place_text: string | null
+          position: number
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          city_id?: string | null
+          city_text?: string | null
+          created_at?: string
+          destination_id?: string | null
+          id?: string
+          place_text?: string | null
+          position?: number
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string | null
+          city_text?: string | null
+          created_at?: string
+          destination_id?: string | null
+          id?: string
+          place_text?: string | null
+          position?: number
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_stops_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stops_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stops_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trip_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -565,6 +703,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      driver_user_busy: {
+        Args: {
+          _end: string
+          _exclude_trip?: string
+          _start: string
+          _user_id: string
+        }
+        Returns: {
+          code: number
+          departure_at: string
+          destination_text: string
+          return_at: string
+          trip_id: string
+        }[]
+      }
       fleet_availability: {
         Args: { p_end: string; p_passengers?: number; p_start: string }
         Returns: {

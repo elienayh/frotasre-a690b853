@@ -42,6 +42,7 @@ interface ProfileRow {
   phone: string | null;
   is_active: boolean;
   is_coordinator: boolean;
+  is_sre_driver: boolean;
 }
 
 const profileSchema = z.object({
@@ -62,7 +63,7 @@ function Usuarios() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, phone, is_active, is_coordinator")
+        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver")
         .order("full_name");
       if (error) throw error;
       return data as ProfileRow[];
@@ -146,6 +147,7 @@ function Usuarios() {
                     <p className="font-medium">{p.full_name || "Sem nome"}</p>
                     <Badge variant="secondary">{p.sector ?? "Sem setor"}</Badge>
                     {p.is_coordinator ? <Badge>Coordenador</Badge> : null}
+                    {p.is_sre_driver ? <Badge variant="outline">Motorista SRE</Badge> : null}
                     {!p.is_active ? <Badge variant="destructive">Inativo</Badge> : null}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -175,6 +177,18 @@ function Usuarios() {
                       checked={p.is_coordinator}
                       onCheckedChange={(v) =>
                         patch.mutate({ id: p.id, values: { is_coordinator: v } })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`driver-${p.id}`} className="text-xs text-muted-foreground">
+                      Motorista da SRE
+                    </Label>
+                    <Switch
+                      id={`driver-${p.id}`}
+                      checked={p.is_sre_driver}
+                      onCheckedChange={(v) =>
+                        patch.mutate({ id: p.id, values: { is_sre_driver: v } })
                       }
                     />
                   </div>

@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Building2,
   Bus,
   CalendarRange,
   CarFront,
@@ -43,7 +44,8 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/veiculos", label: "Veículos", icon: CarFront },
   { to: "/admin/motoristas", label: "Motoristas", icon: Users },
   { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
-  { to: "/admin/destinos", label: "Destinos", icon: MapPin },
+  { to: "/admin/cidades", label: "Cidades", icon: Building2 },
+  { to: "/admin/destinos", label: "Locais de Destino", icon: MapPin },
   { to: "/admin/manutencoes", label: "Manutenções", icon: Wrench },
 ];
 
