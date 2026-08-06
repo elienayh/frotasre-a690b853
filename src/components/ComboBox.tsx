@@ -17,27 +17,27 @@ export interface ComboOption {
   value: string;
   label: string;
   /** Texto auxiliar exibido abaixo do rótulo. */
-  hint?: string;
+  hint?: string | undefined;
   /** Grupo em que o item é exibido; a ordem segue a primeira ocorrência. */
-  group?: string;
+  group?: string | undefined;
 }
 
 export interface ComboBoxProps {
-  id?: string;
+  id?: string | undefined;
   options: ComboOption[];
   /** Valor da opção selecionada (id do registro), quando houver. */
   value: string | null;
   /** Texto livre digitado pelo usuário, quando não há registro correspondente. */
-  customLabel?: string | null;
+  customLabel?: string | null | undefined;
   onSelect: (option: ComboOption) => void;
   /** Habilita a criação de um valor digitado manualmente. */
-  onCustom?: (text: string) => void;
-  customPrefix?: string;
+  onCustom?: ((text: string) => void) | undefined;
+  customPrefix?: string | undefined;
   placeholder: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-  disabled?: boolean;
-  className?: string;
+  searchPlaceholder?: string | undefined;
+  emptyText?: string | undefined;
+  disabled?: boolean | undefined;
+  className?: string | undefined;
 }
 
 /** Seletor com pesquisa que aceita, opcionalmente, um valor digitado manualmente. */

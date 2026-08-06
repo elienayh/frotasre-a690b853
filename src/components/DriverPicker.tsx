@@ -4,14 +4,14 @@ import { ComboBox, type ComboOption } from "@/components/ComboBox";
 import { usePeople } from "@/hooks/useFrotaOptions";
 
 export interface DriverPickerProps {
-  id?: string;
+  id?: string | undefined;
   /** ID do perfil selecionado como condutor. */
   value: string | null;
   onChange: (value: string | null) => void;
   /** Usuário logado, sempre exibido em primeiro lugar. */
-  currentUserId?: string | null;
-  placeholder?: string;
-  disabled?: boolean;
+  currentUserId?: string | null | undefined;
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
 }
 
 /**
