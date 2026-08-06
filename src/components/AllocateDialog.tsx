@@ -81,7 +81,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
         _user_id: driverUserId!,
         _start: startIso,
         _end: endIso,
-        _exclude_trip: trip?.id ?? undefined,
+        ...(trip?.id ? { _exclude_trip: trip.id } : {}),
       });
       if (error) throw error;
       return data ?? [];

@@ -36,13 +36,11 @@ export const Route = createFileRoute("/_authenticated/admin/cidades")({
 interface CityRow {
   id: string;
   name: string;
-  uf: string | null;
   is_active: boolean;
 }
 
 const schema = z.object({
   name: z.string().trim().min(2, { message: "Informe o nome da cidade" }).max(120),
-  uf: z.string().trim().max(2).optional(),
 });
 
 function Cidades() {
@@ -56,7 +54,7 @@ function Cidades() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cities")
-        .select("id, name, uf, is_active")
+        .select("id, name, is_active")
         .order("name");
       if (error) throw error;
       return data as CityRow[];
@@ -67,7 +65,7 @@ function Cidades() {
 
   const save = useMutation({
     mutationFn: async ({ id, payload }: { id?: string; payload: z.infer<typeof schema> }) => {
-      const values = { name: payload.name, uf: payload.uf?.toUpperCase() || "MG" };
+      const values = { name: payload.name };
       const { error } = id
         ? await supabase.from("cities").update(values).eq("id", id)
         : await supabase.from("cities").insert(values);
@@ -138,7 +136,6 @@ function Cidades() {
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="font-medium">{c.name}</p>
-                  <p className="text-sm text-muted-foreground">{c.uf ?? "MG"}</p>
                 </div>
                 <Switch
                   aria-label={`Ativar ${c.name}`}
@@ -185,7 +182,6 @@ function Cidades() {
               const form = new FormData(event.currentTarget);
               const parsed = schema.safeParse({
                 name: form.get("name"),
-                uf: form.get("uf") || undefined,
               });
               if (!parsed.success) {
                 toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
@@ -202,15 +198,6 @@ function Cidades() {
                 required
                 maxLength={120}
                 defaultValue={editing?.name ?? ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="city-uf">UF</Label>
-              <Input
-                id="city-uf"
-                name="uf"
-                maxLength={2}
-                defaultValue={editing?.uf ?? "MG"}
               />
             </div>
           </form>

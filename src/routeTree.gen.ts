@@ -17,6 +17,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedSetorRouteImport } from './routes/_authenticated/setor'
 import { Route as AuthenticatedViagensRouteImport } from './routes/_authenticated/viagens'
 import { Route as AuthenticatedAdminAgendaRouteImport } from './routes/_authenticated/admin.agenda'
+import { Route as AuthenticatedAdminCidadesRouteImport } from './routes/_authenticated/admin.cidades'
 import { Route as AuthenticatedAdminDestinosRouteImport } from './routes/_authenticated/admin.destinos'
 import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/_authenticated/admin.disponibilidade'
 import { Route as AuthenticatedAdminManutencoesRouteImport } from './routes/_authenticated/admin.manutencoes'
@@ -68,6 +69,12 @@ const AuthenticatedAdminAgendaRoute =
   AuthenticatedAdminAgendaRouteImport.update({
     id: '/admin/agenda',
     path: '/admin/agenda',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCidadesRoute =
+  AuthenticatedAdminCidadesRouteImport.update({
+    id: '/admin/cidades',
+    path: '/admin/cidades',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDestinosRoute =
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/setor': typeof AuthenticatedSetorRoute
   '/viagens': typeof AuthenticatedViagensRoute
   '/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
@@ -165,6 +173,7 @@ export interface FileRoutesByTo {
   '/setor': typeof AuthenticatedSetorRoute
   '/viagens': typeof AuthenticatedViagensRoute
   '/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
@@ -187,6 +196,7 @@ export interface FileRoutesById {
   '/_authenticated/setor': typeof AuthenticatedSetorRoute
   '/_authenticated/viagens': typeof AuthenticatedViagensRoute
   '/_authenticated/admin/agenda': typeof AuthenticatedAdminAgendaRoute
+  '/_authenticated/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/_authenticated/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/_authenticated/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/setor'
     | '/viagens'
     | '/admin/agenda'
+    | '/admin/cidades'
     | '/admin/destinos'
     | '/admin/disponibilidade'
     | '/admin/manutencoes'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/setor'
     | '/viagens'
     | '/admin/agenda'
+    | '/admin/cidades'
     | '/admin/destinos'
     | '/admin/disponibilidade'
     | '/admin/manutencoes'
@@ -250,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authenticated/setor'
     | '/_authenticated/viagens'
     | '/_authenticated/admin/agenda'
+    | '/_authenticated/admin/cidades'
     | '/_authenticated/admin/destinos'
     | '/_authenticated/admin/disponibilidade'
     | '/_authenticated/admin/manutencoes'
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/agenda'
       fullPath: '/admin/agenda'
       preLoaderRoute: typeof AuthenticatedAdminAgendaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/cidades': {
+      id: '/_authenticated/admin/cidades'
+      path: '/admin/cidades'
+      fullPath: '/admin/cidades'
+      preLoaderRoute: typeof AuthenticatedAdminCidadesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/destinos': {
@@ -413,6 +433,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSetorRoute: typeof AuthenticatedSetorRoute
   AuthenticatedViagensRoute: typeof AuthenticatedViagensRoute
   AuthenticatedAdminAgendaRoute: typeof AuthenticatedAdminAgendaRoute
+  AuthenticatedAdminCidadesRoute: typeof AuthenticatedAdminCidadesRoute
   AuthenticatedAdminDestinosRoute: typeof AuthenticatedAdminDestinosRoute
   AuthenticatedAdminDisponibilidadeRoute: typeof AuthenticatedAdminDisponibilidadeRoute
   AuthenticatedAdminManutencoesRoute: typeof AuthenticatedAdminManutencoesRoute
@@ -432,6 +453,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSetorRoute: AuthenticatedSetorRoute,
   AuthenticatedViagensRoute: AuthenticatedViagensRoute,
   AuthenticatedAdminAgendaRoute: AuthenticatedAdminAgendaRoute,
+  AuthenticatedAdminCidadesRoute: AuthenticatedAdminCidadesRoute,
   AuthenticatedAdminDestinosRoute: AuthenticatedAdminDestinosRoute,
   AuthenticatedAdminDisponibilidadeRoute:
     AuthenticatedAdminDisponibilidadeRoute,
