@@ -65,9 +65,17 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-sector-gabinete: var(--sector-gabinete);
+  --color-sector-dafi: var(--sector-dafi);
+  --color-sector-dire: var(--sector-dire);
+  --color-sector-dipe: var(--sector-dipe);
+  --color-sector-nte: var(--sector-nte);
+  --color-sector-inspecao: var(--sector-inspecao);
+  --color-sector-outro: var(--sector-outro);
   --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
 }
+
 
 :root {
   --radius: 0.5rem;
