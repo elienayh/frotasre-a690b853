@@ -359,6 +359,7 @@ export type Database = {
           destination_text: string
           driver_id: string | null
           id: string
+          needs_sre_driver: boolean
           occupants_names: string | null
           passengers: number
           period: unknown
@@ -389,6 +390,7 @@ export type Database = {
           destination_text: string
           driver_id?: string | null
           id?: string
+          needs_sre_driver?: boolean
           occupants_names?: string | null
           passengers?: number
           period?: unknown
@@ -419,6 +421,7 @@ export type Database = {
           destination_text?: string
           driver_id?: string | null
           id?: string
+          needs_sre_driver?: boolean
           occupants_names?: string | null
           passengers?: number
           period?: unknown

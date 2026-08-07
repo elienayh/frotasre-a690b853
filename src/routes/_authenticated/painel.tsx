@@ -1,9 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarRange, CarFront, ClipboardList, Plus } from "lucide-react";
+import {
+  CalendarRange,
+  CarFront,
+  CheckCircle2,
+  ClipboardList,
+  Plus,
+  UserCheck,
+  Users,
+  Wrench,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFleetNow } from "@/hooks/useFleet";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -33,18 +43,56 @@ function PainelPage() {
     },
   });
 
-  const { data: pendingCount = 0 } = useQuery({
-    queryKey: ["pending-count"],
+  const { data: fleet = [] } = useFleetNow();
+
+  const { data: counts } = useQuery({
+    queryKey: ["dafi-counts"],
     enabled: isAdmin,
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("trip_requests")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["PENDENTE", "CORRECAO"]);
-      if (error) throw error;
-      return count ?? 0;
+      const nowIso = new Date().toISOString();
+      const [pending, rides, needsDriver, sreDrivers, busyDrivers] = await Promise.all([
+        supabase
+          .from("trip_requests")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["PENDENTE", "CORRECAO"]),
+        supabase
+          .from("ride_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "PENDENTE"),
+        supabase
+          .from("trip_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("needs_sre_driver", true)
+          .is("assigned_driver_user_id", null)
+          .gte("return_at", nowIso)
+          .in("status", ["PENDENTE", "CORRECAO", "APROVADA", "PROGRAMADA"]),
+        supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("is_sre_driver", true)
+          .eq("is_active", true),
+        supabase
+          .from("trip_requests")
+          .select("assigned_driver_user_id")
+          .not("assigned_driver_user_id", "is", null)
+          .lte("departure_at", nowIso)
+          .gte("return_at", nowIso)
+          .in("status", ["APROVADA", "PROGRAMADA", "EM_ANDAMENTO"]),
+      ]);
+      const busy = new Set(
+        (busyDrivers.data ?? []).map((r) => r.assigned_driver_user_id).filter(Boolean),
+      );
+      return {
+        pending: pending.count ?? 0,
+        rides: rides.count ?? 0,
+        needsDriver: needsDriver.count ?? 0,
+        driversTotal: sreDrivers.count ?? 0,
+        driversFree: Math.max(0, (sreDrivers.count ?? 0) - busy.size),
+      };
     },
   });
+
+  const fleetCount = (status: string) => fleet.filter((v) => v.status === status).length;
 
   return (
     <AppShell
@@ -58,96 +106,161 @@ function PainelPage() {
         </Button>
       }
     >
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <ClipboardList className="h-4 w-4" /> Minhas solicitações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-display text-3xl font-bold">{myTrips.length}</p>
-            <Link to="/solicitacoes" className="text-sm text-primary underline-offset-4 hover:underline">
-              Ver todas
-            </Link>
-          </CardContent>
-        </Card>
-
-        {isAdmin ? (
+      {isAdmin ? (
+        <section className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Indicator
+            icon={<CheckCircle2 className="h-4 w-4 text-success" />}
+            label="Veículos disponíveis"
+            value={fleetCount("DISPONIVEL")}
+          />
+          <Indicator
+            icon={<CarFront className="h-4 w-4 text-info" />}
+            label="Veículos ocupados"
+            value={fleetCount("EM_VIAGEM") + fleetCount("RESERVADO")}
+          />
+          <Indicator
+            icon={<Wrench className="h-4 w-4 text-destructive" />}
+            label="Em manutenção"
+            value={fleetCount("EM_MANUTENCAO") + fleetCount("INDISPONIVEL")}
+          />
+          <Indicator
+            icon={<ClipboardList className="h-4 w-4 text-warning" />}
+            label="Solicitações pendentes"
+            value={counts?.pending ?? 0}
+            to="/admin/solicitacoes"
+          />
+          <Indicator
+            icon={<Users className="h-4 w-4 text-warning" />}
+            label="Pedidos de carona"
+            value={counts?.rides ?? 0}
+            to="/agenda-publica"
+          />
+          <Indicator
+            icon={<UserCheck className="h-4 w-4 text-warning" />}
+            label="Motoristas necessários"
+            value={counts?.needsDriver ?? 0}
+            to="/admin/solicitacoes"
+          />
+          <Indicator
+            icon={<UserCheck className="h-4 w-4 text-success" />}
+            label="Motoristas disponíveis"
+            value={`${counts?.driversFree ?? 0}/${counts?.driversTotal ?? 0}`}
+            to="/admin/usuarios"
+          />
+          <Indicator
+            icon={<CalendarRange className="h-4 w-4 text-primary" />}
+            label="Agenda do dia"
+            value={fleetCount("EM_VIAGEM")}
+            to="/admin/agenda"
+          />
+        </section>
+      ) : (
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <ClipboardList className="h-4 w-4" /> Aguardando análise
+                <ClipboardList className="h-4 w-4" /> Minhas solicitações
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="font-display text-3xl font-bold">{pendingCount}</p>
+              <p className="font-display text-3xl font-bold">{myTrips.length}</p>
               <Link
-                to="/admin/solicitacoes"
+                to="/solicitacoes"
                 className="text-sm text-primary underline-offset-4 hover:underline"
               >
-                Analisar agora
+                Ver todas
               </Link>
             </CardContent>
           </Card>
-        ) : null}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <CalendarRange className="h-4 w-4" /> Calendário
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Veja as viagens do mês e peça carona.
+              </p>
+              <Link
+                to="/agenda-publica"
+                className="text-sm text-primary underline-offset-4 hover:underline"
+              >
+                Abrir calendário
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <CarFront className="h-4 w-4" /> Minhas viagens
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Acompanhe seus deslocamentos.</p>
+              <Link
+                to="/viagens"
+                className="text-sm text-primary underline-offset-4 hover:underline"
+              >
+                Ver viagens
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <CalendarRange className="h-4 w-4" /> Agenda
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Consulte as viagens programadas e peça carona.
-            </p>
-            <Link
-              to="/agenda-publica"
-              className="text-sm text-primary underline-offset-4 hover:underline"
-            >
-              Viagens programadas
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      <section className="mt-8">
-        <h2 className="mb-3 font-display text-lg font-semibold">Próximas solicitações</h2>
-        {myTrips.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-            Você ainda não possui solicitações. Crie a primeira em “Nova solicitação”.
-          </p>
-        ) : (
-          <ul className="grid gap-3">
+      {myTrips.length > 0 ? (
+        <section className="mb-8">
+          <h2 className="mb-3 font-display text-base font-semibold">Suas próximas viagens</h2>
+          <ul className="grid gap-2">
             {myTrips.map((t) => (
               <li
                 key={t.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm"
               >
-                <div>
-                  <p className="font-medium">
-                    #{t.code} · {t.destination_text}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {fmtDate(t.departure_at)} · {fmtTime(t.departure_at)} às {fmtTime(t.return_at)}
-                  </p>
-                </div>
+                <span>
+                  <span className="font-medium">{t.destination_text}</span>
+                  <span className="block text-muted-foreground">
+                    {fmtDate(t.departure_at)} · {fmtTime(t.departure_at)} –{" "}
+                    {fmtTime(t.return_at)}
+                  </span>
+                </span>
                 <StatusBadge status={t.status} />
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       {isAdmin ? (
-        <section className="mt-10">
-          <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold">
-            <CarFront className="h-5 w-5" /> Situação da Frota
-          </h2>
+        <section>
+          <h2 className="mb-3 font-display text-base font-semibold">Situação da frota agora</h2>
           <FleetSituation />
         </section>
       ) : null}
     </AppShell>
   );
+}
+
+function Indicator({
+  icon,
+  label,
+  value,
+  to,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number | string;
+  to?: string;
+}) {
+  const body = (
+    <div className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50">
+      <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {icon}
+        {label}
+      </p>
+      <p className="mt-2 font-display text-2xl font-bold">{value}</p>
+    </div>
+  );
+  return to ? <Link to={to}>{body}</Link> : body;
 }
