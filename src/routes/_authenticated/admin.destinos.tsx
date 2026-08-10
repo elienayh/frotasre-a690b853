@@ -96,6 +96,30 @@ function Destinos() {
 
   const invalidate = () => void queryClient.invalidateQueries();
 
+  const createCity = useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase
+        .from("cities")
+        .insert({ name })
+        .select("id, name")
+        .single();
+      if (error) {
+        throw new Error(
+          error.message.includes("duplicate") || error.message.includes("unique")
+            ? "Esta cidade já está cadastrada."
+            : error.message,
+        );
+      }
+      return data;
+    },
+    onSuccess: (city) => {
+      toast.success(`Cidade "${city.name}" cadastrada.`);
+      setFormCityId(city.id);
+      void queryClient.invalidateQueries({ queryKey: ["cities"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const save = useMutation({
     mutationFn: async ({ id, payload }: { id?: string; payload: z.infer<typeof schema> }) => {
       if (!formCityId) throw new Error("Selecione a cidade do local.");
@@ -262,10 +286,15 @@ function Destinos() {
                 options={cities.map((c) => ({ value: c.id, label: c.name }))}
                 value={formCityId}
                 onSelect={(option) => setFormCityId(option.value)}
-                placeholder="Selecione a cidade"
-                searchPlaceholder="Pesquisar cidade…"
-                emptyText="Cadastre a cidade primeiro."
+                onCustom={(text) => createCity.mutate(text)}
+                customPrefix="Cadastrar"
+                placeholder="Pesquisar ou digitar cidade…"
+                searchPlaceholder="Pesquisar ou digitar cidade…"
+                emptyText="Digite para cadastrar uma nova cidade."
               />
+              <p className="text-xs text-muted-foreground">
+                Não encontrou? Digite o nome e confirme para cadastrar a cidade.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dest-name">Nome do local</Label>
