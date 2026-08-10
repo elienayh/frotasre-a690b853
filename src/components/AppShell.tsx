@@ -13,7 +13,6 @@ import {
   Route as RouteIcon,
   Users,
   UserCog,
-  Wrench,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -46,7 +45,6 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
   { to: "/admin/cidades", label: "Cidades", icon: Building2 },
   { to: "/admin/destinos", label: "Locais de Destino", icon: MapPin },
-  { to: "/admin/manutencoes", label: "Manutenções", icon: Wrench },
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
