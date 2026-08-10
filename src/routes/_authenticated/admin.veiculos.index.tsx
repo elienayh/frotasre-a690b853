@@ -37,7 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fmtKm, isoToLocalInput, localInputToIso } from "@/lib/frota";
+import { fmtDateTime, fmtKm, isoToLocalInput, localInputToIso, FLEET_STATUS_LABEL } from "@/lib/frota";
 
 export const Route = createFileRoute("/_authenticated/admin/veiculos/")({
   component: Veiculos,
@@ -85,6 +85,8 @@ function Veiculos() {
   const [maintenance, setMaintenance] = useState<VehicleRow | null>(null);
   const [formType, setFormType] = useState<string>("CARRO");
   const [formFuel, setFormFuel] = useState<string>("Flex");
+  const [statusFor, setStatusFor] = useState<VehicleRow | null>(null);
+  const [nextStatus, setNextStatus] = useState<string>("DISPONIVEL");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles-all"],
@@ -172,6 +174,24 @@ function Veiculos() {
       if (error) throw new Error(error.message);
     },
     onSuccess: invalidate,
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const changeStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from("vehicles")
+        .update({
+          base_status: status as "DISPONIVEL" | "RESERVADO" | "EM_VIAGEM" | "EM_MANUTENCAO" | "INDISPONIVEL",
+        })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Status atualizado.");
+      setStatusFor(null);
+      invalidate();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -304,6 +324,21 @@ function Veiculos() {
                   </div>
                 </dl>
 
+                <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                  <p>
+                    Próxima viagem:{" "}
+                    {status?.next_trip_at
+                      ? `${fmtDateTime(status.next_trip_at)}${status.next_trip_dest ? ` · ${status.next_trip_dest}` : ""}`
+                      : "nenhuma"}
+                  </p>
+                  {block ? (
+                    <p className="text-warning">
+                      Manutenção atual: {block.workshop ?? "oficina não informada"} · até{" "}
+                      {fmtDateTime(block.ends_at)}
+                    </p>
+                  ) : null}
+                </div>
+
                 <div className="mt-4 flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
                   <Label htmlFor={`active-${v.id}`} className="text-sm font-normal">
                     Veículo ativo
@@ -330,6 +365,16 @@ function Veiculos() {
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => openForm(v)}>
                     <Pencil className="mr-1 h-4 w-4" /> Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setNextStatus(status?.status ?? "DISPONIVEL");
+                      setStatusFor(v);
+                    }}
+                  >
+                    Status
                   </Button>
                   {block ? (
                     <Button
@@ -565,6 +610,41 @@ function Veiculos() {
           <DialogFooter>
             <Button type="submit" form="maint-form" disabled={startMaintenance.isPending}>
               Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(statusFor)} onOpenChange={(o) => !o && setStatusFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar status — {statusFor?.plate}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="st-select">Status operacional</Label>
+            <Select value={nextStatus} onValueChange={setNextStatus}>
+              <SelectTrigger id="st-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["DISPONIVEL", "RESERVADO", "EM_VIAGEM", "EM_MANUTENCAO", "INDISPONIVEL"].map(
+                  (s) => (
+                    <SelectItem key={s} value={s}>
+                      {FLEET_STATUS_LABEL[s]}
+                    </SelectItem>
+                  ),
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() =>
+                statusFor && changeStatus.mutate({ id: statusFor.id, status: nextStatus })
+              }
+              disabled={changeStatus.isPending}
+            >
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
