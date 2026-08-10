@@ -20,7 +20,6 @@ import { Route as AuthenticatedAdminAgendaRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminCidadesRouteImport } from './routes/_authenticated/admin.cidades'
 import { Route as AuthenticatedAdminDestinosRouteImport } from './routes/_authenticated/admin.destinos'
 import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/_authenticated/admin.disponibilidade'
-import { Route as AuthenticatedAdminManutencoesRouteImport } from './routes/_authenticated/admin.manutencoes'
 import { Route as AuthenticatedAdminMotoristasRouteImport } from './routes/_authenticated/admin.motoristas'
 import { Route as AuthenticatedAdminSolicitacoesRouteImport } from './routes/_authenticated/admin.solicitacoes'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
@@ -89,12 +88,6 @@ const AuthenticatedAdminDisponibilidadeRoute =
     path: '/admin/disponibilidade',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminManutencoesRoute =
-  AuthenticatedAdminManutencoesRouteImport.update({
-    id: '/admin/manutencoes',
-    path: '/admin/manutencoes',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminMotoristasRoute =
   AuthenticatedAdminMotoristasRouteImport.update({
     id: '/admin/motoristas',
@@ -155,7 +148,6 @@ export interface FileRoutesByFullPath {
   '/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
-  '/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
   '/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -176,7 +168,6 @@ export interface FileRoutesByTo {
   '/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
-  '/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
   '/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -199,7 +190,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/_authenticated/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
-  '/_authenticated/admin/manutencoes': typeof AuthenticatedAdminManutencoesRoute
   '/_authenticated/admin/motoristas': typeof AuthenticatedAdminMotoristasRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -222,7 +212,6 @@ export interface FileRouteTypes {
     | '/admin/cidades'
     | '/admin/destinos'
     | '/admin/disponibilidade'
-    | '/admin/manutencoes'
     | '/admin/motoristas'
     | '/admin/solicitacoes'
     | '/admin/usuarios'
@@ -243,7 +232,6 @@ export interface FileRouteTypes {
     | '/admin/cidades'
     | '/admin/destinos'
     | '/admin/disponibilidade'
-    | '/admin/manutencoes'
     | '/admin/motoristas'
     | '/admin/solicitacoes'
     | '/admin/usuarios'
@@ -265,7 +253,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/cidades'
     | '/_authenticated/admin/destinos'
     | '/_authenticated/admin/disponibilidade'
-    | '/_authenticated/admin/manutencoes'
     | '/_authenticated/admin/motoristas'
     | '/_authenticated/admin/solicitacoes'
     | '/_authenticated/admin/usuarios'
@@ -361,13 +348,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDisponibilidadeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/manutencoes': {
-      id: '/_authenticated/admin/manutencoes'
-      path: '/admin/manutencoes'
-      fullPath: '/admin/manutencoes'
-      preLoaderRoute: typeof AuthenticatedAdminManutencoesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/motoristas': {
       id: '/_authenticated/admin/motoristas'
       path: '/admin/motoristas'
@@ -436,7 +416,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminCidadesRoute: typeof AuthenticatedAdminCidadesRoute
   AuthenticatedAdminDestinosRoute: typeof AuthenticatedAdminDestinosRoute
   AuthenticatedAdminDisponibilidadeRoute: typeof AuthenticatedAdminDisponibilidadeRoute
-  AuthenticatedAdminManutencoesRoute: typeof AuthenticatedAdminManutencoesRoute
   AuthenticatedAdminMotoristasRoute: typeof AuthenticatedAdminMotoristasRoute
   AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
@@ -457,7 +436,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDestinosRoute: AuthenticatedAdminDestinosRoute,
   AuthenticatedAdminDisponibilidadeRoute:
     AuthenticatedAdminDisponibilidadeRoute,
-  AuthenticatedAdminManutencoesRoute: AuthenticatedAdminManutencoesRoute,
   AuthenticatedAdminMotoristasRoute: AuthenticatedAdminMotoristasRoute,
   AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
