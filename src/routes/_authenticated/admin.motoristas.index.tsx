@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { FileText, Pencil, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -75,11 +74,17 @@ function Motoristas() {
   const invalidate = () => void queryClient.invalidateQueries();
 
   const toggle = useMutation({
-    mutationFn: async ({ id, field, value }: { id: string; field: string; value: boolean }) => {
-      const { error } = await supabase
-        .from("drivers")
-        .update({ [field]: value })
-        .eq("id", id);
+    mutationFn: async ({
+      id,
+      field,
+      value,
+    }: {
+      id: string;
+      field: "is_active" | "is_authorized";
+      value: boolean;
+    }) => {
+      const patch = field === "is_active" ? { is_active: value } : { is_authorized: value };
+      const { error } = await supabase.from("drivers").update(patch).eq("id", id);
       if (error) throw new Error(error.message);
     },
     onSuccess: invalidate,
@@ -259,7 +264,7 @@ function Motoristas() {
       <DriverForm
         open={formOpen}
         driver={editing}
-        onOpenChange={(o) => {
+        onOpenChange={(o: boolean) => {
           setFormOpen(o);
           if (!o) setEditing(null);
         }}
@@ -285,7 +290,3 @@ function Motoristas() {
     </AppShell>
   );
 }
-
-export const driverSchema = z.object({
-  full_name: z.string().trim().min(3).max(120),
-});
