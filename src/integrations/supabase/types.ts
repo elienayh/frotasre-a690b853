@@ -84,42 +84,104 @@ export type Database = {
       }
       drivers: {
         Row: {
+          address: string | null
+          address_number: string | null
+          birth_date: string | null
+          city: string | null
+          cnh_categories: string[]
+          cnh_expires_at: string | null
+          cnh_first_at: string | null
+          cnh_issued_at: string | null
+          cnh_notes: string | null
+          complement: string | null
+          cpf: string | null
           created_at: string
+          district: string | null
+          driver_type: string
+          email: string | null
           full_name: string
           id: string
           is_active: boolean
           is_authorized: boolean
           license_category: string | null
           license_number: string | null
+          mobile: string | null
           notes: string | null
           phone: string | null
+          profile_id: string | null
+          state: string | null
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          address_number?: string | null
+          birth_date?: string | null
+          city?: string | null
+          cnh_categories?: string[]
+          cnh_expires_at?: string | null
+          cnh_first_at?: string | null
+          cnh_issued_at?: string | null
+          cnh_notes?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
+          district?: string | null
+          driver_type?: string
+          email?: string | null
           full_name: string
           id?: string
           is_active?: boolean
           is_authorized?: boolean
           license_category?: string | null
           license_number?: string | null
+          mobile?: string | null
           notes?: string | null
           phone?: string | null
+          profile_id?: string | null
+          state?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          address_number?: string | null
+          birth_date?: string | null
+          city?: string | null
+          cnh_categories?: string[]
+          cnh_expires_at?: string | null
+          cnh_first_at?: string | null
+          cnh_issued_at?: string | null
+          cnh_notes?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
+          district?: string | null
+          driver_type?: string
+          email?: string | null
           full_name?: string
           id?: string
           is_active?: boolean
           is_authorized?: boolean
           license_category?: string | null
           license_number?: string | null
+          mobile?: string | null
           notes?: string | null
           phone?: string | null
+          profile_id?: string | null
+          state?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "drivers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fuel_records: {
         Row: {
@@ -578,6 +640,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           ends_at: string
+          expected_return_at: string | null
           finished_at: string | null
           id: string
           is_open: boolean
@@ -599,6 +662,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           ends_at: string
+          expected_return_at?: string | null
           finished_at?: string | null
           id?: string
           is_open?: boolean
@@ -620,6 +684,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           ends_at?: string
+          expected_return_at?: string | null
           finished_at?: string | null
           id?: string
           is_open?: boolean
