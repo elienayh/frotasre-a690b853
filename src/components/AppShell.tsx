@@ -75,6 +75,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1 px-3" aria-label="Navegação principal">
       {render(SERVER_ITEMS)}
+      {isAdmin || profile?.is_sre_driver
+        ? render([{ to: "/organizacao", label: "Organização do Dia", icon: CalendarRange }])
+        : null}
       {isCoordinator
         ? render([{ to: "/setor", label: "Viagens do Setor", icon: Users }])
         : null}
