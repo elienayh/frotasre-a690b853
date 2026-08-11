@@ -10,6 +10,7 @@ export interface Profile {
   phone: string | null;
   is_active: boolean;
   is_coordinator: boolean;
+  is_sre_driver: boolean;
 }
 
 interface AuthState {
