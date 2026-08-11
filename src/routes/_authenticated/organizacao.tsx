@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_authenticated/organizacao")({
   component: OrganizacaoDoDia,
 });
 
-function Indicator({ label, value, tone }: { label: string; value: number; tone?: string }) {
+function Indicator({ label, value, tone }: { label: string; value: number; tone?: string | undefined }) {
   return (
     <Card>
       <CardContent className="p-4">
