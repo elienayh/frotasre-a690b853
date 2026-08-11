@@ -84,12 +84,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Sistema interno da SRE para solicitação antecipada de viagens, aprovação pelo DAFI e gestão da frota oficial.",
+          "Sistema interno da SRE para solicitação antecipada de viagens, aprovação pela DAFI e gestão da frota oficial.",
       },
       { property: "og:title", content: "Frota SRE" },
       {
         property: "og:description",
-        content: "Solicitações de viagem, aprovação do DAFI e agenda da frota oficial.",
+        content: "Solicitações de viagem, aprovação da DAFI e agenda da frota oficial.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

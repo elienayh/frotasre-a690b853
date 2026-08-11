@@ -12,13 +12,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Camada interna da SRE para solicitação antecipada de viagens, aprovação pelo DAFI, alocação de veículos e agenda da frota.",
+          "Camada interna da SRE para solicitação antecipada de viagens, aprovação pela DAFI, alocação de veículos e agenda da frota.",
       },
       { property: "og:title", content: "Frota SRE" },
       {
         property: "og:description",
         content:
-          "Solicite viagens, acompanhe aprovações do DAFI e consulte a disponibilidade da frota oficial.",
+          "Solicite viagens, acompanhe aprovações da DAFI e consulte a disponibilidade da frota oficial.",
       },
     ],
   }),
@@ -29,7 +29,7 @@ const HIGHLIGHTS = [
   {
     icon: CalendarCheck,
     title: "Solicitação antecipada",
-    text: "O servidor informa data, horários, destino, motivo e ocupantes. O veículo é definido pelo DAFI.",
+    text: "O servidor informa data, horários, destino, motivo e ocupantes. O veículo é definido pela DAFI.",
   },
   {
     icon: Bus,
@@ -39,7 +39,7 @@ const HIGHLIGHTS = [
   {
     icon: ShieldCheck,
     title: "PW/Prodemge preservado",
-    text: "O sistema organiza internamente; o lançamento oficial continua sendo feito pelo DAFI no PW.",
+    text: "O sistema organiza internamente; o lançamento oficial continua sendo feito pela DAFI no PW.",
   },
 ];
 
@@ -77,7 +77,7 @@ function Index() {
               Viagens oficiais organizadas do pedido à alocação do veículo
             </h1>
             <p className="mt-5 max-w-xl text-base text-sidebar-foreground/70">
-              O servidor solicita o deslocamento. O DAFI analisa, aprova e define veículo, motorista
+              O servidor solicita o deslocamento. A DAFI analisa, aprova e define veículo, motorista
               e horário definitivo. Todos acompanham a agenda da frota em um só lugar.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">

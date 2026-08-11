@@ -34,7 +34,7 @@ function MinhasViagens() {
   return (
     <AppShell
       title="Minhas Viagens"
-      description="Viagens aprovadas com veículo e motorista definidos pelo DAFI."
+      description="Viagens aprovadas com veículo e motorista definidos pela DAFI."
     >
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
@@ -70,7 +70,7 @@ function MinhasViagens() {
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-muted-foreground">Registro PW</dt>
-                  <dd>{t.pw_number ?? "Pendente no DAFI"}</dd>
+                  <dd>{t.pw_number ?? "Pendente na DAFI"}</dd>
                 </div>
               </dl>
             </li>

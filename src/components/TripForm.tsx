@@ -149,7 +149,7 @@ export function TripForm({ trip }: TripFormProps) {
       return;
     }
     if (!noDriver && !driverId) {
-      toast.error("Indique quem irá dirigir ou marque que o DAFI deve definir.");
+      toast.error("Indique quem irá dirigir ou marque que a DAFI deve definir.");
       return;
     }
     setReview(parsed.data);
@@ -217,7 +217,7 @@ export function TripForm({ trip }: TripFormProps) {
       }
 
       toast.success(
-        trip ? "Solicitação atualizada e reenviada ao DAFI." : "Solicitação enviada ao DAFI.",
+        trip ? "Solicitação atualizada e reenviada à DAFI." : "Solicitação enviada à DAFI.",
       );
       void navigate({ to: "/solicitacoes" });
     } catch (error) {
@@ -230,7 +230,7 @@ export function TripForm({ trip }: TripFormProps) {
   if (review) {
     const list = validStops();
     const driverName = noDriver
-      ? "A definir pelo DAFI"
+      ? "A definir pela DAFI"
       : (people.find((p) => p.id === driverId)?.full_name ?? "—");
     return (
       <div className="mx-auto max-w-2xl space-y-6">
@@ -370,7 +370,7 @@ export function TripForm({ trip }: TripFormProps) {
                     onCheckedChange={(c) => setNoDriver(c === true)}
                   />
                   <Label htmlFor="no-driver" className="text-sm font-normal leading-snug">
-                    Não indicar — o DAFI define o condutor
+                    Não indicar — a DAFI define o condutor
                   </Label>
                 </div>
               </div>
@@ -417,11 +417,11 @@ export function TripForm({ trip }: TripFormProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              O veículo é definido pelo DAFI. Sua indicação de condutor é uma sugestão: o DAFI
+              O veículo é definido pela DAFI. Sua indicação de condutor é uma sugestão: a DAFI
               confirma ou substitui conforme a disponibilidade.
             </p>
             <p>Você será notificado quando a solicitação for aprovada, ajustada ou recusada.</p>
-            <p>O registro oficial no PW/Prodemge é feito pelo DAFI após a aprovação.</p>
+            <p>O registro oficial no PW/Prodemge é feito pela DAFI após a aprovação.</p>
           </CardContent>
         </Card>
         <Button type="submit" className="w-full" size="lg">

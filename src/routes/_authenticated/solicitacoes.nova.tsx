@@ -11,7 +11,7 @@ function NovaSolicitacao() {
   return (
     <AppShell
       title="Nova Solicitação de Viagem"
-      description="Informe data, horários, destino e ocupantes. O DAFI define o veículo."
+      description="Informe data, horários, destino e ocupantes. A DAFI define o veículo."
     >
       <TripForm />
     </AppShell>

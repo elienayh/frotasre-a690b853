@@ -138,7 +138,7 @@ export function AppShell({ title, description, actions, children }: AppShellProp
             {profile?.full_name || user?.email}
           </p>
           <p className="text-xs text-sidebar-foreground/60">
-            {isAdmin ? "Administrador DAFI" : "Servidor"}
+            {isAdmin ? "Administrador da DAFI" : "Servidor"}
           </p>
           <Button
             variant="ghost"
