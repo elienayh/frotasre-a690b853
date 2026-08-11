@@ -48,7 +48,7 @@ const ADMIN_ITEMS: NavItem[] = [
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
-  const { isAdmin, isCoordinator } = useAuth();
+  const { isAdmin, isCoordinator, profile } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const render = (items: NavItem[]) =>
