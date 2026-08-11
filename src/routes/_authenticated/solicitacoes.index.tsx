@@ -95,7 +95,7 @@ function MinhasSolicitacoes() {
                     <dd className="font-medium">
                       {approved && t.vehicles
                         ? `${t.vehicles.manufacturer} ${t.vehicles.model} — ${t.vehicles.plate}`
-                        : "A DEFINIR PELO DAFI"}
+                        : "A DEFINIR PELA DAFI"}
                     </dd>
                   </div>
                   <div>
@@ -113,7 +113,7 @@ function MinhasSolicitacoes() {
                 ) : null}
                 {t.admin_notes ? (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    Observações do DAFI: {t.admin_notes}
+                    Observações da DAFI: {t.admin_notes}
                   </p>
                 ) : null}
 

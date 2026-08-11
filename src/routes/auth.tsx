@@ -36,7 +36,7 @@ export const Route = createFileRoute("/auth")({
       { property: "og:title", content: "Entrar — Frota SRE" },
       {
         property: "og:description",
-        content: "Acesso dos servidores e do DAFI ao sistema interno de viagens.",
+        content: "Acesso dos servidores e da DAFI ao sistema interno de viagens.",
       },
     ],
   }),
@@ -149,7 +149,7 @@ function AuthPage() {
             <CardTitle>Acesso ao sistema</CardTitle>
             <CardDescription>
               Use seu e-mail institucional. O registro oficial no PW/Prodemge continua sendo feito
-              pelo DAFI.
+              pela DAFI.
             </CardDescription>
           </CardHeader>
           <CardContent>

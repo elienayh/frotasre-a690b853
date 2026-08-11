@@ -28,7 +28,7 @@ function EditarSolicitacao() {
   return (
     <AppShell
       title="Editar Solicitação"
-      description="Ajuste os dados e reenvie o pedido para análise do DAFI."
+      description="Ajuste os dados e reenvie o pedido para análise da DAFI."
     >
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>

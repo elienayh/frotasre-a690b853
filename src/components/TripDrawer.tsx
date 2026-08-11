@@ -58,7 +58,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      toast.success("Pedido de carona enviado ao DAFI.");
+      toast.success("Pedido de carona enviado à DAFI.");
       setAskingRide(false);
       invalidate();
     },
@@ -158,7 +158,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   <Field label="Observações do solicitante" value={trip.requester_notes} />
                 ) : null}
                 {trip.admin_notes ? (
-                  <Field label="Observações do DAFI" value={trip.admin_notes} />
+                  <Field label="Observações da DAFI" value={trip.admin_notes} />
                 ) : null}
               </dl>
 
@@ -270,7 +270,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                 <>
                   <Separator />
                   <section className="space-y-3">
-                    <h3 className="font-display text-sm font-semibold">Ações do DAFI</h3>
+                    <h3 className="font-display text-sm font-semibold">Ações da DAFI</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"

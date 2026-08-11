@@ -97,7 +97,7 @@ function PainelPage() {
   return (
     <AppShell
       title={`Olá, ${profile?.full_name?.split(" ")[0] || "servidor"}`}
-      description={isAdmin ? "Painel do DAFI" : "Painel do servidor"}
+      description={isAdmin ? "Painel da DAFI" : "Painel do servidor"}
       actions={
         <Button asChild size="sm">
           <Link to="/solicitacoes/nova">
