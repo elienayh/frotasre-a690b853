@@ -38,6 +38,77 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_schedules: {
+        Row: {
+          code: number
+          created_at: string
+          created_by: string | null
+          driver_id: string | null
+          driver_user_id: string | null
+          id: string
+          observations: string | null
+          schedule_date: string
+          status: Database["public"]["Enums"]["schedule_status"]
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          code?: number
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string | null
+          driver_user_id?: string | null
+          id?: string
+          observations?: string | null
+          schedule_date: string
+          status?: Database["public"]["Enums"]["schedule_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          code?: number
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string | null
+          driver_user_id?: string | null
+          id?: string
+          observations?: string | null
+          schedule_date?: string
+          status?: Database["public"]["Enums"]["schedule_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_schedules_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_schedules_driver_user_id_fkey"
+            columns: ["driver_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_schedules_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destinations: {
         Row: {
           address: string | null
@@ -361,6 +432,244 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trip_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_assignments: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          created_at: string
+          created_by: string | null
+          destination_city_id: string | null
+          destination_id: string | null
+          destination_text: string
+          id: string
+          notes: string | null
+          order_index: number
+          origin_city_id: string | null
+          origin_destination_id: string | null
+          origin_text: string
+          passengers: number
+          passengers_names: string | null
+          requested_at: string | null
+          schedule_id: string
+          scheduled_arrival: string
+          scheduled_departure: string
+          segment_type: Database["public"]["Enums"]["segment_type"]
+          status: Database["public"]["Enums"]["assignment_status"]
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_city_id?: string | null
+          destination_id?: string | null
+          destination_text?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          origin_city_id?: string | null
+          origin_destination_id?: string | null
+          origin_text?: string
+          passengers?: number
+          passengers_names?: string | null
+          requested_at?: string | null
+          schedule_id: string
+          scheduled_arrival: string
+          scheduled_departure: string
+          segment_type?: Database["public"]["Enums"]["segment_type"]
+          status?: Database["public"]["Enums"]["assignment_status"]
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_city_id?: string | null
+          destination_id?: string | null
+          destination_text?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          origin_city_id?: string | null
+          origin_destination_id?: string | null
+          origin_text?: string
+          passengers?: number
+          passengers_names?: string | null
+          requested_at?: string | null
+          schedule_id?: string
+          scheduled_arrival?: string
+          scheduled_departure?: string
+          segment_type?: Database["public"]["Enums"]["segment_type"]
+          status?: Database["public"]["Enums"]["assignment_status"]
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_destination_city_id_fkey"
+            columns: ["destination_city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_origin_city_id_fkey"
+            columns: ["origin_city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_origin_destination_id_fkey"
+            columns: ["origin_destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "daily_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_assignments_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trip_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_history: {
+        Row: {
+          action: string
+          assignment_id: string | null
+          created_at: string
+          field_changed: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          schedule_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          assignment_id?: string | null
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          schedule_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          assignment_id?: string | null
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          schedule_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_history_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_history_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "daily_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_incidents: {
+        Row: {
+          assignment_id: string | null
+          created_at: string
+          description: string
+          id: string
+          kind: string
+          schedule_id: string
+          user_id: string | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          kind?: string
+          schedule_id: string
+          user_id?: string | null
+        }
+        Update: {
+          assignment_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: string
+          schedule_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_incidents_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_incidents_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "daily_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_incidents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -832,12 +1141,71 @@ export type Database = {
         Args: { _sector: string; _user_id: string }
         Returns: boolean
       }
+      is_schedule_driver: {
+        Args: { _schedule_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_sre_driver: { Args: { _user_id: string }; Returns: boolean }
+      notify_users: {
+        Args: {
+          _body: string
+          _title: string
+          _trip_id?: string
+          _user_ids: string[]
+        }
+        Returns: number
+      }
       profile_sector: { Args: { _user_id: string }; Returns: string }
+      schedule_conflicts: {
+        Args: {
+          _driver_id: string
+          _driver_user_id: string
+          _end: string
+          _exclude_assignment?: string
+          _start: string
+          _vehicle_id: string
+        }
+        Returns: {
+          assignment_id: string
+          ends_at: string
+          kind: string
+          label: string
+          schedule_code: number
+          schedule_id: string
+          starts_at: string
+        }[]
+      }
+      suggest_free_slot: {
+        Args: {
+          _driver_id: string
+          _driver_user_id: string
+          _end: string
+          _exclude_assignment?: string
+          _start: string
+          _vehicle_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "servidor"
+      assignment_status:
+        | "PENDENTE"
+        | "PROGRAMADO"
+        | "EM_ANDAMENTO"
+        | "CONCLUIDO"
+        | "NAO_REALIZADO"
+        | "CANCELADO"
       block_type: "MANUTENCAO" | "INDISPONIVEL"
       ride_status: "PENDENTE" | "APROVADA" | "REJEITADA"
+      schedule_status:
+        | "RASCUNHO"
+        | "PLANEJADA"
+        | "PUBLICADA"
+        | "EM_EXECUCAO"
+        | "CONCLUIDA"
+        | "CANCELADA"
+      segment_type: "LEVAR" | "BUSCAR" | "DESLOCAMENTO" | "AGUARDAR" | "RETORNO"
       trip_status:
         | "PENDENTE"
         | "CORRECAO"
@@ -981,8 +1349,25 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "servidor"],
+      assignment_status: [
+        "PENDENTE",
+        "PROGRAMADO",
+        "EM_ANDAMENTO",
+        "CONCLUIDO",
+        "NAO_REALIZADO",
+        "CANCELADO",
+      ],
       block_type: ["MANUTENCAO", "INDISPONIVEL"],
       ride_status: ["PENDENTE", "APROVADA", "REJEITADA"],
+      schedule_status: [
+        "RASCUNHO",
+        "PLANEJADA",
+        "PUBLICADA",
+        "EM_EXECUCAO",
+        "CONCLUIDA",
+        "CANCELADA",
+      ],
+      segment_type: ["LEVAR", "BUSCAR", "DESLOCAMENTO", "AGUARDAR", "RETORNO"],
       trip_status: [
         "PENDENTE",
         "CORRECAO",

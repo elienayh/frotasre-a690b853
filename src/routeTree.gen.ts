@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
+import { Route as AuthenticatedOrganizacaoRouteImport } from './routes/_authenticated/organizacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSetorRouteImport } from './routes/_authenticated/setor'
 import { Route as AuthenticatedViagensRouteImport } from './routes/_authenticated/viagens'
@@ -48,6 +49,12 @@ const AuthenticatedAgendaPublicaRoute =
   AuthenticatedAgendaPublicaRouteImport.update({
     id: '/agenda-publica',
     path: '/agenda-publica',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrganizacaoRoute =
+  AuthenticatedOrganizacaoRouteImport.update({
+    id: '/organizacao',
+    path: '/organizacao',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/setor': typeof AuthenticatedSetorRoute
   '/viagens': typeof AuthenticatedViagensRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/setor': typeof AuthenticatedSetorRoute
   '/viagens': typeof AuthenticatedViagensRoute
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/_authenticated/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/setor': typeof AuthenticatedSetorRoute
   '/_authenticated/viagens': typeof AuthenticatedViagensRoute
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/agenda-publica'
+    | '/organizacao'
     | '/painel'
     | '/setor'
     | '/viagens'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/agenda-publica'
+    | '/organizacao'
     | '/painel'
     | '/setor'
     | '/viagens'
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/agenda-publica'
+    | '/_authenticated/organizacao'
     | '/_authenticated/painel'
     | '/_authenticated/setor'
     | '/_authenticated/viagens'
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/agenda-publica'
       fullPath: '/agenda-publica'
       preLoaderRoute: typeof AuthenticatedAgendaPublicaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/organizacao': {
+      id: '/_authenticated/organizacao'
+      path: '/organizacao'
+      fullPath: '/organizacao'
+      preLoaderRoute: typeof AuthenticatedOrganizacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/painel': {
@@ -429,6 +449,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
+  AuthenticatedOrganizacaoRoute: typeof AuthenticatedOrganizacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedSetorRoute: typeof AuthenticatedSetorRoute
   AuthenticatedViagensRoute: typeof AuthenticatedViagensRoute
@@ -449,6 +470,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaPublicaRoute: AuthenticatedAgendaPublicaRoute,
+  AuthenticatedOrganizacaoRoute: AuthenticatedOrganizacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedSetorRoute: AuthenticatedSetorRoute,
   AuthenticatedViagensRoute: AuthenticatedViagensRoute,
@@ -483,13 +505,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -10,6 +10,7 @@ export interface Profile {
   phone: string | null;
   is_active: boolean;
   is_coordinator: boolean;
+  is_sre_driver: boolean;
 }
 
 interface AuthState {
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, phone, is_active, is_coordinator")
+        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver")
         .eq("id", userId)
         .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
