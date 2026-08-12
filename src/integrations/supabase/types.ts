@@ -346,42 +346,138 @@ export type Database = {
           },
         ]
       }
+      permission_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          field_changed: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_history_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_history_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          address: string | null
+          address_number: string | null
+          birth_date: string | null
+          city: string | null
+          cnh_categories: string[]
+          cnh_expires_at: string | null
+          cnh_first_at: string | null
+          cnh_issued_at: string | null
+          cnh_notes: string | null
+          cnh_number: string | null
+          complement: string | null
+          cpf: string | null
           created_at: string
+          district: string | null
           full_name: string
           id: string
           is_active: boolean
           is_coordinator: boolean
           is_sre_driver: boolean
+          mobile: string | null
           phone: string | null
           registration: string | null
           sector: string | null
+          state: string | null
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          address_number?: string | null
+          birth_date?: string | null
+          city?: string | null
+          cnh_categories?: string[]
+          cnh_expires_at?: string | null
+          cnh_first_at?: string | null
+          cnh_issued_at?: string | null
+          cnh_notes?: string | null
+          cnh_number?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
+          district?: string | null
           full_name?: string
           id: string
           is_active?: boolean
           is_coordinator?: boolean
           is_sre_driver?: boolean
+          mobile?: string | null
           phone?: string | null
           registration?: string | null
           sector?: string | null
+          state?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          address_number?: string | null
+          birth_date?: string | null
+          city?: string | null
+          cnh_categories?: string[]
+          cnh_expires_at?: string | null
+          cnh_first_at?: string | null
+          cnh_issued_at?: string | null
+          cnh_notes?: string | null
+          cnh_number?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
+          district?: string | null
           full_name?: string
           id?: string
           is_active?: boolean
           is_coordinator?: boolean
           is_sre_driver?: boolean
+          mobile?: string | null
           phone?: string | null
           registration?: string | null
           sector?: string | null
+          state?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Relationships: []
       }
@@ -1146,6 +1242,7 @@ export type Database = {
         Returns: boolean
       }
       is_sre_driver: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       notify_users: {
         Args: {
           _body: string
@@ -1175,6 +1272,14 @@ export type Database = {
           starts_at: string
         }[]
       }
+      set_user_role: {
+        Args: {
+          _grant: boolean
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       suggest_free_slot: {
         Args: {
           _driver_id: string
@@ -1188,7 +1293,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "servidor"
+      app_role: "admin" | "servidor" | "super_admin"
       assignment_status:
         | "PENDENTE"
         | "PROGRAMADO"
@@ -1348,7 +1453,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "servidor"],
+      app_role: ["admin", "servidor", "super_admin"],
       assignment_status: [
         "PENDENTE",
         "PROGRAMADO",
