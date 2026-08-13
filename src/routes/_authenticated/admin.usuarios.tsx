@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { fmtDateTime } from "@/lib/frota";
@@ -141,7 +142,7 @@ function Usuarios() {
   });
 
   const patch = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
+    mutationFn: async ({ id, values }: { id: string; values: Partial<Database["public"]["Tables"]["profiles"]["Update"]> }) => {
       const { error } = await supabase.from("profiles").update(values).eq("id", id);
       if (error) throw new Error(error.message);
     },
