@@ -85,6 +85,7 @@ function OrganizacaoDoDia() {
     if (!isDriver || !user) return false;
     return (
       schedule.driver_user_id === user.id ||
+      schedule.driver_user_id === user.id ||
       schedule.driver?.profile_id === user.id ||
       schedule.created_by === user.id
     );
@@ -117,7 +118,7 @@ function OrganizacaoDoDia() {
     () =>
       schedules.filter(
         (s) =>
-          (driverFilter === "all" || s.driver_id === driverFilter) &&
+          (driverFilter === "all" || s.driver_user_id === driverFilter) &&
           (vehicleFilter === "all" || s.vehicle_id === vehicleFilter) &&
           (statusFilter === "all" || s.status === statusFilter),
       ),
@@ -177,7 +178,7 @@ function OrganizacaoDoDia() {
           />
           <Indicator
             label="Motoristas envolvidos"
-            value={new Set(schedules.map((s) => s.driver_id).filter(Boolean)).size}
+            value={new Set(schedules.map((s) => s.driver_user_id).filter(Boolean)).size}
           />
         </div>
 
@@ -283,7 +284,7 @@ function OrganizacaoDoDia() {
                           {myScheduleList.map((s) => (
                             <SelectItem key={s.id} value={s.id}>
                               Escala {String(s.code).padStart(2, "0")} —{" "}
-                              {s.driver?.full_name ?? "sem motorista"}
+                              {s.driver_user?.full_name ?? s.driver?.full_name ?? "sem motorista"}
                             </SelectItem>
                           ))}
                         </SelectContent>

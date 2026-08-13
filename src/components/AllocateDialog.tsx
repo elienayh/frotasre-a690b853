@@ -232,10 +232,11 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
               </div>
             ) : null}
             {driverConflicts.length > 0 ? (
-              <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
-                Conflito de agenda: este condutor já está escalado na viagem #
+              <p className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning">
+                Atenção: este condutor também está na viagem #
                 {driverConflicts[0]?.code} ({fmtDateTime(driverConflicts[0]?.departure_at)} –{" "}
-                {fmtDateTime(driverConflicts[0]?.return_at)}).
+                {fmtDateTime(driverConflicts[0]?.return_at)}). A alocação continua permitida —
+                organize as etapas na Organização do Dia.
               </p>
             ) : null}
           </div>
@@ -250,7 +251,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           <Button variant="ghost" onClick={onClose} type="button">
             Fechar
           </Button>
-          <Button type="submit" form="allocate-form" disabled={approve.isPending || !vehicleId || driverConflicts.length > 0}>
+          <Button type="submit" form="allocate-form" disabled={approve.isPending || !vehicleId}>
             Aprovar viagem
           </Button>
         </DialogFooter>

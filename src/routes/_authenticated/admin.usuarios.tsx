@@ -6,10 +6,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { fmtDateTime } from "@/lib/frota";
 import { SECTORS } from "@/lib/setores";
+import { cnhStatus } from "@/lib/motoristas";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +46,13 @@ interface ProfileRow {
   is_active: boolean;
   is_coordinator: boolean;
   is_sre_driver: boolean;
+  cpf: string | null;
+  birth_date: string | null;
+  mobile: string | null;
+  cnh_number: string | null;
+  cnh_categories: string[] | null;
+  cnh_issued_at: string | null;
+  cnh_expires_at: string | null;
 }
 
 const profileSchema = z.object({
@@ -50,10 +60,18 @@ const profileSchema = z.object({
   registration: z.string().trim().max(30).optional(),
   phone: z.string().trim().max(30).optional(),
   sector: z.string().trim().max(30).optional(),
+  cpf: z.string().trim().max(20).optional(),
+  mobile: z.string().trim().max(30).optional(),
+  birth_date: z.string().trim().optional(),
+  cnh_number: z.string().trim().max(30).optional(),
+  cnh_categories: z.string().trim().max(40).optional(),
+  cnh_issued_at: z.string().trim().optional(),
+  cnh_expires_at: z.string().trim().optional(),
 });
 
 function Usuarios() {
   const queryClient = useQueryClient();
+  const { isSuperAdmin } = useAuth();
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [sectorDraft, setSectorDraft] = useState<string>("");
   const [tripsOf, setTripsOf] = useState<ProfileRow | null>(null);
@@ -63,11 +81,48 @@ function Usuarios() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver")
+        .select(
+          "id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at",
+        )
         .order("full_name");
       if (error) throw error;
       return data as ProfileRow[];
     },
+  });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["user-roles-admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("user_roles").select("user_id, role");
+      if (error) throw error;
+      return data as { user_id: string; role: string }[];
+    },
+  });
+
+  const roleOf = (id: string) => roles.filter((r) => r.user_id === id).map((r) => r.role);
+
+  const setRole = useMutation({
+    mutationFn: async ({
+      userId,
+      role,
+      grant,
+    }: {
+      userId: string;
+      role: "admin" | "super_admin";
+      grant: boolean;
+    }) => {
+      const { error } = await supabase.rpc("set_user_role", {
+        _user_id: userId,
+        _role: role,
+        _grant: grant,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Permissões atualizadas.");
+      void queryClient.invalidateQueries({ queryKey: ["user-roles-admin"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const { data: trips = [], isLoading: loadingTrips } = useQuery({
@@ -87,7 +142,7 @@ function Usuarios() {
   });
 
   const patch = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: Partial<ProfileRow> }) => {
+    mutationFn: async ({ id, values }: { id: string; values: Partial<Database["public"]["Tables"]["profiles"]["Update"]> }) => {
       const { error } = await supabase.from("profiles").update(values).eq("id", id);
       if (error) throw new Error(error.message);
     },
@@ -106,6 +161,13 @@ function Usuarios() {
       registration: form.get("registration") || undefined,
       phone: form.get("phone") || undefined,
       sector: sectorDraft || undefined,
+      cpf: form.get("cpf") || undefined,
+      mobile: form.get("mobile") || undefined,
+      birth_date: form.get("birth_date") || undefined,
+      cnh_number: form.get("cnh_number") || undefined,
+      cnh_categories: form.get("cnh_categories") || undefined,
+      cnh_issued_at: form.get("cnh_issued_at") || undefined,
+      cnh_expires_at: form.get("cnh_expires_at") || undefined,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
@@ -119,6 +181,18 @@ function Usuarios() {
           registration: parsed.data.registration ?? null,
           phone: parsed.data.phone ?? null,
           sector: parsed.data.sector ?? null,
+          cpf: parsed.data.cpf ?? null,
+          mobile: parsed.data.mobile ?? null,
+          birth_date: parsed.data.birth_date || null,
+          cnh_number: parsed.data.cnh_number ?? null,
+          cnh_categories: parsed.data.cnh_categories
+            ? parsed.data.cnh_categories
+                .split(/[,\s]+/)
+                .map((c) => c.trim().toUpperCase())
+                .filter(Boolean)
+            : [],
+          cnh_issued_at: parsed.data.cnh_issued_at || null,
+          cnh_expires_at: parsed.data.cnh_expires_at || null,
         },
       },
       {
@@ -148,6 +222,15 @@ function Usuarios() {
                     <Badge variant="secondary">{p.sector ?? "Sem setor"}</Badge>
                     {p.is_coordinator ? <Badge>Coordenador</Badge> : null}
                     {p.is_sre_driver ? <Badge variant="outline">Motorista SRE</Badge> : null}
+                    {roleOf(p.id).includes("super_admin") ? <Badge>Super Admin</Badge> : null}
+                    {roleOf(p.id).includes("admin") ? (
+                      <Badge variant="secondary">Administrador</Badge>
+                    ) : null}
+                    {p.is_sre_driver && p.cnh_expires_at ? (
+                      <Badge variant="outline" className={cnhStatus(p.cnh_expires_at).tone}>
+                        {cnhStatus(p.cnh_expires_at).label}
+                      </Badge>
+                    ) : null}
                     {!p.is_active ? <Badge variant="destructive">Inativo</Badge> : null}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -192,6 +275,34 @@ function Usuarios() {
                       }
                     />
                   </div>
+                  {isSuperAdmin ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`adm-${p.id}`} className="text-xs text-muted-foreground">
+                          Administrador
+                        </Label>
+                        <Switch
+                          id={`adm-${p.id}`}
+                          checked={roleOf(p.id).includes("admin")}
+                          onCheckedChange={(v) =>
+                            setRole.mutate({ userId: p.id, role: "admin", grant: v })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`sadm-${p.id}`} className="text-xs text-muted-foreground">
+                          Super Admin
+                        </Label>
+                        <Switch
+                          id={`sadm-${p.id}`}
+                          checked={roleOf(p.id).includes("super_admin")}
+                          onCheckedChange={(v) =>
+                            setRole.mutate({ userId: p.id, role: "super_admin", grant: v })
+                          }
+                        />
+                      </div>
+                    </>
+                  ) : null}
                   <Button
                     variant="outline"
                     size="sm"
@@ -213,7 +324,7 @@ function Usuarios() {
       )}
 
       <Dialog open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar usuário</DialogTitle>
           </DialogHeader>
@@ -262,6 +373,66 @@ function Usuarios() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="p-cpf">CPF</Label>
+                <Input id="p-cpf" name="cpf" maxLength={20} defaultValue={editing?.cpf ?? ""} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-mobile">Celular</Label>
+                <Input
+                  id="p-mobile"
+                  name="mobile"
+                  maxLength={30}
+                  defaultValue={editing?.mobile ?? ""}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-birth">Data de nascimento</Label>
+                <Input
+                  id="p-birth"
+                  name="birth_date"
+                  type="date"
+                  defaultValue={editing?.birth_date ?? ""}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-cnh">Número da CNH</Label>
+                <Input
+                  id="p-cnh"
+                  name="cnh_number"
+                  maxLength={30}
+                  defaultValue={editing?.cnh_number ?? ""}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-cats">Categorias da CNH</Label>
+                <Input
+                  id="p-cats"
+                  name="cnh_categories"
+                  placeholder="Ex.: AB, D"
+                  defaultValue={(editing?.cnh_categories ?? []).join(", ")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-cnh-exp">Validade da CNH</Label>
+                <Input
+                  id="p-cnh-exp"
+                  name="cnh_expires_at"
+                  type="date"
+                  defaultValue={editing?.cnh_expires_at ?? ""}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-cnh-iss">Emissão da CNH</Label>
+                <Input
+                  id="p-cnh-iss"
+                  name="cnh_issued_at"
+                  type="date"
+                  defaultValue={editing?.cnh_issued_at ?? ""}
+                />
+              </div>
             </div>
           </form>
           <DialogFooter>

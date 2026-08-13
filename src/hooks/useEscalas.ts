@@ -230,15 +230,21 @@ export function useScheduleIncidents(scheduleId: string | null) {
 /** Motoristas cadastrados e ativos, para montar a escala. */
 export function useDriverOptions() {
   return useQuery({
-    queryKey: ["driver-options"],
+    queryKey: ["driver-options-profiles"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("drivers")
-        .select("id, full_name, profile_id, is_active, is_authorized")
+        .from("profiles")
+        .select("id, full_name, cnh_expires_at, is_sre_driver")
         .eq("is_active", true)
+        .eq("is_sre_driver", true)
         .order("full_name");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((p) => ({
+        id: p.id,
+        full_name: p.full_name,
+        profile_id: p.id,
+        cnh_expires_at: p.cnh_expires_at as string | null,
+      }));
     },
     staleTime: 60_000,
   });
