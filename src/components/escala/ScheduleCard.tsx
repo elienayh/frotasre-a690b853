@@ -211,7 +211,7 @@ export function ScheduleCard({ schedule, canEdit, onDropTrip, compact }: Schedul
   const totalPassengers = schedule.assignments.reduce((max, a) => Math.max(max, a.passengers), 0);
   const capacity = schedule.vehicle?.capacity ?? 0;
   const overCapacity = capacity > 0 && totalPassengers > capacity;
-  const missingSetup = !schedule.vehicle_id || !schedule.driver_id;
+  const missingSetup = !schedule.vehicle_id || !schedule.driver_user_id;
 
   return (
     <Card
@@ -246,7 +246,7 @@ export function ScheduleCard({ schedule, canEdit, onDropTrip, compact }: Schedul
               Escala {String(schedule.code).padStart(2, "0")}
             </p>
             <p className="truncate text-sm text-muted-foreground">
-              {schedule.driver?.full_name ?? "Sem motorista"} ·{" "}
+              {schedule.driver_user?.full_name ?? schedule.driver?.full_name ?? "Sem motorista"} ·{" "}
               {schedule.vehicle
                 ? `${schedule.vehicle.model} ${schedule.vehicle.plate}`
                 : "Sem veículo"}

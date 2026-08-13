@@ -148,7 +148,7 @@ export function AssignmentDialog({
     }
     const rows = await findConflicts({
       vehicleId: schedule.vehicle_id,
-      driverId: schedule.driver_id,
+      driverId: schedule.driver_user_id,
       driverUserId: schedule.driver_user_id,
       start: startIso,
       end: endIso,
@@ -162,7 +162,7 @@ export function AssignmentDialog({
     }
     const slot = await suggestFreeSlot({
       vehicleId: schedule.vehicle_id,
-      driverId: schedule.driver_id,
+      driverId: schedule.driver_user_id,
       driverUserId: schedule.driver_user_id,
       start: startIso,
       end: endIso,

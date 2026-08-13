@@ -41,7 +41,6 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/disponibilidade", label: "Disponibilidade da Frota", icon: Bus },
   { to: "/admin/agenda", label: "Agenda da Frota", icon: CalendarRange },
   { to: "/admin/veiculos", label: "Veículos", icon: CarFront },
-  { to: "/admin/motoristas", label: "Motoristas", icon: Users },
   { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
   { to: "/admin/cidades", label: "Cidades", icon: Building2 },
   { to: "/admin/destinos", label: "Locais de Destino", icon: MapPin },
