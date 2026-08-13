@@ -289,15 +289,15 @@ export function ScheduleCard({ schedule, canEdit, onDropTrip, compact }: Schedul
             </Select>
 
             <Select
-              value={schedule.driver_id ?? ""}
+              value={schedule.driver_user_id ?? ""}
               onValueChange={(value) => {
                 const driver = drivers.find((d) => d.id === value);
                 updateSchedule.mutate({
-                  driver_id: value,
-                  driver_user_id: driver?.profile_id ?? null,
+                  driver_id: null,
+                  driver_user_id: value,
                   action: "Motorista da escala alterado",
                   field: "Motorista",
-                  oldValue: schedule.driver?.full_name ?? "—",
+                  oldValue: schedule.driver_user?.full_name ?? schedule.driver?.full_name ?? "—",
                   newValue: driver?.full_name ?? "—",
                 });
               }}
