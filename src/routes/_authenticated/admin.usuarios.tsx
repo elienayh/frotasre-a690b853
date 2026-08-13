@@ -141,7 +141,7 @@ function Usuarios() {
   });
 
   const patch = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: Partial<ProfileRow> }) => {
+    mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
       const { error } = await supabase.from("profiles").update(values).eq("id", id);
       if (error) throw new Error(error.message);
     },
