@@ -305,28 +305,40 @@ export type Database = {
         Row: {
           body: string | null
           created_at: string
+          entity_id: string | null
+          entity_type: string | null
           id: string
+          link: string | null
           read_at: string | null
           title: string
           trip_id: string | null
+          type: string
           user_id: string
         }
         Insert: {
           body?: string | null
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
+          link?: string | null
           read_at?: string | null
           title: string
           trip_id?: string | null
+          type?: string
           user_id: string
         }
         Update: {
           body?: string | null
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
+          link?: string | null
           read_at?: string | null
           title?: string
           trip_id?: string | null
+          type?: string
           user_id?: string
         }
         Relationships: [
@@ -816,6 +828,8 @@ export type Database = {
         Row: {
           admin_notes: string | null
           allows_rides: boolean
+          approved_at: string | null
+          approved_by: string | null
           assigned_driver_user_id: string | null
           city_id: string | null
           city_text: string | null
@@ -828,11 +842,15 @@ export type Database = {
           id: string
           needs_sre_driver: boolean
           occupants_names: string | null
+          organized_at: string | null
+          organized_by: string | null
           passengers: number
           period: unknown
           purpose: string
           pw_number: string | null
           pw_registered_at: string | null
+          rejected_at: string | null
+          rejected_by: string | null
           rejection_reason: string | null
           requested_driver_id: string | null
           requester_id: string | null
@@ -847,6 +865,8 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           allows_rides?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_driver_user_id?: string | null
           city_id?: string | null
           city_text?: string | null
@@ -859,11 +879,15 @@ export type Database = {
           id?: string
           needs_sre_driver?: boolean
           occupants_names?: string | null
+          organized_at?: string | null
+          organized_by?: string | null
           passengers?: number
           period?: unknown
           purpose: string
           pw_number?: string | null
           pw_registered_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
           rejection_reason?: string | null
           requested_driver_id?: string | null
           requester_id?: string | null
@@ -878,6 +902,8 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           allows_rides?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_driver_user_id?: string | null
           city_id?: string | null
           city_text?: string | null
@@ -890,11 +916,15 @@ export type Database = {
           id?: string
           needs_sre_driver?: boolean
           occupants_names?: string | null
+          organized_at?: string | null
+          organized_by?: string | null
           passengers?: number
           period?: unknown
           purpose?: string
           pw_number?: string | null
           pw_registered_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
           rejection_reason?: string | null
           requested_driver_id?: string | null
           requester_id?: string | null
@@ -907,6 +937,13 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trip_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trip_requests_assigned_driver_user_id_fkey"
             columns: ["assigned_driver_user_id"]
@@ -933,6 +970,20 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_requests_organized_by_fkey"
+            columns: ["organized_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_requests_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1252,7 +1303,21 @@ export type Database = {
         }
         Returns: number
       }
+      person_label: { Args: { _user_id: string }; Returns: string }
       profile_sector: { Args: { _user_id: string }; Returns: string }
+      push_notification: {
+        Args: {
+          _body: string
+          _entity_id?: string
+          _entity_type?: string
+          _link?: string
+          _title: string
+          _trip_id?: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       schedule_conflicts: {
         Args: {
           _driver_id: string
@@ -1291,6 +1356,11 @@ export type Database = {
         }
         Returns: string
       }
+      trip_label: {
+        Args: { _trip: Database["public"]["Tables"]["trip_requests"]["Row"] }
+        Returns: string
+      }
+      vehicle_label: { Args: { _vehicle_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "servidor" | "super_admin"

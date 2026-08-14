@@ -132,7 +132,7 @@ function Usuarios() {
       const { data, error } = await supabase
         .from("trip_requests")
         .select(
-          "id, code, destination_text, purpose, departure_at, return_at, status, vehicles(plate, model), drivers(full_name)",
+          "id, code, destination_text, purpose, departure_at, return_at, status, vehicles(plate, model), assigned:profiles!trip_requests_assigned_driver_user_id_fkey(full_name)",
         )
         .eq("requester_id", tripsOf!.id)
         .order("departure_at", { ascending: false });
@@ -467,7 +467,7 @@ function Usuarios() {
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {t.vehicles ? `${t.vehicles.model} (${t.vehicles.plate})` : "Veículo a definir"}
-                    {t.drivers ? ` · ${t.drivers.full_name}` : ""}
+                    {t.assigned ? ` · ${t.assigned.full_name}` : ""}
                   </p>
                 </li>
               ))}

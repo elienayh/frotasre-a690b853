@@ -12,6 +12,8 @@ export interface DriverPickerProps {
   currentUserId?: string | null | undefined;
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
+  /** Restringe a lista a usuários ativos marcados como Motorista da SRE. */
+  onlySreDrivers?: boolean | undefined;
 }
 
 /**
@@ -25,13 +27,14 @@ export function DriverPicker({
   currentUserId,
   placeholder = "Selecione quem irá dirigir",
   disabled,
+  onlySreDrivers = false,
 }: DriverPickerProps) {
   const { data: people = [] } = usePeople();
 
   const options = useMemo<ComboOption[]>(() => {
     const me = people.find((p) => p.id === currentUserId);
     const list: ComboOption[] = [];
-    if (me) {
+    if (me && (!onlySreDrivers || me.is_sre_driver)) {
       list.push({ value: me.id, label: me.full_name || "Eu", hint: "Eu", group: "VOCÊ" });
     }
     for (const p of people) {
@@ -44,17 +47,20 @@ export function DriverPicker({
         group: "MOTORISTAS DA SRE",
       });
     }
-    for (const p of people) {
-      if (p.id === currentUserId || p.is_sre_driver) continue;
-      list.push({
-        value: p.id,
-        label: p.full_name,
-        hint: p.sector ?? undefined,
-        group: "OUTROS USUÁRIOS",
-      });
+    if (!onlySreDrivers) {
+      for (const p of people) {
+        if (p.id === currentUserId || p.is_sre_driver) continue;
+        list.push({
+          value: p.id,
+          label: p.full_name,
+          hint: p.sector ?? undefined,
+          group: "OUTROS USUÁRIOS",
+        });
+      }
     }
     return list;
-  }, [people, currentUserId]);
+  }, [people, currentUserId, onlySreDrivers]);
+
 
   return (
     <ComboBox
