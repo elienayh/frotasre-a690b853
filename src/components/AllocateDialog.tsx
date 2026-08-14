@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -31,6 +31,12 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
   const queryClient = useQueryClient();
   const [vehicleId, setVehicleId] = useState<string>("");
   const [driverUserId, setDriverUserId] = useState<string | null>(null);
+
+  // Ao abrir outra viagem, recarrega a alocação já persistida (única fonte de verdade).
+  useEffect(() => {
+    setVehicleId(trip?.vehicle_id ?? "");
+    setDriverUserId(trip?.assigned_driver_user_id ?? trip?.requested_driver_id ?? null);
+  }, [trip?.id, trip?.vehicle_id, trip?.assigned_driver_user_id, trip?.requested_driver_id]);
   const { data: people = [] } = usePeople();
 
   const departure = trip ? new Date(trip.departure_at) : null;
@@ -215,7 +221,13 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
               value={driverUserId}
               onChange={setDriverUserId}
               placeholder="Selecione o condutor"
+              onlySreDrivers={Boolean(trip?.needs_sre_driver)}
             />
+            {driverUserId ? (
+              <p className="text-xs text-muted-foreground">
+                Condutor definido: {people.find((p) => p.id === driverUserId)?.full_name ?? "—"}
+              </p>
+            ) : null}
             {requestedDriverName ? (
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>Indicado pelo solicitante: {requestedDriverName}</span>
