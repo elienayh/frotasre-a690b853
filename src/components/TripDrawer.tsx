@@ -164,6 +164,47 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
 
               <Separator />
 
+              <section className="space-y-2">
+                <h3 className="font-display text-sm font-semibold">Responsabilidade</h3>
+                <dl className="space-y-2 text-sm">
+                  <Field
+                    label="Solicitante"
+                    value={trip.requester?.full_name ?? trip.requester_name ?? "—"}
+                  />
+                  {isAdmin ? (
+                    <>
+                      <Field
+                        label="Aprovado por"
+                        value={
+                          trip.approver?.full_name
+                            ? `${trip.approver.full_name}${trip.approved_at ? ` · ${fmtDate(trip.approved_at)} ${fmtTime(trip.approved_at)}` : ""}`
+                            : "—"
+                        }
+                      />
+                      <Field
+                        label="Organizado por"
+                        value={
+                          trip.organizer?.full_name
+                            ? `${trip.organizer.full_name}${trip.organized_at ? ` · ${fmtDate(trip.organized_at)} ${fmtTime(trip.organized_at)}` : ""}`
+                            : "—"
+                        }
+                      />
+                    </>
+                  ) : null}
+                  <Field label="Motorista" value={tripDriverName(trip)} />
+                  <Field
+                    label="Veículo"
+                    value={
+                      trip.vehicles
+                        ? `${trip.vehicles.manufacturer} ${trip.vehicles.model} — ${trip.vehicles.plate}`
+                        : "A definir"
+                    }
+                  />
+                </dl>
+              </section>
+
+              <Separator />
+
               <section className="space-y-3">
                 <h3 className="font-display text-sm font-semibold">Pedidos de carona</h3>
                 {rides.length === 0 ? (
