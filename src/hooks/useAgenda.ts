@@ -10,7 +10,10 @@ const TRIP_SELECT = `
   vehicles(id, plate, manufacturer, model, capacity),
   drivers(full_name),
   requester:profiles!trip_requests_requester_id_fkey(full_name, sector),
-  assigned:profiles!trip_requests_assigned_driver_user_id_fkey(full_name)
+  assigned:profiles!trip_requests_assigned_driver_user_id_fkey(full_name),
+  approver:profiles!trip_requests_approved_by_fkey(full_name),
+  organizer:profiles!trip_requests_organized_by_fkey(full_name),
+  approved_at, organized_at, rejection_reason
 `;
 
 export interface AgendaTrip {
@@ -45,6 +48,11 @@ export interface AgendaTrip {
   drivers: { full_name: string } | null;
   requester: { full_name: string; sector: string | null } | null;
   assigned: { full_name: string } | null;
+  approver: { full_name: string } | null;
+  organizer: { full_name: string } | null;
+  approved_at: string | null;
+  organized_at: string | null;
+  rejection_reason: string | null;
 }
 
 /** Nome da cidade principal da viagem (cadastrada ou digitada). */
@@ -56,7 +64,6 @@ export function tripCity(trip: AgendaTrip): string {
 export function tripDriverName(trip: AgendaTrip): string {
   return (
     trip.assigned?.full_name ??
-    trip.drivers?.full_name ??
     (trip.needs_sre_driver ? "Motorista da SRE a definir" : "Motorista a definir")
   );
 }
