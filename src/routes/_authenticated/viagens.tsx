@@ -21,7 +21,7 @@ function MinhasViagens() {
       const { data, error } = await supabase
         .from("trip_requests")
         .select(
-          "id, code, destination_text, departure_at, return_at, status, passengers, pw_number, vehicles(plate, manufacturer, model), drivers(full_name, phone)",
+          "id, code, destination_text, departure_at, return_at, status, passengers, pw_number, vehicles(plate, manufacturer, model), assigned:profiles!trip_requests_assigned_driver_user_id_fkey(full_name, mobile, phone)",
         )
         .eq("requester_id", user!.id)
         .in("status", ["APROVADA", "PROGRAMADA", "EM_ANDAMENTO", "CONCLUIDA"])
@@ -66,7 +66,7 @@ function MinhasViagens() {
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-muted-foreground">Motorista</dt>
-                  <dd>{t.drivers?.full_name ?? "A definir"}</dd>
+                  <dd>{t.assigned?.full_name ?? "A definir"}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-muted-foreground">Registro PW</dt>

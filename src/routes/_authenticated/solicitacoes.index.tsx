@@ -25,7 +25,7 @@ function MinhasSolicitacoes() {
       const { data, error } = await supabase
         .from("trip_requests")
         .select(
-          "id, code, destination_text, purpose, passengers, departure_at, return_at, status, rejection_reason, admin_notes, vehicle_id, driver_id, vehicles(plate, manufacturer, model), drivers(full_name)",
+          "id, code, destination_text, purpose, passengers, departure_at, return_at, status, rejection_reason, admin_notes, vehicle_id, assigned_driver_user_id, vehicles(plate, manufacturer, model), assigned:profiles!trip_requests_assigned_driver_user_id_fkey(full_name)",
         )
         .eq("requester_id", user!.id)
         .order("departure_at", { ascending: false });
@@ -101,7 +101,7 @@ function MinhasSolicitacoes() {
                   <div>
                     <dt className="text-muted-foreground">Motorista</dt>
                     <dd className="font-medium">
-                      {approved && t.drivers ? t.drivers.full_name : "A DEFINIR"}
+                      {t.assigned?.full_name ?? "A DEFINIR"}
                     </dd>
                   </div>
                 </dl>
