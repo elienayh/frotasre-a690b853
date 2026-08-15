@@ -69,7 +69,10 @@ export function usePeople() {
     queryFn: async (): Promise<PersonOption[]> => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, sector, is_sre_driver, is_active")
+        .select(
+          "id, full_name, sector, registration, is_sre_driver, is_driver_certified, is_active",
+        )
+
         .eq("is_active", true)
         .order("full_name");
       if (error) throw error;
