@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DriverPicker } from "@/components/DriverPicker";
+import { OccupantsPicker } from "@/components/OccupantsPicker";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
@@ -20,15 +20,15 @@ import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } fro
 const schema = z
   .object({
     date: z.string().min(1, { message: "Informe a data da viagem" }),
+    return_date: z.string().min(1, { message: "Informe a data de retorno" }),
     departure: z.string().min(1, { message: "Informe o horário de saída" }),
     ret: z.string().min(1, { message: "Informe o horário previsto de retorno" }),
     purpose: z.string().trim().min(5, { message: "Descreva o motivo da viagem" }).max(600),
     passengers: z.coerce.number().int().min(1).max(60),
-    occupants_names: z.string().trim().max(600).optional(),
     requester_notes: z.string().trim().max(600).optional(),
     allows_rides: z.boolean(),
   })
-  .refine((v) => v.ret > v.departure, {
+  .refine((v) => `${v.return_date}T${v.ret}` > `${v.date}T${v.departure}`, {
     message: "O retorno deve ser posterior à saída",
     path: ["ret"],
   });
@@ -50,12 +50,8 @@ export function TripForm({ trip }: TripFormProps) {
   const [busy, setBusy] = useState(false);
   const [stops, setStops] = useState<StopValue[]>([newStop()]);
   const [allowsRides, setAllowsRides] = useState<boolean>(trip?.allows_rides ?? true);
-  const [driverId, setDriverId] = useState<string | null>(
-    trip?.requested_driver_id ?? user?.id ?? null,
-  );
-  const [noDriver, setNoDriver] = useState<boolean>(
-    Boolean(trip) && !trip?.requested_driver_id,
-  );
+  const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 1);
+  const [occupantIds, setOccupantIds] = useState<(string | null)[]>([]);
   const [review, setReview] = useState<FormValues | null>(null);
 
   // Carrega as paradas já registradas quando a solicitação está em edição.
@@ -65,13 +61,34 @@ export function TripForm({ trip }: TripFormProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_stops")
-        .select("city_id, city_text, destination_id, place_text, position")
+        .select("city_id, city_text, destination_id, place_text, position, driver_user_id")
         .eq("trip_id", trip!.id)
         .order("position");
       if (error) throw error;
       return data ?? [];
     },
   });
+
+  // Ocupantes já vinculados (usuários do sistema), para edição da solicitação.
+  const { data: savedOccupants } = useQuery({
+    queryKey: ["trip-occupants-form", trip?.id],
+    enabled: Boolean(trip?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trip_occupants")
+        .select("id, user_id, is_external")
+        .eq("trip_id", trip!.id)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (!savedOccupants) return;
+    const ids = savedOccupants.filter((o) => !o.is_external).map((o) => o.user_id);
+    if (ids.length > 0) setOccupantIds(ids);
+  }, [savedOccupants]);
 
   useEffect(() => {
     if (!trip) return;
@@ -99,16 +116,17 @@ export function TripForm({ trip }: TripFormProps) {
   }, [savedStops, trip]);
 
   const initialDate = trip ? new Date(trip.departure_at) : null;
+  const initialReturn = trip ? new Date(trip.return_at) : null;
   const pad = (n: number) => String(n).padStart(2, "0");
+  const asDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const defaults = {
-    date: initialDate
-      ? `${initialDate.getFullYear()}-${pad(initialDate.getMonth() + 1)}-${pad(initialDate.getDate())}`
-      : todayInput(),
+    date: initialDate ? asDate(initialDate) : todayInput(),
+    return_date: initialReturn ? asDate(initialReturn) : todayInput(),
     departure: initialDate
       ? `${pad(initialDate.getHours())}:${pad(initialDate.getMinutes())}`
       : "08:00",
-    ret: trip
-      ? `${pad(new Date(trip.return_at).getHours())}:${pad(new Date(trip.return_at).getMinutes())}`
+    ret: initialReturn
+      ? `${pad(initialReturn.getHours())}:${pad(initialReturn.getMinutes())}`
       : "17:00",
   };
 
@@ -121,9 +139,11 @@ export function TripForm({ trip }: TripFormProps) {
   }
 
   function validStops(): StopValue[] {
-    return stops.filter(
-      (s) => (s.cityId || s.cityText) && (s.destinationId || s.placeText),
-    );
+    return stops.filter((s) => (s.cityId || s.cityText) && (s.destinationId || s.placeText));
+  }
+
+  function selectedOccupants(count: number): string[] {
+    return occupantIds.slice(0, count).filter(Boolean) as string[];
   }
 
   function handleReview(event: React.FormEvent<HTMLFormElement>) {
@@ -131,11 +151,11 @@ export function TripForm({ trip }: TripFormProps) {
     const form = new FormData(event.currentTarget);
     const parsed = schema.safeParse({
       date: form.get("date"),
+      return_date: form.get("return_date"),
       departure: form.get("departure"),
       ret: form.get("ret"),
       purpose: form.get("purpose"),
-      passengers: form.get("passengers"),
-      occupants_names: form.get("occupants_names") || undefined,
+      passengers,
       requester_notes: form.get("requester_notes") || undefined,
       allows_rides: allowsRides,
     });
@@ -148,8 +168,8 @@ export function TripForm({ trip }: TripFormProps) {
       toast.error("Informe pelo menos um destino com cidade e local.");
       return;
     }
-    if (!noDriver && !driverId) {
-      toast.error("Indique quem irá dirigir ou marque que a DAFI deve definir.");
+    if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
+      toast.error("Selecione todos os ocupantes da viagem.");
       return;
     }
     setReview(parsed.data);
@@ -161,10 +181,7 @@ export function TripForm({ trip }: TripFormProps) {
     const list = validStops();
     const first = list[0]!;
     const summary = list.map(describeStop).join(" | ");
-    const requestedDriver = noDriver ? null : driverId;
-    const driverName = requestedDriver
-      ? (people.find((p) => p.id === requestedDriver)?.full_name ?? null)
-      : null;
+    const chosen = selectedOccupants(review.passengers);
 
     const payload = {
       requester_id: user?.id ?? null,
@@ -173,15 +190,15 @@ export function TripForm({ trip }: TripFormProps) {
       city_text: first.cityText,
       destination_id: first.destinationId,
       destination_text: summary.slice(0, 400),
-      requested_driver_id: requestedDriver,
-      suggested_driver: driverName,
+      // O condutor deixa de ser escolhido na solicitação: a DAFI define por destino.
+      requested_driver_id: null,
+      suggested_driver: null,
       purpose: review.purpose,
       passengers: review.passengers,
-      occupants_names: review.occupants_names ?? null,
       requester_notes: review.requester_notes ?? null,
       allows_rides: review.allows_rides,
       departure_at: dateTimeToIso(review.date, review.departure),
-      return_at: dateTimeToIso(review.date, review.ret),
+      return_at: dateTimeToIso(review.return_date, review.ret),
       status: "PENDENTE" as const,
     };
 
@@ -214,6 +231,32 @@ export function TripForm({ trip }: TripFormProps) {
           })),
         );
         if (stopsError) throw new Error(stopsError.message);
+
+        // Ocupantes: só as diferenças, para não gerar avisos repetidos a quem já estava.
+        const current = (savedOccupants ?? []).filter((o) => !o.is_external);
+        const currentIds = current.map((o) => o.user_id).filter(Boolean) as string[];
+        const toRemove = current.filter((o) => o.user_id && !chosen.includes(o.user_id));
+        const toAdd = chosen.filter((id) => !currentIds.includes(id));
+        if (toRemove.length > 0) {
+          await supabase
+            .from("trip_occupants")
+            .delete()
+            .in(
+              "id",
+              toRemove.map((o) => o.id),
+            );
+        }
+        if (toAdd.length > 0) {
+          const { error: occError } = await supabase.from("trip_occupants").insert(
+            toAdd.map((id) => ({
+              trip_id: tripId,
+              user_id: id,
+              is_external: false,
+              added_by: user?.id ?? null,
+            })),
+          );
+          if (occError) throw new Error(occError.message);
+        }
       }
 
       toast.success(
@@ -229,9 +272,9 @@ export function TripForm({ trip }: TripFormProps) {
 
   if (review) {
     const list = validStops();
-    const driverName = noDriver
-      ? "A definir pela DAFI"
-      : (people.find((p) => p.id === driverId)?.full_name ?? "—");
+    const names = selectedOccupants(review.passengers).map(
+      (id) => people.find((p) => p.id === id)?.full_name ?? "—",
+    );
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <Card>
@@ -239,7 +282,11 @@ export function TripForm({ trip }: TripFormProps) {
             <CardTitle className="text-base">Confira antes de enviar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Row label="Data" value={fmtDate(dateTimeToIso(review.date, review.departure))} />
+            <Row label="Data da viagem" value={fmtDate(dateTimeToIso(review.date, review.departure))} />
+            <Row
+              label="Data de retorno"
+              value={fmtDate(dateTimeToIso(review.return_date, review.ret))}
+            />
             <Row label="Saída" value={review.departure} />
             <Row label="Retorno previsto" value={review.ret} />
             <div>
@@ -251,11 +298,15 @@ export function TripForm({ trip }: TripFormProps) {
               </ol>
             </div>
             <Row label="Motivo" value={review.purpose} />
-            <Row label="Ocupantes" value={String(review.passengers)} />
-            {review.occupants_names ? (
-              <Row label="Nomes" value={review.occupants_names} />
-            ) : null}
-            <Row label="Condutor indicado" value={driverName} />
+            <div>
+              <p className="text-muted-foreground">Ocupantes ({review.passengers})</p>
+              <ol className="mt-1 list-decimal space-y-1 pl-5">
+                {names.map((name, index) => (
+                  <li key={index}>{name}</li>
+                ))}
+              </ol>
+            </div>
+            <Row label="Motorista" value="DAFI DEFINIR" />
             <Row label="Aceita caronas" value={review.allows_rides ? "Sim" : "Não"} />
             {review.requester_notes ? (
               <Row label="Observações" value={review.requester_notes} />
@@ -281,10 +332,20 @@ export function TripForm({ trip }: TripFormProps) {
           <CardHeader>
             <CardTitle className="text-base">Quando</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-3">
+          <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="date">Data da viagem</Label>
               <Input id="date" name="date" type="date" defaultValue={defaults.date} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="return_date">Data de retorno</Label>
+              <Input
+                id="return_date"
+                name="return_date"
+                type="date"
+                defaultValue={defaults.return_date}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="departure">Horário de saída</Label>
@@ -300,6 +361,9 @@ export function TripForm({ trip }: TripFormProps) {
               <Label htmlFor="ret">Retorno previsto</Label>
               <Input id="ret" name="ret" type="time" defaultValue={defaults.ret} required />
             </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">
+              Viagens de vários dias: informe a data de retorno diferente da data da viagem.
+            </p>
           </CardContent>
         </Card>
 
@@ -310,8 +374,8 @@ export function TripForm({ trip }: TripFormProps) {
           <CardContent className="space-y-4">
             <TripStops value={stops} onChange={setStops} />
             <p className="text-xs text-muted-foreground">
-              Cada parada tem cidade e local próprios. Se a cidade ou o local não estiverem
-              cadastrados, digite o nome e escolha a opção de usar o texto informado.
+              Cada parada tem cidade e local próprios. O motorista de cada destino é definido pela
+              DAFI após a solicitação.
             </p>
           </CardContent>
         </Card>
@@ -350,42 +414,24 @@ export function TripForm({ trip }: TripFormProps) {
                   type="number"
                   min={1}
                   max={60}
-                  defaultValue={trip?.passengers ?? 1}
+                  value={passengers}
+                  onChange={(e) => setPassengers(Math.max(0, Number(e.target.value) || 0))}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="driver">Quem irá dirigir</Label>
-                <DriverPicker
-                  id="driver"
-                  value={noDriver ? null : driverId}
-                  onChange={setDriverId}
-                  currentUserId={user?.id ?? null}
-                  disabled={noDriver}
-                />
-                <div className="flex items-start gap-2 pt-1">
-                  <Checkbox
-                    id="no-driver"
-                    checked={noDriver}
-                    onCheckedChange={(c) => setNoDriver(c === true)}
-                  />
-                  <Label htmlFor="no-driver" className="text-sm font-normal leading-snug">
-                    Não indicar — a DAFI define o condutor
-                  </Label>
+                <Label>Motorista</Label>
+                <div className="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+                  DAFI DEFINIR
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  O motorista de cada destino é definido pela DAFI na aprovação.
+                </p>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="occupants_names">Nomes dos ocupantes</Label>
-              <Textarea
-                id="occupants_names"
-                name="occupants_names"
-                rows={2}
-                maxLength={600}
-                defaultValue={trip?.occupants_names ?? ""}
-                placeholder="Um nome por linha"
-              />
-            </div>
+
+            <OccupantsPicker count={passengers} value={occupantIds} onChange={setOccupantIds} />
+
             <div className="space-y-2">
               <Label htmlFor="requester_notes">Observações</Label>
               <Textarea
@@ -417,8 +463,8 @@ export function TripForm({ trip }: TripFormProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              O veículo é definido pela DAFI. Sua indicação de condutor é uma sugestão: a DAFI
-              confirma ou substitui conforme a disponibilidade.
+              O veículo e o motorista de cada destino são definidos pela DAFI. O motorista conta
+              como pessoa a bordo, além dos ocupantes informados.
             </p>
             <p>Você será notificado quando a solicitação for aprovada, ajustada ou recusada.</p>
             <p>O registro oficial no PW/Prodemge é feito pela DAFI após a aprovação.</p>

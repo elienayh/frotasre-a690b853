@@ -46,6 +46,8 @@ interface ProfileRow {
   is_active: boolean;
   is_coordinator: boolean;
   is_sre_driver: boolean;
+  is_driver_certified: boolean;
+
   cpf: string | null;
   birth_date: string | null;
   mobile: string | null;
@@ -82,7 +84,7 @@ function Usuarios() {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at",
+          "id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, is_driver_certified, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at",
         )
         .order("full_name");
       if (error) throw error;
@@ -151,6 +153,25 @@ function Usuarios() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Credenciamento para dirigir é registrado no histórico de permissões pelo banco.
+  const certify = useMutation({
+    mutationFn: async ({ userId, certified }: { userId: string; certified: boolean }) => {
+      const { error } = await supabase.rpc("set_driver_certified", {
+        _user_id: userId,
+        _value: certified,
+      });
+
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Credenciamento atualizado.");
+      void queryClient.invalidateQueries({ queryKey: ["profiles-admin"] });
+      void queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   function submitEdit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -275,6 +296,17 @@ function Usuarios() {
                       }
                     />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`cert-${p.id}`} className="text-xs text-muted-foreground">
+                      Credenciado para dirigir
+                    </Label>
+                    <Switch
+                      id={`cert-${p.id}`}
+                      checked={p.is_driver_certified}
+                      onCheckedChange={(v) => certify.mutate({ userId: p.id, certified: v })}
+                    />
+                  </div>
+
                   {isSuperAdmin ? (
                     <>
                       <div className="flex items-center gap-2">

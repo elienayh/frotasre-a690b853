@@ -32,34 +32,37 @@ export function DriverPicker({
   const { data: people = [] } = usePeople();
 
   const options = useMemo<ComboOption[]>(() => {
-    const me = people.find((p) => p.id === currentUserId);
+    // Somente usuários ativos e credenciados para dirigir podem ser motoristas.
+    const eligible = people.filter((p) => p.is_active && p.is_driver_certified);
+    const me = eligible.find((p) => p.id === currentUserId);
     const list: ComboOption[] = [];
     if (me && (!onlySreDrivers || me.is_sre_driver)) {
-      list.push({ value: me.id, label: me.full_name || "Eu", hint: "Eu", group: "VOCÊ" });
+      list.push({ value: me.id, label: me.full_name || "Eu", hint: "Eu · Credenciado", group: "VOCÊ" });
     }
-    for (const p of people) {
+    for (const p of eligible) {
       if (p.id === currentUserId) continue;
       if (!p.is_sre_driver) continue;
       list.push({
         value: p.id,
         label: p.full_name,
-        hint: "Motorista da SRE",
+        hint: "Motorista da SRE · Credenciado",
         group: "MOTORISTAS DA SRE",
       });
     }
     if (!onlySreDrivers) {
-      for (const p of people) {
+      for (const p of eligible) {
         if (p.id === currentUserId || p.is_sre_driver) continue;
         list.push({
           value: p.id,
           label: p.full_name,
-          hint: p.sector ?? undefined,
-          group: "OUTROS USUÁRIOS",
+          hint: p.sector ? `${p.sector} · Credenciado` : "Credenciado",
+          group: "OUTROS CREDENCIADOS",
         });
       }
     }
     return list;
   }, [people, currentUserId, onlySreDrivers]);
+
 
 
   return (

@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAgendaTrip, tripCity, tripDriverName } from "@/hooks/useAgenda";
 import { AllocateDialog } from "@/components/AllocateDialog";
 import { StatusBadge } from "@/components/StatusBadge";
+import { OccupantsList } from "@/components/OccupantsList";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -151,9 +153,8 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   value={`${trip.passengers}${trip.vehicles ? ` de ${trip.vehicles.capacity}` : ""}`}
                   icon={<Users className="h-4 w-4" />}
                 />
-                {trip.occupants_names ? (
-                  <Field label="Nomes" value={trip.occupants_names} />
-                ) : null}
+                {null}
+
                 {trip.requester_notes ? (
                   <Field label="Observações do solicitante" value={trip.requester_notes} />
                 ) : null}
@@ -163,6 +164,14 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
               </dl>
 
               <Separator />
+
+              <section className="space-y-2">
+                <h3 className="font-display text-sm font-semibold">Ocupantes</h3>
+                <OccupantsList tripId={trip.id} requesterId={trip.requester_id} />
+              </section>
+
+              <Separator />
+
 
               <section className="space-y-2">
                 <h3 className="font-display text-sm font-semibold">Responsabilidade</h3>

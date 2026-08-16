@@ -82,9 +82,10 @@ function MinhasSolicitacoes() {
                       Solicitação #{t.code} · {t.destination_text}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {fmtDate(t.departure_at)} · saída {fmtTime(t.departure_at)} · retorno previsto{" "}
-                      {fmtTime(t.return_at)} · {t.passengers} ocupante(s)
+                      Ida {fmtDate(t.departure_at)} às {fmtTime(t.departure_at)} · Retorno{" "}
+                      {fmtDate(t.return_at)} às {fmtTime(t.return_at)} · {t.passengers} ocupante(s)
                     </p>
+
                   </div>
                   <StatusBadge status={t.status} />
                 </div>
