@@ -151,9 +151,8 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   value={`${trip.passengers}${trip.vehicles ? ` de ${trip.vehicles.capacity}` : ""}`}
                   icon={<Users className="h-4 w-4" />}
                 />
-                {trip.occupants_names ? (
-                  <Field label="Nomes" value={trip.occupants_names} />
-                ) : null}
+                {null}
+
                 {trip.requester_notes ? (
                   <Field label="Observações do solicitante" value={trip.requester_notes} />
                 ) : null}
