@@ -159,8 +159,9 @@ function Usuarios() {
     mutationFn: async ({ userId, certified }: { userId: string; certified: boolean }) => {
       const { error } = await supabase.rpc("set_driver_certified", {
         _user_id: userId,
-        _certified: certified,
+        _value: certified,
       });
+
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {

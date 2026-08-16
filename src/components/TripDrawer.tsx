@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAgendaTrip, tripCity, tripDriverName } from "@/hooks/useAgenda";
 import { AllocateDialog } from "@/components/AllocateDialog";
 import { StatusBadge } from "@/components/StatusBadge";
+import { OccupantsList } from "@/components/OccupantsList";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
