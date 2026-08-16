@@ -164,6 +164,14 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
               <Separator />
 
               <section className="space-y-2">
+                <h3 className="font-display text-sm font-semibold">Ocupantes</h3>
+                <OccupantsList tripId={trip.id} requesterId={trip.requester_id} />
+              </section>
+
+              <Separator />
+
+
+              <section className="space-y-2">
                 <h3 className="font-display text-sm font-semibold">Responsabilidade</h3>
                 <dl className="space-y-2 text-sm">
                   <Field

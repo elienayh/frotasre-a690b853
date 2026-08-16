@@ -154,6 +154,24 @@ function Usuarios() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Credenciamento para dirigir é registrado no histórico de permissões pelo banco.
+  const certify = useMutation({
+    mutationFn: async ({ userId, certified }: { userId: string; certified: boolean }) => {
+      const { error } = await supabase.rpc("set_driver_certified", {
+        _user_id: userId,
+        _certified: certified,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Credenciamento atualizado.");
+      void queryClient.invalidateQueries({ queryKey: ["profiles-admin"] });
+      void queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
   function submitEdit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editing) return;
