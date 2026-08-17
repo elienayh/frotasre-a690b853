@@ -17,9 +17,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DriverPicker } from "@/components/DriverPicker";
+import { OccupantsList } from "@/components/OccupantsList";
+import { StopDriverEditor } from "@/components/StopDriverEditor";
+import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
 import { cn } from "@/lib/utils";
-import { dateTimeToIso, friendlyDbError, fmtDateTime, type TripRow } from "@/lib/frota";
+import {
+  dateTimeToIso,
+  friendlyDbError,
+  fmtDate,
+  fmtDateTime,
+  TRIP_STATUS_LABEL,
+  type TripRow,
+} from "@/lib/frota";
+
 
 export interface AllocateDialogProps {
   trip: TripRow | null;
