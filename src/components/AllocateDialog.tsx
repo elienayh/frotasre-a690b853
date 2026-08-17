@@ -114,9 +114,24 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     },
   });
 
+  // Lotação: o motorista ocupa um lugar e é contado à parte dos ocupantes.
+  const selectedVehicle = availability.find((v) => v.vehicle_id === vehicleId) ?? null;
+  const occupants = trip?.passengers ?? 0;
+  const driverSeats = driverUserId ? 1 : 0;
+  const totalSeats = occupants + driverSeats;
+  const capacity = selectedVehicle?.capacity ?? null;
+  const overCapacity = capacity != null && totalSeats > capacity;
+  const capacityBlocked = overCapacity && !isSuperAdmin;
+
   const approve = useMutation({
     mutationFn: async (notes: string) => {
       if (!vehicleId) throw new Error("Selecione o veículo.");
+      if (capacityBlocked) {
+        throw new Error(
+          "Capacidade do veículo excedida: escolha outro veículo ou reduza os ocupantes.",
+        );
+      }
+
       const { error } = await supabase
         .from("trip_requests")
         .update({
