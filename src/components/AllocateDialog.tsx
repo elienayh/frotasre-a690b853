@@ -166,6 +166,53 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
+        {trip ? (
+          <section className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+            <h3 className="mb-2 font-display text-sm font-semibold">Ficha da solicitação</h3>
+            <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+              <Field label="Solicitante" value={trip.requester_name ?? "—"} />
+              <Field label="Situação" value={TRIP_STATUS_LABEL[trip.status] ?? trip.status} />
+              <Field label="Data da viagem" value={fmtDate(trip.departure_at)} />
+              <Field label="Data de retorno" value={fmtDate(trip.return_at)} />
+              <Field
+                label="Aprovada por"
+                value={
+                  trip.approved_by
+                    ? `${people.find((p) => p.id === trip.approved_by)?.full_name ?? "—"}${
+                        trip.approved_at ? ` · ${fmtDateTime(trip.approved_at)}` : ""
+                      }`
+                    : "—"
+                }
+              />
+              <Field
+                label="Organizada por"
+                value={
+                  trip.organized_by
+                    ? `${people.find((p) => p.id === trip.organized_by)?.full_name ?? "—"}${
+                        trip.organized_at ? ` · ${fmtDateTime(trip.organized_at)}` : ""
+                      }`
+                    : "—"
+                }
+              />
+            </dl>
+            <p className="mt-2 text-muted-foreground">Motivo: {trip.purpose}</p>
+          </section>
+        ) : null}
+
+        {trip ? (
+          <div className="space-y-2">
+            <Label>Destinos e motorista de cada trecho</Label>
+            <StopDriverEditor tripId={trip.id} onlySreDrivers={Boolean(trip.needs_sre_driver)} />
+          </div>
+        ) : null}
+
+        {trip ? (
+          <div className="space-y-2">
+            <Label>Ocupantes</Label>
+            <OccupantsList tripId={trip.id} requesterId={trip.requester_id} />
+          </div>
+        ) : null}
+
         <form
           id="allocate-form"
           className="space-y-5"
@@ -175,14 +222,23 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
             approve.mutate(String(form.get("admin_notes") ?? ""));
           }}
         >
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="al-date">Data</Label>
+              <Label htmlFor="al-date">Data da viagem</Label>
               <Input
                 id="al-date"
                 type="date"
                 value={effectiveDate}
                 onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="al-return-date">Data de retorno</Label>
+              <Input
+                id="al-return-date"
+                type="date"
+                value={effectiveReturnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -204,6 +260,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
               />
             </div>
           </div>
+
 
           <div className="space-y-2">
             <Label>Veículos no período</Label>
