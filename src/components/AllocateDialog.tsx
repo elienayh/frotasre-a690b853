@@ -29,35 +29,44 @@ export interface AllocateDialogProps {
 /** Etapa "Definir Transporte": DAFI escolhe veículo, motorista e horário definitivo. */
 export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
   const queryClient = useQueryClient();
+  const { isSuperAdmin } = useAuth();
   const [vehicleId, setVehicleId] = useState<string>("");
   const [driverUserId, setDriverUserId] = useState<string | null>(null);
 
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const asDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const asTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  const [date, setDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
   // Ao abrir outra viagem, recarrega a alocação já persistida (única fonte de verdade).
   useEffect(() => {
-    setVehicleId(trip?.vehicle_id ?? "");
-    setDriverUserId(trip?.assigned_driver_user_id ?? trip?.requested_driver_id ?? null);
-  }, [trip?.id, trip?.vehicle_id, trip?.assigned_driver_user_id, trip?.requested_driver_id]);
+    if (!trip) return;
+    setVehicleId(trip.vehicle_id ?? "");
+    setDriverUserId(trip.assigned_driver_user_id ?? trip.requested_driver_id ?? null);
+    const dep = new Date(trip.departure_at);
+    const back = new Date(trip.return_at);
+    setDate(asDate(dep));
+    setReturnDate(asDate(back));
+    setStart(asTime(dep));
+    setEnd(asTime(back));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id]);
+
   const { data: people = [] } = usePeople();
 
-  const departure = trip ? new Date(trip.departure_at) : null;
-  const ret = trip ? new Date(trip.return_at) : null;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const dateValue = departure
-    ? `${departure.getFullYear()}-${pad(departure.getMonth() + 1)}-${pad(departure.getDate())}`
-    : "";
-  const [date, setDate] = useState(dateValue);
-  const [start, setStart] = useState(
-    departure ? `${pad(departure.getHours())}:${pad(departure.getMinutes())}` : "",
-  );
-  const [end, setEnd] = useState(ret ? `${pad(ret.getHours())}:${pad(ret.getMinutes())}` : "");
+  const effectiveDate = date;
+  const effectiveReturnDate = returnDate || date;
+  const effectiveStart = start || "08:00";
+  const effectiveEnd = end || "17:00";
 
-  const effectiveDate = date || dateValue;
-  const effectiveStart =
-    start || (departure ? `${pad(departure.getHours())}:${pad(departure.getMinutes())}` : "08:00");
-  const effectiveEnd = end || (ret ? `${pad(ret.getHours())}:${pad(ret.getMinutes())}` : "17:00");
+  const startIso = trip && effectiveDate ? dateTimeToIso(effectiveDate, effectiveStart) : "";
+  const endIso =
+    trip && effectiveReturnDate ? dateTimeToIso(effectiveReturnDate, effectiveEnd) : "";
 
-  const startIso = trip ? dateTimeToIso(effectiveDate, effectiveStart) : "";
-  const endIso = trip ? dateTimeToIso(effectiveDate, effectiveEnd) : "";
 
   const { data: availability = [] } = useQuery({
     queryKey: ["fleet-availability", startIso, endIso, trip?.passengers],
