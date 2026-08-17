@@ -17,9 +17,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DriverPicker } from "@/components/DriverPicker";
+import { OccupantsList } from "@/components/OccupantsList";
+import { StopDriverEditor } from "@/components/StopDriverEditor";
+import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
 import { cn } from "@/lib/utils";
-import { dateTimeToIso, friendlyDbError, fmtDateTime, type TripRow } from "@/lib/frota";
+import {
+  dateTimeToIso,
+  friendlyDbError,
+  fmtDate,
+  fmtDateTime,
+  TRIP_STATUS_LABEL,
+  type TripRow,
+} from "@/lib/frota";
+
 
 export interface AllocateDialogProps {
   trip: TripRow | null;
@@ -29,35 +40,44 @@ export interface AllocateDialogProps {
 /** Etapa "Definir Transporte": DAFI escolhe veículo, motorista e horário definitivo. */
 export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
   const queryClient = useQueryClient();
+  const { isSuperAdmin } = useAuth();
   const [vehicleId, setVehicleId] = useState<string>("");
   const [driverUserId, setDriverUserId] = useState<string | null>(null);
 
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const asDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const asTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  const [date, setDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
   // Ao abrir outra viagem, recarrega a alocação já persistida (única fonte de verdade).
   useEffect(() => {
-    setVehicleId(trip?.vehicle_id ?? "");
-    setDriverUserId(trip?.assigned_driver_user_id ?? trip?.requested_driver_id ?? null);
-  }, [trip?.id, trip?.vehicle_id, trip?.assigned_driver_user_id, trip?.requested_driver_id]);
+    if (!trip) return;
+    setVehicleId(trip.vehicle_id ?? "");
+    setDriverUserId(trip.assigned_driver_user_id ?? trip.requested_driver_id ?? null);
+    const dep = new Date(trip.departure_at);
+    const back = new Date(trip.return_at);
+    setDate(asDate(dep));
+    setReturnDate(asDate(back));
+    setStart(asTime(dep));
+    setEnd(asTime(back));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id]);
+
   const { data: people = [] } = usePeople();
 
-  const departure = trip ? new Date(trip.departure_at) : null;
-  const ret = trip ? new Date(trip.return_at) : null;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const dateValue = departure
-    ? `${departure.getFullYear()}-${pad(departure.getMonth() + 1)}-${pad(departure.getDate())}`
-    : "";
-  const [date, setDate] = useState(dateValue);
-  const [start, setStart] = useState(
-    departure ? `${pad(departure.getHours())}:${pad(departure.getMinutes())}` : "",
-  );
-  const [end, setEnd] = useState(ret ? `${pad(ret.getHours())}:${pad(ret.getMinutes())}` : "");
+  const effectiveDate = date;
+  const effectiveReturnDate = returnDate || date;
+  const effectiveStart = start || "08:00";
+  const effectiveEnd = end || "17:00";
 
-  const effectiveDate = date || dateValue;
-  const effectiveStart =
-    start || (departure ? `${pad(departure.getHours())}:${pad(departure.getMinutes())}` : "08:00");
-  const effectiveEnd = end || (ret ? `${pad(ret.getHours())}:${pad(ret.getMinutes())}` : "17:00");
+  const startIso = trip && effectiveDate ? dateTimeToIso(effectiveDate, effectiveStart) : "";
+  const endIso =
+    trip && effectiveReturnDate ? dateTimeToIso(effectiveReturnDate, effectiveEnd) : "";
 
-  const startIso = trip ? dateTimeToIso(effectiveDate, effectiveStart) : "";
-  const endIso = trip ? dateTimeToIso(effectiveDate, effectiveEnd) : "";
 
   const { data: availability = [] } = useQuery({
     queryKey: ["fleet-availability", startIso, endIso, trip?.passengers],
@@ -94,9 +114,24 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     },
   });
 
+  // Lotação: o motorista ocupa um lugar e é contado à parte dos ocupantes.
+  const selectedVehicle = availability.find((v) => v.vehicle_id === vehicleId) ?? null;
+  const occupants = trip?.passengers ?? 0;
+  const driverSeats = driverUserId ? 1 : 0;
+  const totalSeats = occupants + driverSeats;
+  const capacity = selectedVehicle?.capacity ?? null;
+  const overCapacity = capacity != null && totalSeats > capacity;
+  const capacityBlocked = overCapacity && !isSuperAdmin;
+
   const approve = useMutation({
     mutationFn: async (notes: string) => {
       if (!vehicleId) throw new Error("Selecione o veículo.");
+      if (capacityBlocked) {
+        throw new Error(
+          "Capacidade do veículo excedida: escolha outro veículo ou reduza os ocupantes.",
+        );
+      }
+
       const { error } = await supabase
         .from("trip_requests")
         .update({
@@ -131,6 +166,53 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
+        {trip ? (
+          <section className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+            <h3 className="mb-2 font-display text-sm font-semibold">Ficha da solicitação</h3>
+            <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+              <Field label="Solicitante" value={trip.requester_name ?? "—"} />
+              <Field label="Situação" value={TRIP_STATUS_LABEL[trip.status] ?? trip.status} />
+              <Field label="Data da viagem" value={fmtDate(trip.departure_at)} />
+              <Field label="Data de retorno" value={fmtDate(trip.return_at)} />
+              <Field
+                label="Aprovada por"
+                value={
+                  trip.approved_by
+                    ? `${people.find((p) => p.id === trip.approved_by)?.full_name ?? "—"}${
+                        trip.approved_at ? ` · ${fmtDateTime(trip.approved_at)}` : ""
+                      }`
+                    : "—"
+                }
+              />
+              <Field
+                label="Organizada por"
+                value={
+                  trip.organized_by
+                    ? `${people.find((p) => p.id === trip.organized_by)?.full_name ?? "—"}${
+                        trip.organized_at ? ` · ${fmtDateTime(trip.organized_at)}` : ""
+                      }`
+                    : "—"
+                }
+              />
+            </dl>
+            <p className="mt-2 text-muted-foreground">Motivo: {trip.purpose}</p>
+          </section>
+        ) : null}
+
+        {trip ? (
+          <div className="space-y-2">
+            <Label>Destinos e motorista de cada trecho</Label>
+            <StopDriverEditor tripId={trip.id} onlySreDrivers={Boolean(trip.needs_sre_driver)} />
+          </div>
+        ) : null}
+
+        {trip ? (
+          <div className="space-y-2">
+            <Label>Ocupantes</Label>
+            <OccupantsList tripId={trip.id} requesterId={trip.requester_id} />
+          </div>
+        ) : null}
+
         <form
           id="allocate-form"
           className="space-y-5"
@@ -140,14 +222,23 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
             approve.mutate(String(form.get("admin_notes") ?? ""));
           }}
         >
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="al-date">Data</Label>
+              <Label htmlFor="al-date">Data da viagem</Label>
               <Input
                 id="al-date"
                 type="date"
                 value={effectiveDate}
                 onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="al-return-date">Data de retorno</Label>
+              <Input
+                id="al-return-date"
+                type="date"
+                value={effectiveReturnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -169,6 +260,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
               />
             </div>
           </div>
+
 
           <div className="space-y-2">
             <Label>Veículos no período</Label>
