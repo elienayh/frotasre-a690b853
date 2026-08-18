@@ -35,6 +35,8 @@ interface Profile {
 }
 
 function UsuariosList() {
+  const navigate = useNavigate();
+  const search = Route.useSearch() as { pending?: boolean };
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     admin: false,
@@ -42,8 +44,8 @@ function UsuariosList() {
     coordinator: false,
     driver: false,
     certified: false,
-    active: true,
-    inactive: false,
+    active: search?.pending ? false : true,
+    inactive: search?.pending ? true : false,
   });
 
   const fetchEmails = useServerFn(getUsersEmails);

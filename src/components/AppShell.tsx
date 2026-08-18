@@ -28,6 +28,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { usePendingCounts } from "@/hooks/usePendingCounts";
+import { Badge } from "@/components/ui/badge";
 
 interface NavItem {
   to: string;
@@ -52,14 +54,55 @@ const ADMIN_ITEMS: NavItem[] = [
 function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigate?: () => void }) {
   const { isAdmin, isCoordinator, profile } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const counts = usePendingCounts();
+
+  const getBadge = (label: string) => {
+    if (!isAdmin) return null;
+    
+    let count = 0;
+    let colorClass = "";
+
+    if (label === "Aprovações") {
+      count = counts.approvals;
+      colorClass = "bg-destructive text-destructive-foreground ring-destructive/20";
+    } else if (label === "Veículos") {
+      count = counts.vehicles;
+      colorClass = "bg-orange-500 text-white ring-orange-500/20";
+    } else if (label === "Usuários") {
+      count = counts.users;
+      colorClass = "bg-blue-500 text-white ring-blue-500/20";
+    }
+
+    if (count <= 0) return null;
+
+    return (
+      <Badge 
+        className={cn(
+          "ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold ring-2 shadow-sm transition-all duration-300",
+          colorClass,
+          isCollapsed && "absolute -top-1 -right-1 ml-0 h-4 min-w-4 text-[8px] ring-1 shadow-lg"
+        )}
+      >
+        {count}
+      </Badge>
+    );
+  };
 
   const render = (items: NavItem[]) =>
     items.map((item) => {
       const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+      const badge = getBadge(item.label);
+
       return (
         <Link
           key={item.to}
           to={item.to}
+          search={(prev: any) => {
+            if (item.label === "Aprovações") return { ...prev, tab: "pendentes" };
+            if (item.label === "Veículos") return { ...prev, filter: "pending" };
+            if (item.label === "Usuários") return { ...prev, pending: true };
+            return prev;
+          }}
           onClick={onNavigate}
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
@@ -71,9 +114,13 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
         >
           <item.icon className={cn("h-5 w-5 shrink-0", active ? "text-white" : "group-hover:scale-110 transition-transform")} aria-hidden="true" />
           {!isCollapsed && <span className="truncate">{item.label}</span>}
+          {badge}
           {isCollapsed && (
              <div className="absolute left-full ml-4 hidden group-hover:block z-50 rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md border whitespace-nowrap">
                {item.label}
+               {counts[item.label === "Aprovações" ? "approvals" : item.label === "Veículos" ? "vehicles" : item.label === "Usuários" ? "users" : "none" as keyof typeof counts] > 0 && 
+                 ` (${counts[item.label === "Aprovações" ? "approvals" : item.label === "Veículos" ? "vehicles" : item.label === "Usuários" ? "users" : "none" as keyof typeof counts]})`
+               }
              </div>
           )}
         </Link>
