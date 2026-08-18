@@ -9,7 +9,7 @@ interface MaintenanceItemProps {
   lastKm: number | null;
   nextKm: number | null;
   icon: React.ReactNode;
-  compact?: boolean;
+  compact?: boolean | undefined;
 }
 
 function MaintenanceItem({ label, currentKm, lastKm, nextKm, icon, compact }: MaintenanceItemProps) {
