@@ -99,8 +99,22 @@ export function fmtKm(value: number | null | undefined): string {
   return `${new Intl.NumberFormat("pt-BR").format(value)} km`;
 }
 
+/** Calcula a autonomia estimada baseada nos últimos abastecimentos. */
+export function calculateAutonomy(fuels: any[]): string {
+  if (fuels.length < 2) return "N/A";
+  const sorted = [...fuels].sort((a, b) => new Date(b.filled_at).getTime() - new Date(a.filled_at).getTime());
+  const latest = sorted[0];
+  const previous = sorted[1];
+  if (!latest.odometer || !previous.odometer || !latest.liters) return "N/A";
+  const km = latest.odometer - previous.odometer;
+  if (km <= 0) return "N/A";
+  const consumption = (km / latest.liters).toFixed(2);
+  return `${consumption} km/L`;
+}
+
 /** Converte o valor de um <input type="datetime-local"> em ISO UTC. */
 export function localInputToIso(value: string): string {
+  if (!value) return "";
   return new Date(value).toISOString();
 }
 
