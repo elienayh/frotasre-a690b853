@@ -39,11 +39,21 @@ export function usePendingCounts() {
           .eq("is_active", false),
       ]);
 
+      const pendingVehicles = (vehiclesRes.data || []).filter(v => {
+        const check = (nextKm: any) => nextKm && v.odometer >= nextKm;
+        return (
+          check(v.next_oil_change_km) ||
+          check(v.next_tire_change_km) ||
+          check(v.next_oil_filter_change_km) ||
+          check(v.next_air_filter_change_km) ||
+          check(v.next_alignment_km) ||
+          check(v.next_balancing_km)
+        );
+      });
+
       return {
         approvals: (tripsRes.count || 0) + (ridesRes.count || 0),
-        // Para veículos, o count exato via PostgREST head pode ser limitado se usarmos or,
-        // mas aqui estamos pegando os IDs e contando os únicos.
-        vehicles: new Set((vehiclesRes.data || []).map(v => v.id)).size,
+        vehicles: pendingVehicles.length,
         users: usersRes.count || 0,
       };
     },
