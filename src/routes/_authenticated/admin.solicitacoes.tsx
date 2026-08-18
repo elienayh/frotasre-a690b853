@@ -422,7 +422,7 @@ function AdminSolicitacoes() {
                 toast.error("Descreva o motivo para o solicitante.");
                 return;
               }
-              decide.mutate({ id: decision!.trip.id as string, kind: decision!.kind, reason });
+              decide.mutate({ id: decision!.trip.id || "", kind: decision!.kind, reason });
             }}
           >
             <Label htmlFor="reason">Motivo</Label>
