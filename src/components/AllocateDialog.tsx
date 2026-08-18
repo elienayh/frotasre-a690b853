@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyTripDecision } from "@/lib/email.functions";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,7 @@ export interface AllocateDialogProps {
 export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useAuth();
+  const notifyEmail = useServerFn(notifyTripDecision);
   const [vehicleId, setVehicleId] = useState<string>("");
   const [driverUserId, setDriverUserId] = useState<string | null>(null);
 
@@ -148,6 +151,21 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     },
     onSuccess: () => {
       toast.success("Viagem aprovada e transporte definido.");
+      // Envio de e-mail assíncrono para aprovação
+      if (trip) {
+        const vehicle = availability.find(v => v.vehicle_id === vehicleId);
+        const driver = people.find(p => p.id === driverUserId);
+        
+        void notifyEmail({
+          data: {
+            tripId: trip.id,
+            userId: trip.requester_id || "",
+            status: "APROVADA",
+            vehicleName: vehicle ? `${vehicle.manufacturer} ${vehicle.model} (${vehicle.plate})` : "A DEFINIR",
+            driverName: driver?.full_name || "DAFI DEFINIR"
+          }
+        }).catch(err => console.error("Erro ao enviar e-mail de aprovação:", err));
+      }
       void queryClient.invalidateQueries();
       void queryClient.invalidateQueries({ queryKey: ["admin-trips-all"] });
 
