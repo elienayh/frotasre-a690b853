@@ -293,14 +293,15 @@ function Veiculos() {
 
   return (
     <AppShell
-      title="Veículos"
-      description="Frota oficial: cadastro completo, status atual e manutenção."
+      title="Gestão da Frota"
+      description="Controle operacional, disponibilidade e manutenção preventiva."
       actions={
-        <Button size="sm" onClick={() => openForm(null)}>
-          <Plus className="mr-1 h-4 w-4" /> Novo veículo
+        <Button size="sm" onClick={() => openForm(null)} className="rounded-xl shadow-lg shadow-primary/20">
+          <Plus className="mr-1.5 h-4 w-4" /> Novo Veículo
         </Button>
       }
     >
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
@@ -311,9 +312,10 @@ function Veiculos() {
             return (
               <li 
                 key={v.id} 
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card transition-all hover:border-primary/30 hover:shadow-md cursor-pointer"
+                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/40 bg-card/60 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-1 cursor-pointer"
                 onClick={() => navigate({ to: "/admin/veiculos/$vehicleId", params: { vehicleId: v.id } })}
               >
+
 
                 
                 <div className="relative z-10 p-5">
