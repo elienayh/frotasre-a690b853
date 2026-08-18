@@ -68,10 +68,21 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
         <span className="text-muted-foreground">{label}</span>
         <div className={cn("flex items-center gap-1", textColors[status])}>
           {icons[status]}
-          <span>{remaining > 0 ? `${remaining.toLocaleString()} km resta(m)` : "MANUTENÇÃO VENCIDA"}</span>
+          <span>
+            {currentKm >= nextKm 
+              ? `VENCIDA (${(currentKm - nextKm).toLocaleString()} km acima)` 
+              : `${remaining.toLocaleString()} km resta(m)`}
+          </span>
         </div>
       </div>
-      <Progress value={progress} className="h-2" indicatorClassName={statusColors[status]} />
+      <div className="relative">
+        <Progress value={progress} className="h-2" indicatorClassName={statusColors[status]} />
+        {!hasHistory && (
+          <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold uppercase tracking-tighter text-muted-foreground/50">
+            Sem histórico anterior
+          </span>
+        )}
+      </div>
     </div>
   );
 }
