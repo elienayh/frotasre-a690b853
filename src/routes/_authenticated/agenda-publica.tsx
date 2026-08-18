@@ -183,50 +183,74 @@ function CalendarioViagens() {
     <AppShell
       title="Cronograma"
       description="Agenda institucional da frota, por dia e por setor."
+      fullWidth
       actions={
-        <div className="flex items-center gap-2">
-          <Button
-            variant={activeFiltersCount > 0 ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className={cn(
-              "rounded-xl font-bold transition-all",
-              activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
-            )}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Filtros
-            {activeFiltersCount > 0 && (
-              <span className="ml-2 rounded-full bg-primary-foreground text-primary px-1.5 py-0.5 text-[10px] font-black">
-                {activeFiltersCount}
-              </span>
-            )}
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6 mr-6 bg-card/50 px-6 py-2 rounded-2xl border border-border/40">
+            <Stat label="Total" value={stats.total} color="text-foreground" />
+            <Stat label="Aprovadas" value={stats.aprovadas} color="text-emerald-500" />
+            <Stat label="Aguardando" value={stats.aguardando} color="text-amber-500" />
+            <Stat label="Em andamento" value={stats.emAndamento} color="text-blue-500" />
+          </div>
 
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              size="icon"
-              aria-label="Mês anterior"
-              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
+              variant={activeFiltersCount > 0 ? "default" : "outline"}
               size="sm"
-              onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "rounded-xl font-bold transition-all",
+                activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
+              )}
             >
-              Hoje
+              <Filter className="mr-2 h-4 w-4" />
+              Filtros
+              {activeFiltersCount > 0 && (
+                <span className="ml-2 rounded-full bg-primary-foreground text-primary px-1.5 py-0.5 text-[10px] font-black">
+                  {activeFiltersCount}
+                </span>
+              )}
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Próximo mês"
-              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+
+            <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl">
+              {["Semana", "Dia", "Mês", "Lista"].map((m) => (
+                <Button
+                  key={m}
+                  variant={viewMode === m ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode(m as any)}
+                  className="rounded-lg text-xs font-bold"
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1 ml-2">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Mês anterior"
+                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+              >
+                Hoje
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Próximo mês"
+                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       }
