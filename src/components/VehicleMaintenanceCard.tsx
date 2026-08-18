@@ -10,7 +10,7 @@ interface MaintenanceItemProps {
 }
 
 function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemProps) {
-  if (!nextKm || !lastKm) {
+  if (!nextKm) {
     return (
       <div className="space-y-1.5 opacity-60">
         <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -22,13 +22,22 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
     );
   }
 
-  const totalInterval = nextKm - lastKm;
-  const elapsed = currentKm - lastKm;
-  const progress = Math.min(Math.max((elapsed / Math.max(1, totalInterval)) * 100, 0), 100);
+  // Se não houver lastKm, assumimos que o intervalo começa no odometer atual (para evitar divisão por zero ou barras negativas)
+  const effectiveLastKm = lastKm ?? currentKm;
+  const totalInterval = Math.max(1, nextKm - effectiveLastKm);
+  const elapsed = currentKm - effectiveLastKm;
+  
+  // Se não houver histórico anterior, mostramos "Sem histórico" mas permitimos ver o KM restante
+  const hasHistory = lastKm !== null;
+  
+  const progress = hasHistory 
+    ? Math.min(Math.max((elapsed / totalInterval) * 100, 0), 100)
+    : 0;
+
   const remaining = Math.max(nextKm - currentKm, 0);
 
   let status: "normal" | "warning" | "urgent" | "expired" = "normal";
-  if (remaining <= 0) status = "expired";
+  if (currentKm >= nextKm) status = "expired";
   else if (remaining <= 500) status = "urgent";
   else if (remaining <= 1500) status = "warning";
 
@@ -59,10 +68,21 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
         <span className="text-muted-foreground">{label}</span>
         <div className={cn("flex items-center gap-1", textColors[status])}>
           {icons[status]}
-          <span>{remaining > 0 ? `${remaining.toLocaleString()} km resta(m)` : "MANUTENÇÃO VENCIDA"}</span>
+          <span>
+            {currentKm >= nextKm 
+              ? `VENCIDA (${(currentKm - nextKm).toLocaleString()} km acima)` 
+              : `${remaining.toLocaleString()} km resta(m)`}
+          </span>
         </div>
       </div>
-      <Progress value={progress} className="h-2" indicatorClassName={statusColors[status]} />
+      <div className="relative">
+        <Progress value={progress} className="h-2" indicatorClassName={statusColors[status]} />
+        {!hasHistory && (
+          <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold uppercase tracking-tighter text-muted-foreground/50">
+            Sem histórico anterior
+          </span>
+        )}
+      </div>
     </div>
   );
 }

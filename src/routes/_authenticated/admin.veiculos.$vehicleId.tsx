@@ -248,14 +248,14 @@ function FichaVeiculo() {
       if (error) throw error;
 
       // Add to history
-      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_km', '');
+      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_change_km', '');
       if (maintenanceType) {
         await supabase.from("maintenance_history").insert({
           vehicle_id: vehicleId,
           maintenance_type: maintenanceType.toUpperCase(),
           performed_at_km: vehicle?.odometer ?? 0,
           performed_date: todayInput(),
-          next_planned_km: payload[`next_${maintenanceType}_km`],
+          next_planned_km: payload[`next_${maintenanceType}_change_km`],
           notes: payload[`${maintenanceType}_notes`] || 'Atualização manual da próxima manutenção',
         });
       }
@@ -570,25 +570,26 @@ function FichaVeiculo() {
                           <span className="text-muted-foreground">Progresso</span>
                           <span className={cn(
                             "font-bold",
-                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) ? "text-destructive" :
-                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 ? "text-warning" : "text-success"
+                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "text-destructive" :
+                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 && (item.nextKm ?? 0) > 0 ? "text-warning" : "text-success"
                           )}>
-                            {(item.nextKm ?? 0) - (vehicle?.odometer ?? 0) > 0 
-                              ? `${((item.nextKm ?? 0) - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`
-                              : "MANUTENÇÃO VENCIDA"}
+                            {!(item.nextKm) || (item.nextKm === 0) ? "Não configurado" :
+                             (vehicle?.odometer ?? 0) >= item.nextKm
+                              ? `VENCIDA (${((vehicle?.odometer ?? 0) - item.nextKm).toLocaleString()} km acima)`
+                              : `${(item.nextKm - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`}
                           </span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
                           <div 
                             className={cn(
                               "h-full transition-all",
-                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) ? "bg-destructive animate-pulse" :
-                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 ? "bg-warning" : "bg-success"
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "bg-destructive animate-pulse" :
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 && (item.nextKm ?? 0) > 0 ? "bg-warning" : "bg-success"
                             )}
                             style={{ 
                               width: `${Math.max(0, Math.min(100, 
-                                item.lastKm && item.nextKm && item.nextKm > item.lastKm
-                                  ? ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) * 100
+                                item.nextKm && item.nextKm > (item.lastKm ?? vehicle.odometer)
+                                  ? ((vehicle.odometer - (item.lastKm ?? vehicle.odometer)) / (item.nextKm - (item.lastKm ?? vehicle.odometer))) * 100
                                   : 0
                               ))}%` 
                             }}
