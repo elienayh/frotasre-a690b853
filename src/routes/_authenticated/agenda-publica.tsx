@@ -168,101 +168,113 @@ function CalendarioViagens() {
         </div>
       }
     >
-      <div className="grid gap-5 lg:grid-cols-[16rem_1fr]">
-        <aside className="space-y-4 rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <p className="flex items-center gap-2 font-display text-sm font-semibold">
-              <Filter className="h-4 w-4" /> Filtros
-            </p>
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Limpar
-            </Button>
-          </div>
+      <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
+        <aside className="space-y-6">
+          <Card className="p-6 border-none shadow-xl bg-card/60 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <p className="flex items-center gap-2 font-display text-base font-bold text-foreground">
+                <Filter className="h-4 w-4 text-primary" /> Filtros
+              </p>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs font-bold text-muted-foreground hover:text-primary">
+                Limpar
+              </Button>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="f-destino">Destino</Label>
-            <Input
-              id="f-destino"
-              value={fDestino}
-              onChange={(e) => setFDestino(e.target.value)}
-              placeholder="Escola, órgão…"
-            />
-          </div>
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="f-destino" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Destino</Label>
+                <Input
+                  id="f-destino"
+                  value={fDestino}
+                  onChange={(e) => setFDestino(e.target.value)}
+                  placeholder="Escola, órgão…"
+                  className="rounded-xl border-border/40 bg-background/50"
+                />
+              </div>
 
-          <FilterSelect
-            id="f-cidade"
-            label="Cidade"
-            value={fCidade}
-            onChange={setFCidade}
-            options={cities.map((c) => ({ value: c.id, label: c.name }))}
-          />
-          <FilterSelect
-            id="f-setor"
-            label="Setor"
-            value={fSetor}
-            onChange={setFSetor}
-            options={SECTORS.map((s) => ({ value: s, label: s }))}
-          />
-          <FilterSelect
-            id="f-veiculo"
-            label="Veículo"
-            value={fVeiculo}
-            onChange={setFVeiculo}
-            options={vehicles.map((v) => ({
-              value: v.id,
-              label: `${v.manufacturer} ${v.model} — ${v.plate}`,
-            }))}
-          />
-          <FilterSelect
-            id="f-status"
-            label="Status"
-            value={fStatus}
-            onChange={setFStatus}
-            options={STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABEL[s] ?? s }))}
-          />
+              <FilterSelect
+                id="f-cidade"
+                label="Cidade"
+                value={fCidade}
+                onChange={setFCidade}
+                options={cities.map((c) => ({ value: c.id, label: c.name }))}
+              />
+              <FilterSelect
+                id="f-setor"
+                label="Setor"
+                value={fSetor}
+                onChange={setFSetor}
+                options={SECTORS.map((s) => ({ value: s, label: s }))}
+              />
+              <FilterSelect
+                id="f-veiculo"
+                label="Veículo"
+                value={fVeiculo}
+                onChange={setFVeiculo}
+                options={vehicles.map((v) => ({
+                  value: v.id,
+                  label: `${v.manufacturer} ${v.model} — ${v.plate}`,
+                }))}
+              />
+              <FilterSelect
+                id="f-status"
+                label="Status"
+                value={fStatus}
+                onChange={setFStatus}
+                options={STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABEL[s] ?? s }))}
+              />
 
-          <div className="space-y-2">
-            <Label htmlFor="f-motorista">Motorista</Label>
-            <Input
-              id="f-motorista"
-              value={fMotorista}
-              onChange={(e) => setFMotorista(e.target.value)}
-              placeholder="Nome do condutor"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="f-motorista" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Motorista</Label>
+                <Input
+                  id="f-motorista"
+                  value={fMotorista}
+                  onChange={(e) => setFMotorista(e.target.value)}
+                  placeholder="Nome do condutor"
+                  className="rounded-xl border-border/40 bg-background/50"
+                />
+              </div>
 
-          <div className="space-y-2 border-t border-border pt-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Cores por setor
-            </p>
-            <ul className="space-y-1">
-              {SECTORS.map((s) => (
-                <li key={s} className="flex items-center gap-2 text-sm">
-                  <span className={cn("h-2.5 w-2.5 rounded-full", sectorColor(s).dot)} />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
+              <div className="space-y-3 border-t border-border/40 pt-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                  Legenda de Setores
+                </p>
+                <ul className="space-y-2">
+                  {SECTORS.map((s) => (
+                    <li key={s} className="flex items-center gap-3 text-sm font-medium text-foreground/80">
+                      <span className={cn("h-3 w-3 rounded-full shadow-sm", sectorColor(s).dot)} />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </Card>
         </aside>
 
-        <section className="min-w-0">
-          <div className="mb-3 flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl font-semibold">
-              {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-            </h2>
-            <span className="text-sm text-muted-foreground">
-              {isLoading ? "carregando…" : `${filtered.length} viagem(ns)`}
-            </span>
+        <section className="min-w-0 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <CalendarDays className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-display text-2xl font-black tracking-tight text-foreground">
+                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
+                </h2>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  {isLoading ? "Sincronizando..." : `${filtered.length} solicitações encontradas`}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <div className="grid grid-cols-7 border-b border-border bg-muted/50">
+          <Card className="overflow-hidden border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl">
+            <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
               {WEEKDAYS.map((w) => (
                 <div
                   key={w}
-                  className="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  className="px-2 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70"
                 >
                   {w}
                 </div>
@@ -273,31 +285,37 @@ function CalendarioViagens() {
                 const key = dayKey(d);
                 const items = byDay.get(key) ?? [];
                 const outside = d.getMonth() !== cursor.getMonth();
+                const isToday = key === todayKey;
                 const expanded = expandedDay === key;
                 const shown = expanded ? items : items.slice(0, 3);
+                
                 return (
                   <div
                     key={key}
                     className={cn(
-                      "min-h-28 border-b border-r border-border p-1.5 last:border-r-0",
-                      outside && "bg-muted/30",
+                      "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-colors duration-200 group",
+                      outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
                     )}
                   >
-                    <div className="mb-1 flex items-center justify-between">
+                    <div className="mb-2 flex items-center justify-between">
                       <span
                         className={cn(
-                          "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-                          key === todayKey
-                            ? "bg-primary text-primary-foreground"
+                          "inline-flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black transition-all duration-300",
+                          isToday
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110"
                             : outside
-                              ? "text-muted-foreground/60"
-                              : "text-foreground",
+                              ? "text-muted-foreground/40"
+                              : "text-foreground group-hover:text-primary",
                         )}
                       >
                         {d.getDate()}
                       </span>
+                      {isToday && (
+                        <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
+                      )}
                     </div>
-                    <ul className="space-y-1">
+                    
+                    <ul className="space-y-1.5">
                       {shown.map((t) => {
                         const color = sectorColor(t.requester?.sector);
                         return (
@@ -306,21 +324,23 @@ function CalendarioViagens() {
                               type="button"
                               onClick={() => setTripId(t.id)}
                               className={cn(
-                                "w-full rounded border-l-2 px-1.5 py-1 text-left text-[11px] leading-tight transition-opacity hover:opacity-80",
+                                "w-full rounded-xl border px-2 py-2 text-left text-[10px] leading-tight transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
                                 color.chip,
                                 color.border,
+                                "bg-opacity-90 backdrop-blur-sm"
                               )}
                             >
-                              <span className={cn("block font-semibold", color.text)}>
-                                {fmtTime(t.departure_at)} {tripCity(t)}
+                              <div className="flex items-center justify-between mb-1">
+                                <span className={cn("font-black tracking-tight", color.text)}>
+                                  {fmtTime(t.departure_at)}
+                                </span>
+                                <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
+                              </div>
+                              <span className={cn("block font-extrabold truncate", color.text)}>
+                                {tripCity(t)}
                               </span>
-                              <span className="block truncate text-muted-foreground">
-                                {t.vehicles
-                                  ? `${t.vehicles.manufacturer} ${t.vehicles.model}`
-                                  : "Veículo a definir"}
-                              </span>
-                              <span className="block truncate text-muted-foreground">
-                                {tripDriverName(t)}
+                              <span className="block truncate opacity-70 font-medium text-[9px] mt-0.5">
+                                {t.vehicles?.plate ?? "Sem veículo"}
                               </span>
                             </button>
                           </li>
@@ -331,9 +351,9 @@ function CalendarioViagens() {
                           <button
                             type="button"
                             onClick={() => setExpandedDay(expanded ? null : key)}
-                            className="w-full rounded px-1.5 py-0.5 text-left text-[11px] font-semibold text-primary hover:underline"
+                            className="w-full rounded-xl px-2 py-1.5 text-center text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                           >
-                            {expanded ? "mostrar menos" : `+${items.length - 3} viagens`}
+                            {expanded ? "ver menos" : `+${items.length - 3} itens`}
                           </button>
                         </li>
                       ) : null}
@@ -342,12 +362,48 @@ function CalendarioViagens() {
                 );
               })}
             </div>
-          </div>
+          </Card>
         </section>
       </div>
 
       <TripDrawer tripId={tripId} onClose={() => setTripId(null)} />
     </AppShell>
+  );
+}
+
+function FilterSelect({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={id} className="rounded-xl border-border/40 bg-background/50">
+          <SelectValue placeholder="Todos" />
+        </SelectTrigger>
+        <SelectContent className="rounded-2xl border-border/40 backdrop-blur-xl">
+          <SelectItem value={ALL} className="rounded-xl">Todos</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value} className="rounded-xl">
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
   );
 }
 
