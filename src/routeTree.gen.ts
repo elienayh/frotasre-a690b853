@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
 import { Route as AuthenticatedOrganizacaoRouteImport } from './routes/_authenticated/organizacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
 import { Route as AuthenticatedAdminMotoristasIndexRouteImport } from './routes/_authenticated/admin.motoristas.index'
 import { Route as AuthenticatedAdminMotoristasDriverIdRouteImport } from './routes/_authenticated/admin.motoristas.$driverId'
+import { Route as AuthenticatedAdminUsuariosUserIdRouteImport } from './routes/_authenticated/admin.usuarios.$userId'
 import { Route as AuthenticatedAdminVeiculosIndexRouteImport } from './routes/_authenticated/admin.veiculos.index'
 import { Route as AuthenticatedAdminVeiculosVehicleIdRouteImport } from './routes/_authenticated/admin.veiculos.$vehicleId'
 import { Route as AuthenticatedSolicitacoesTripIdEditarRouteImport } from './routes/_authenticated/solicitacoes.$tripId.editar'
@@ -42,6 +44,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAgendaPublicaRoute =
@@ -125,6 +132,12 @@ const AuthenticatedAdminMotoristasDriverIdRoute =
     path: '/admin/motoristas/$driverId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminUsuariosUserIdRoute =
+  AuthenticatedAdminUsuariosUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedAdminUsuariosRoute,
+  } as any)
 const AuthenticatedAdminVeiculosIndexRoute =
   AuthenticatedAdminVeiculosIndexRouteImport.update({
     id: '/admin/veiculos/',
@@ -147,6 +160,7 @@ const AuthenticatedSolicitacoesTripIdEditarRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -156,10 +170,11 @@ export interface FileRoutesByFullPath {
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
-  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRouteWithChildren
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
   '/admin/motoristas/$driverId': typeof AuthenticatedAdminMotoristasDriverIdRoute
+  '/admin/usuarios/$userId': typeof AuthenticatedAdminUsuariosUserIdRoute
   '/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
   '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
   '/admin/motoristas/': typeof AuthenticatedAdminMotoristasIndexRoute
@@ -168,6 +183,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -177,10 +193,11 @@ export interface FileRoutesByTo {
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
-  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRouteWithChildren
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
   '/admin/motoristas/$driverId': typeof AuthenticatedAdminMotoristasDriverIdRoute
+  '/admin/usuarios/$userId': typeof AuthenticatedAdminUsuariosUserIdRoute
   '/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
   '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
   '/admin/motoristas': typeof AuthenticatedAdminMotoristasIndexRoute
@@ -191,6 +208,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/_authenticated/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
@@ -200,10 +218,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/_authenticated/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
-  '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRouteWithChildren
   '/_authenticated/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/_authenticated/solicitacoes/': typeof AuthenticatedSolicitacoesIndexRoute
   '/_authenticated/admin/motoristas/$driverId': typeof AuthenticatedAdminMotoristasDriverIdRoute
+  '/_authenticated/admin/usuarios/$userId': typeof AuthenticatedAdminUsuariosUserIdRoute
   '/_authenticated/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
   '/_authenticated/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
   '/_authenticated/admin/motoristas/': typeof AuthenticatedAdminMotoristasIndexRoute
@@ -214,6 +233,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/redefinir-senha'
     | '/agenda-publica'
     | '/organizacao'
     | '/painel'
@@ -227,6 +247,7 @@ export interface FileRouteTypes {
     | '/solicitacoes/nova'
     | '/solicitacoes/'
     | '/admin/motoristas/$driverId'
+    | '/admin/usuarios/$userId'
     | '/admin/veiculos/$vehicleId'
     | '/solicitacoes/$tripId/editar'
     | '/admin/motoristas/'
@@ -235,6 +256,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/redefinir-senha'
     | '/agenda-publica'
     | '/organizacao'
     | '/painel'
@@ -248,6 +270,7 @@ export interface FileRouteTypes {
     | '/solicitacoes/nova'
     | '/solicitacoes'
     | '/admin/motoristas/$driverId'
+    | '/admin/usuarios/$userId'
     | '/admin/veiculos/$vehicleId'
     | '/solicitacoes/$tripId/editar'
     | '/admin/motoristas'
@@ -257,6 +280,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/redefinir-senha'
     | '/_authenticated/agenda-publica'
     | '/_authenticated/organizacao'
     | '/_authenticated/painel'
@@ -270,6 +294,7 @@ export interface FileRouteTypes {
     | '/_authenticated/solicitacoes/nova'
     | '/_authenticated/solicitacoes/'
     | '/_authenticated/admin/motoristas/$driverId'
+    | '/_authenticated/admin/usuarios/$userId'
     | '/_authenticated/admin/veiculos/$vehicleId'
     | '/_authenticated/solicitacoes/$tripId/editar'
     | '/_authenticated/admin/motoristas/'
@@ -280,6 +305,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -303,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/agenda-publica': {
@@ -403,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMotoristasDriverIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/usuarios/$userId': {
+      id: '/_authenticated/admin/usuarios/$userId'
+      path: '/$userId'
+      fullPath: '/admin/usuarios/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdminUsuariosRoute
+    }
     '/_authenticated/admin/veiculos/': {
       id: '/_authenticated/admin/veiculos/'
       path: '/admin/veiculos'
@@ -427,6 +467,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminUsuariosRouteChildren {
+  AuthenticatedAdminUsuariosUserIdRoute: typeof AuthenticatedAdminUsuariosUserIdRoute
+}
+
+const AuthenticatedAdminUsuariosRouteChildren: AuthenticatedAdminUsuariosRouteChildren =
+  {
+    AuthenticatedAdminUsuariosUserIdRoute:
+      AuthenticatedAdminUsuariosUserIdRoute,
+  }
+
+const AuthenticatedAdminUsuariosRouteWithChildren =
+  AuthenticatedAdminUsuariosRoute._addFileChildren(
+    AuthenticatedAdminUsuariosRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
   AuthenticatedOrganizacaoRoute: typeof AuthenticatedOrganizacaoRoute
@@ -437,7 +492,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDestinosRoute: typeof AuthenticatedAdminDestinosRoute
   AuthenticatedAdminDisponibilidadeRoute: typeof AuthenticatedAdminDisponibilidadeRoute
   AuthenticatedAdminSolicitacoesRoute: typeof AuthenticatedAdminSolicitacoesRoute
-  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
+  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRouteWithChildren
   AuthenticatedSolicitacoesNovaRoute: typeof AuthenticatedSolicitacoesNovaRoute
   AuthenticatedSolicitacoesIndexRoute: typeof AuthenticatedSolicitacoesIndexRoute
   AuthenticatedAdminMotoristasDriverIdRoute: typeof AuthenticatedAdminMotoristasDriverIdRoute
@@ -458,7 +513,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDisponibilidadeRoute:
     AuthenticatedAdminDisponibilidadeRoute,
   AuthenticatedAdminSolicitacoesRoute: AuthenticatedAdminSolicitacoesRoute,
-  AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
+  AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRouteWithChildren,
   AuthenticatedSolicitacoesNovaRoute: AuthenticatedSolicitacoesNovaRoute,
   AuthenticatedSolicitacoesIndexRoute: AuthenticatedSolicitacoesIndexRoute,
   AuthenticatedAdminMotoristasDriverIdRoute:
@@ -479,6 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
