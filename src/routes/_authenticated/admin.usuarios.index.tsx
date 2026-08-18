@@ -107,7 +107,11 @@ function UsuariosList() {
 
   const roleOf = (id: string) => roles.filter((r) => r.user_id === id).map((r) => r.role);
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length - 1; // -1 for 'active' being default
+  const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'active' && value === true) return false; // Default
+    if (key === 'inactive' && value === false) return false; // Default
+    return !!value;
+  }).length;
 
   const filteredProfiles = useMemo(() => {
     return profiles.filter((p) => {
