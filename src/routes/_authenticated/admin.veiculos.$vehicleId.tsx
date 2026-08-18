@@ -570,12 +570,13 @@ function FichaVeiculo() {
                           <span className="text-muted-foreground">Progresso</span>
                           <span className={cn(
                             "font-bold",
-                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) ? "text-destructive" :
-                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 ? "text-warning" : "text-success"
+                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "text-destructive" :
+                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 && (item.nextKm ?? 0) > 0 ? "text-warning" : "text-success"
                           )}>
-                            {(item.nextKm ?? 0) - (vehicle?.odometer ?? 0) > 0 
-                              ? `${((item.nextKm ?? 0) - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`
-                              : "MANUTENÇÃO VENCIDA"}
+                            {!(item.nextKm) || (item.nextKm === 0) ? "Não configurado" :
+                             (vehicle?.odometer ?? 0) >= item.nextKm
+                              ? `VENCIDA (${((vehicle?.odometer ?? 0) - item.nextKm).toLocaleString()} km acima)`
+                              : `${(item.nextKm - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`}
                           </span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
