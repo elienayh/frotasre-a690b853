@@ -230,38 +230,46 @@ function Usuarios() {
 
   return (
     <AppShell
-      title="Usuários"
-      description="Acesso, setor, coordenação e viagens de cada servidor cadastrado."
+      title="Gestão de Usuários"
+      description="Controle de acesso, coordenação de setores e credenciamento de condutores."
     >
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <div className="grid gap-4">
+           {[1, 2, 3].map(i => <div key={i} className="h-24 w-full rounded-3xl bg-card/60 animate-pulse" />)}
+        </div>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid gap-4">
           {profiles.map((p) => (
-            <li key={p.id} className="rounded-lg border border-border bg-card p-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="min-w-0">
+            <li key={p.id} className="group overflow-hidden rounded-[2rem] border border-border/40 bg-card/60 p-6 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium">{p.full_name || "Sem nome"}</p>
-                    <Badge variant="secondary">{p.sector ?? "Sem setor"}</Badge>
-                    {p.is_coordinator ? <Badge>Coordenador</Badge> : null}
-                    {p.is_sre_driver ? <Badge variant="outline">Motorista SRE</Badge> : null}
-                    {roleOf(p.id).includes("super_admin") ? <Badge>Super Admin</Badge> : null}
+                    <p className="font-display text-lg font-black tracking-tight text-foreground uppercase">{p.full_name || "Sem nome"}</p>
+                    <Badge variant="secondary" className="rounded-lg font-bold uppercase tracking-widest text-[9px]">{p.sector ?? "Sem setor"}</Badge>
+                    {p.is_coordinator ? <Badge className="rounded-lg font-bold uppercase tracking-widest text-[9px] bg-primary/10 text-primary border-primary/20">Coordenador</Badge> : null}
+                    {p.is_sre_driver ? <Badge variant="outline" className="rounded-lg font-bold uppercase tracking-widest text-[9px] border-success/30 text-success bg-success/5">Motorista SRE</Badge> : null}
+                    {roleOf(p.id).includes("super_admin") ? <Badge className="rounded-lg font-bold uppercase tracking-widest text-[9px] bg-destructive/10 text-destructive border-destructive/20">Super Admin</Badge> : null}
                     {roleOf(p.id).includes("admin") ? (
-                      <Badge variant="secondary">Administrador</Badge>
+                      <Badge variant="secondary" className="rounded-lg font-bold uppercase tracking-widest text-[9px]">Administrador</Badge>
                     ) : null}
                     {p.is_sre_driver && p.cnh_expires_at ? (
-                      <Badge variant="outline" className={cnhStatus(p.cnh_expires_at).tone}>
-                        {cnhStatus(p.cnh_expires_at).label}
+                      <Badge variant="outline" className={cn("rounded-lg font-bold uppercase tracking-widest text-[9px]", cnhStatus(p.cnh_expires_at).tone)}>
+                        CNH: {cnhStatus(p.cnh_expires_at).label}
                       </Badge>
                     ) : null}
-                    {!p.is_active ? <Badge variant="destructive">Inativo</Badge> : null}
+                    {!p.is_active ? <Badge variant="destructive" className="rounded-lg font-bold uppercase tracking-widest text-[9px]">Inativo</Badge> : null}
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {p.registration ? `Matrícula ${p.registration}` : "Matrícula não informada"}
-                    {p.phone ? ` · ${p.phone}` : ""}
-                  </p>
+                  <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                    <span>{p.registration ? `MATRÍCULA: ${p.registration}` : "SEM MATRÍCULA"}</span>
+                    {p.phone && (
+                      <>
+                        <div className="h-1 w-1 rounded-full bg-border" />
+                        <span>{p.phone}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
+
 
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
