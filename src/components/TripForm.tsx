@@ -489,8 +489,6 @@ export function TripForm({ trip }: TripFormProps) {
             </div>
           </CardContent>
         </Card>
-          </CardContent>
-        </Card>
       </div>
 
       <aside className="space-y-4">
