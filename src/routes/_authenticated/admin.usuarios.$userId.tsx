@@ -154,8 +154,21 @@ function UsuarioEdicao() {
     }
   };
 
-  if (isLoading) return <AppShell title="Carregando..."><p>Carregando dados do usuário...</p></AppShell>;
-  if (!profile) return <AppShell title="Não encontrado"><p>Usuário não localizado.</p></AppShell>;
+  if (isLoading) return <AppShell title="Carregando..." description="Buscando dados no servidor..."><div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></AppShell>;
+  if (!profile) return (
+    <AppShell title="Não encontrado" description="Usuário não localizado no sistema.">
+      <div className="flex flex-col items-center justify-center py-20 text-center bg-card/20 rounded-[2rem] border border-dashed border-border/60">
+        <h3 className="font-display text-lg font-bold text-foreground uppercase tracking-tight">Usuário não encontrado</h3>
+        <p className="text-sm text-muted-foreground mt-1 mb-6">O ID informado não corresponde a nenhum perfil ativo.</p>
+        <Button variant="outline" asChild className="rounded-xl">
+          <Link to="/admin/usuarios">
+            <ChevronLeft className="mr-2 h-4 w-4" /> Voltar para usuários
+          </Link>
+        </Button>
+      </div>
+    </AppShell>
+  );
+
 
   return (
     <AppShell 
