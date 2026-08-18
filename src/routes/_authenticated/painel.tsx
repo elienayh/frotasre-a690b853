@@ -151,7 +151,7 @@ function PainelPage() {
             icon={<CalendarRange className="h-4 w-4 text-primary" />}
             label="Agenda do dia"
             value={fleetCount("EM_VIAGEM")}
-            to="/admin/agenda"
+            to="/admin/disponibilidade"
           />
         </section>
       ) : (

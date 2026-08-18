@@ -359,7 +359,7 @@ function Veiculos() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/admin/agenda">
+                    <Link to="/admin/disponibilidade">
                       <CalendarRange className="mr-1 h-4 w-4" /> Agenda
                     </Link>
                   </Button>
