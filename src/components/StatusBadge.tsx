@@ -17,12 +17,14 @@ export function StatusBadge({ status, kind = "trip", className }: StatusBadgePro
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
+        "inline-flex items-center rounded-xl border px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 shadow-sm",
         statusTone(status),
         className,
       )}
     >
+      <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-70 animate-pulse" />
       {label}
     </span>
   );
 }
+
