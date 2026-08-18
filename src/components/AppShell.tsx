@@ -28,6 +28,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { usePendingCounts } from "@/hooks/usePendingCounts";
+import { Badge } from "@/components/ui/badge";
 
 interface NavItem {
   to: string;
