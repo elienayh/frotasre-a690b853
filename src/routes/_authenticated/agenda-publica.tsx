@@ -564,18 +564,4 @@ function FilterSelect({
   );
 }
 
-          <SelectValue placeholder="Todos" />
-        </SelectTrigger>
-        <SelectContent className="rounded-2xl border-border/40 backdrop-blur-xl">
-          <SelectItem value={ALL} className="rounded-xl">Todos</SelectItem>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value} className="rounded-xl">
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
 
