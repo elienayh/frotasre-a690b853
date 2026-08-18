@@ -114,6 +114,9 @@ function UsuariosList() {
   }).length;
 
   const filteredProfiles = useMemo(() => {
+    // If we're still loading, don't filter yet to avoid showing "No users found"
+    if (isLoading) return [];
+    
     return profiles.filter((p) => {
       const pRoles = roleOf(p.id);
       const email = emails[p.id]?.toLowerCase() || "";
@@ -134,7 +137,7 @@ function UsuariosList() {
 
       return matchesSearch && matchesFilters;
     });
-  }, [profiles, roles, emails, searchTerm, filters]);
+  }, [profiles, roles, emails, searchTerm, filters, isLoading]);
 
   const isLoading = profilesLoading || rolesLoading;
 
