@@ -148,20 +148,22 @@ function AdminSolicitacoes() {
     // Apply search
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      combined = combined.filter(item => {
-        if ('destination_text' in item) { // TripRow
+      combined = combined.filter((item) => {
+        if ("destination_text" in item) {
+          const trip = item as TripRow;
           return (
-            item.code?.toString().includes(term) ||
-            item.destination_text?.toLowerCase().includes(term) ||
-            item.requester_name?.toLowerCase().includes(term) ||
-            item.purpose?.toLowerCase().includes(term)
+            trip.code?.toString().includes(term) ||
+            trip.destination_text?.toLowerCase().includes(term) ||
+            trip.requester_name?.toLowerCase().includes(term) ||
+            trip.purpose?.toLowerCase().includes(term)
           );
-        } else { // RideRow
+        } else {
+          const ride = item as RideRow;
           return (
-            item.trip?.code?.toString().includes(term) ||
-            item.trip?.destination_text?.toLowerCase().includes(term) ||
-            item.requester?.full_name?.toLowerCase().includes(term) ||
-            item.reason?.toLowerCase().includes(term)
+            ride.trip?.code?.toString().includes(term) ||
+            ride.trip?.destination_text?.toLowerCase().includes(term) ||
+            ride.requester?.full_name?.toLowerCase().includes(term) ||
+            ride.reason?.toLowerCase().includes(term)
           );
         }
       });
@@ -169,6 +171,7 @@ function AdminSolicitacoes() {
 
     return combined;
   }, [activeFilter, trips, rides, searchTerm]);
+
 
   // Counts for chips
   const counts = useMemo(() => {
