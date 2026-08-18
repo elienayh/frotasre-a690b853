@@ -103,7 +103,7 @@ const vehicleSchema = z.object({
 function Veiculos() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const search = Route.useSearch() as { filter?: string };
+  const search = Route.useSearch() as { filter?: string; pending?: string };
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<VehicleRow | null>(null);
@@ -294,6 +294,8 @@ function Veiculos() {
   }
 
   const filteredVehicles = useMemo(() => {
+    if (isLoading) return [];
+    
     return vehicles.filter(v => {
       const matchesSearch = 
         v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -301,13 +303,16 @@ function Veiculos() {
         v.model.toLowerCase().includes(searchTerm.toLowerCase());
       
       const maintenanceStatus = (v as any).maintenance_status;
-      const matchesFilter = search?.filter === 'pending' 
+      // Explicitly check for 'pending' or 'true' to support both types of URL params
+      const isPendingRequested = search?.filter === 'pending' || search?.pending === 'true';
+      
+      const matchesFilter = isPendingRequested
         ? (maintenanceStatus === 'VENCIDA' || maintenanceStatus === 'CRÍTICO')
         : true;
 
       return matchesSearch && matchesFilter;
     });
-  }, [vehicles, searchTerm, search?.filter]);
+  }, [vehicles, searchTerm, search?.filter, search?.pending, isLoading]);
 
   return (
     <AppShell
@@ -329,9 +334,14 @@ function Veiculos() {
     >
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
-      ) : (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="mt-4 text-sm font-medium text-muted-foreground">Carregando veículos...</p>
+        </div>
+      ) : filteredVehicles.length > 0 ? (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {/* ... existing vehicle cards mapping ... */}
+
           {filteredVehicles.map((v) => {
             const status = statusByVehicle.get(v.id);
             const block = blockByVehicle.get(v.id);
@@ -461,6 +471,28 @@ function Veiculos() {
             );
           })}
         </ul>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="rounded-full bg-muted p-4 mb-4">
+            <CarFront className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold">Nenhum veículo encontrado</h3>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+            Não encontramos veículos cadastrados ou correspondentes aos filtros aplicados.
+          </p>
+          {(searchTerm || search?.filter || search?.pending) && (
+            <Button 
+              variant="outline" 
+              className="mt-6 rounded-xl"
+              onClick={() => {
+                setSearchTerm("");
+                navigate({ to: "/admin/veiculos", search: {} });
+              }}
+            >
+              Limpar busca e filtros
+            </Button>
+          )}
+        </div>
       )}
 
       <Dialog
