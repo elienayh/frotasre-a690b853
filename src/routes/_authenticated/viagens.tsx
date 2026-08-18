@@ -1,17 +1,10 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Search, 
-  Filter, 
   Plus, 
-  MapPin, 
   Calendar, 
-  Clock, 
-  Users, 
-  Car, 
-  User, 
-  ChevronRight,
-  ClipboardCheck,
+  ClipboardCheck, 
   ClipboardList,
   Clock3
 } from "lucide-react";
@@ -21,16 +14,14 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
-import { StatusBadge } from "@/components/StatusBadge";
 import { TripDrawer } from "@/components/TripDrawer";
+import { TripCard } from "@/components/TripCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { fmtDate, fmtTime } from "@/lib/frota";
 import { cn } from "@/lib/utils";
-import { sectorColor } from "@/lib/setores";
+
 
 export const Route = createFileRoute("/_authenticated/viagens")({
   component: MinhasViagens,
