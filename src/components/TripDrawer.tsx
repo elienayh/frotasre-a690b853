@@ -233,6 +233,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   </p>
                 </div>
 
+
                 <div className="space-y-3">
                   <h3 className="font-display text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-1.5">
                     Controle de Quilometragem
