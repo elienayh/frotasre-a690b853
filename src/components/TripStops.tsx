@@ -159,6 +159,36 @@ export function TripStops({ value, onChange }: TripStopsProps) {
                   onCustom={(text) => update(index, { destinationId: null, placeText: text })}
                 />
               </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor={`driver-${stop.key}`}>Motorista</Label>
+                <ComboBox
+                  id={`driver-${stop.key}`}
+                  options={[
+                    { value: "DAFI", label: "DAFI DEFINIR" },
+                    ...(profile?.is_driver_certified
+                      ? [{ value: user?.id || "", label: `EU — ${profile.full_name}` }]
+                      : []),
+                    ...people
+                      .filter((p) => p.is_driver_certified && p.id !== user?.id)
+                      .map((p) => ({
+                        value: p.id,
+                        label: p.full_name,
+                        hint: p.sector || undefined,
+                      })),
+                  ]}
+                  value={stop.driverUserId ?? "DAFI"}
+                  onSelect={(option) =>
+                    update(index, { driverUserId: option.value === "DAFI" ? null : option.value })
+                  }
+                  placeholder="Selecione o motorista"
+                  searchPlaceholder="Pesquisar motorista…"
+                  emptyText="Nenhum motorista credenciado encontrado."
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Selecione um motorista credenciado ou deixe a DAFI definir.
+                </p>
+              </div>
             </div>
           </div>
         );

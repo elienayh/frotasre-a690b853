@@ -100,6 +100,7 @@ export function TripForm({ trip }: TripFormProps) {
           cityText: s.city_text,
           destinationId: s.destination_id,
           placeText: s.place_text,
+          driverUserId: s.driver_user_id,
         })),
       );
     } else if (savedStops) {
@@ -110,6 +111,7 @@ export function TripForm({ trip }: TripFormProps) {
           cityText: trip.city_text ?? null,
           destinationId: trip.destination_id ?? null,
           placeText: trip.destination_id ? null : (trip.destination_text ?? null),
+          driverUserId: null,
         },
       ]);
     }
@@ -190,8 +192,7 @@ export function TripForm({ trip }: TripFormProps) {
       city_text: first.cityText,
       destination_id: first.destinationId,
       destination_text: summary.slice(0, 400),
-      // O condutor deixa de ser escolhido na solicitação: a DAFI define por destino.
-      requested_driver_id: null,
+      requested_driver_id: first.driverUserId,
       suggested_driver: null,
       purpose: review.purpose,
       passengers: review.passengers,
@@ -228,6 +229,7 @@ export function TripForm({ trip }: TripFormProps) {
             city_text: stop.cityText,
             destination_id: stop.destinationId,
             place_text: stop.placeText,
+            driver_user_id: stop.driverUserId,
           })),
         );
         if (stopsError) throw new Error(stopsError.message);
@@ -306,7 +308,16 @@ export function TripForm({ trip }: TripFormProps) {
                 ))}
               </ol>
             </div>
-            <Row label="Motorista" value="DAFI DEFINIR" />
+            <Row
+              label="Motorista(s)"
+              value={
+                [...new Set(list.map((s) => s.driverUserId).filter(Boolean))].length > 0
+                  ? [...new Set(list.map((s) => s.driverUserId).filter(Boolean))]
+                      .map((id) => people.find((p) => p.id === id)?.full_name)
+                      .join(", ")
+                  : "DAFI DEFINIR"
+              }
+            />
             <Row label="Aceita caronas" value={review.allows_rides ? "Sim" : "Não"} />
             {review.requester_notes ? (
               <Row label="Observações" value={review.requester_notes} />
