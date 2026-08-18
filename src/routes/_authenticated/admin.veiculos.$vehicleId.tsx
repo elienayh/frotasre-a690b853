@@ -588,8 +588,8 @@ function FichaVeiculo() {
                             )}
                             style={{ 
                               width: `${Math.max(0, Math.min(100, 
-                                item.lastKm && item.nextKm && item.nextKm > item.lastKm
-                                  ? ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) * 100
+                                item.nextKm && item.nextKm > (item.lastKm ?? vehicle.odometer)
+                                  ? ((vehicle.odometer - (item.lastKm ?? vehicle.odometer)) / (item.nextKm - (item.lastKm ?? vehicle.odometer))) * 100
                                   : 0
                               ))}%` 
                             }}
