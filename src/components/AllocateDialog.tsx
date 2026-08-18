@@ -345,6 +345,29 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
             ) : null}
           </div>
 
+          {capacity != null ? (
+            <div
+              className={cn(
+                "rounded-md border p-3 text-xs",
+                overCapacity
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : "border-border bg-muted/40 text-muted-foreground",
+              )}
+            >
+              <p className="font-medium">
+                Lotação: capacidade {capacity} · motorista {driverSeats} · ocupantes {occupants} ·
+                total {totalSeats}
+              </p>
+              {overCapacity ? (
+                <p className="mt-1">
+                  {isSuperAdmin
+                    ? "Capacidade excedida — liberado apenas pela permissão de Super Admin."
+                    : "Capacidade excedida: a confirmação deste veículo está bloqueada."}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <Label htmlFor="admin_notes">Observações ao solicitante</Label>
             <Textarea id="admin_notes" name="admin_notes" rows={2} maxLength={400} />
@@ -355,7 +378,11 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           <Button variant="ghost" onClick={onClose} type="button">
             Fechar
           </Button>
-          <Button type="submit" form="allocate-form" disabled={approve.isPending || !vehicleId}>
+          <Button
+            type="submit"
+            form="allocate-form"
+            disabled={approve.isPending || !vehicleId || capacityBlocked}
+          >
             Aprovar viagem
           </Button>
         </DialogFooter>
@@ -363,3 +390,14 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     </Dialog>
   );
 }
+
+/** Par rótulo/valor da ficha de aprovação. */
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-medium">{value}</dd>
+    </div>
+  );
+}
+
