@@ -44,6 +44,7 @@ export interface TripFormProps {
 
 export function TripForm({ trip }: TripFormProps) {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/_authenticated/solicitacoes/nova" }) as any;
   const { user, profile } = useAuth();
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
@@ -124,8 +125,8 @@ export function TripForm({ trip }: TripFormProps) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const asDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const defaults = {
-    date: initialDate ? asDate(initialDate) : todayInput(),
-    return_date: initialReturn ? asDate(initialReturn) : todayInput(),
+    date: initialDate ? asDate(initialDate) : (search?.initialDate || todayInput()),
+    return_date: initialReturn ? asDate(initialReturn) : (search?.initialDate || todayInput()),
     departure: initialDate
       ? `${pad(initialDate.getHours())}:${pad(initialDate.getMinutes())}`
       : "08:00",

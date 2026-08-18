@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 
@@ -52,6 +52,7 @@ function dayKey(value: string | Date): string {
 
 function CalendarioViagens() {
   const today = new Date();
+  const navigate = useNavigate();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [tripId, setTripId] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
@@ -152,7 +153,7 @@ function CalendarioViagens() {
 
   return (
     <AppShell
-      title="Calendário de Viagens"
+      title="Cronograma"
       description="Agenda institucional da frota, por dia e por setor."
       actions={
         <div className="flex items-center gap-2">
@@ -329,9 +330,13 @@ function CalendarioViagens() {
                   <div
                     key={key}
                     className={cn(
-                      "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-colors duration-200 group",
+                      "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-colors duration-200 group cursor-pointer",
                       outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
                     )}
+                    onClick={() => {
+                      const isoDate = d.toISOString().split('T')[0];
+                      navigate({ to: "/solicitacoes/nova", search: { initialDate: isoDate } });
+                    }}
                   >
                     <div className="mb-2 flex items-center justify-between">
                       <span
@@ -358,7 +363,10 @@ function CalendarioViagens() {
                           <li key={t.id}>
                             <button
                               type="button"
-                              onClick={() => setTripId(t.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTripId(t.id);
+                              }}
                               className={cn(
                                 "w-full rounded-xl border px-2 py-2 text-left text-[10px] leading-tight transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
                                 color.chip,
@@ -387,7 +395,10 @@ function CalendarioViagens() {
                         <li>
                           <button
                             type="button"
-                            onClick={() => setExpandedDay(expanded ? null : key)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedDay(expanded ? null : key);
+                            }}
                             className="w-full rounded-xl px-2 py-1.5 text-center text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                           >
                             {expanded ? "ver menos" : `+${items.length - 3} itens`}

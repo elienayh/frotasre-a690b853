@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarRange,
@@ -33,6 +34,13 @@ export const Route = createFileRoute("/_authenticated/painel")({
 
 function PainelPage() {
   const { profile, isAdmin, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate({ to: "/viagens", replace: true });
+    }
+  }, [isAdmin, navigate]);
 
   const { data: myTrips = [] } = useQuery({
     queryKey: ["my-trips", user?.id],
