@@ -35,6 +35,13 @@ function AdminSolicitacoes() {
   const [decision, setDecision] = useState<Decision>(null);
   const [activeTab, setActiveTab] = useState(search?.tab || "pendentes");
 
+  // Sync tab with URL search parameter
+  useEffect(() => {
+    if (search?.tab && search.tab !== activeTab) {
+      setActiveTab(search.tab);
+    }
+  }, [search?.tab]);
+
   const { data: trips = [], isLoading } = useQuery({
     queryKey: ["admin-trips"],
     queryFn: async () => {
