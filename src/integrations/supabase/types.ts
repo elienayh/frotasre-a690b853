@@ -301,6 +301,57 @@ export type Database = {
           },
         ]
       }
+      maintenance_history: {
+        Row: {
+          created_at: string
+          id: string
+          maintenance_type: string
+          next_planned_km: number | null
+          notes: string | null
+          performed_at_km: number
+          performed_date: string
+          recorded_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          maintenance_type: string
+          next_planned_km?: number | null
+          notes?: string | null
+          performed_at_km: number
+          performed_date?: string
+          recorded_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          maintenance_type?: string
+          next_planned_km?: number | null
+          notes?: string | null
+          performed_at_km?: number
+          performed_date?: string
+          recorded_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_history_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_history_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -354,6 +405,61 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      odometer_history: {
+        Row: {
+          id: string
+          new_value: number
+          old_value: number | null
+          origin: string
+          recorded_at: string
+          recorded_by: string | null
+          trip_id: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          id?: string
+          new_value: number
+          old_value?: number | null
+          origin: string
+          recorded_at?: string
+          recorded_by?: string | null
+          trip_id?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          id?: string
+          new_value?: number
+          old_value?: number | null
+          origin?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          trip_id?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "odometer_history_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "odometer_history_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trip_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "odometer_history_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
@@ -915,6 +1021,8 @@ export type Database = {
           id: string
           needs_sre_driver: boolean
           occupants_names: string | null
+          odometer_end: number | null
+          odometer_start: number | null
           organized_at: string | null
           organized_by: string | null
           passengers: number
@@ -952,6 +1060,8 @@ export type Database = {
           id?: string
           needs_sre_driver?: boolean
           occupants_names?: string | null
+          odometer_end?: number | null
+          odometer_start?: number | null
           organized_at?: string | null
           organized_by?: string | null
           passengers?: number
@@ -989,6 +1099,8 @@ export type Database = {
           id?: string
           needs_sre_driver?: boolean
           occupants_names?: string | null
+          odometer_end?: number | null
+          odometer_start?: number | null
           organized_at?: string | null
           organized_by?: string | null
           passengers?: number
@@ -1257,9 +1369,17 @@ export type Database = {
           fuel: string | null
           id: string
           is_active: boolean
+          last_alignment_km: number | null
+          last_balancing_km: number | null
+          last_oil_change_km: number | null
+          last_tire_change_km: number | null
           manufacturer: string
           model: string
+          next_alignment_km: number | null
+          next_balancing_km: number | null
+          next_oil_change_km: number | null
           next_preventive_km: number | null
+          next_tire_change_km: number | null
           notes: string | null
           odometer: number
           photo_url: string | null
@@ -1277,9 +1397,17 @@ export type Database = {
           fuel?: string | null
           id?: string
           is_active?: boolean
+          last_alignment_km?: number | null
+          last_balancing_km?: number | null
+          last_oil_change_km?: number | null
+          last_tire_change_km?: number | null
           manufacturer: string
           model: string
+          next_alignment_km?: number | null
+          next_balancing_km?: number | null
+          next_oil_change_km?: number | null
           next_preventive_km?: number | null
+          next_tire_change_km?: number | null
           notes?: string | null
           odometer?: number
           photo_url?: string | null
@@ -1297,9 +1425,17 @@ export type Database = {
           fuel?: string | null
           id?: string
           is_active?: boolean
+          last_alignment_km?: number | null
+          last_balancing_km?: number | null
+          last_oil_change_km?: number | null
+          last_tire_change_km?: number | null
           manufacturer?: string
           model?: string
+          next_alignment_km?: number | null
+          next_balancing_km?: number | null
+          next_oil_change_km?: number | null
           next_preventive_km?: number | null
+          next_tire_change_km?: number | null
           notes?: string | null
           odometer?: number
           photo_url?: string | null

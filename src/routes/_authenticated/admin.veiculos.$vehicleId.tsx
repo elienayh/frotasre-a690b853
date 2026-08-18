@@ -1,32 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, TriangleAlert, Wrench, Fuel, Activity, History } from "lucide-react";
-import { toast } from "sonner";
-
-import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
-import { StatusBadge } from "@/components/StatusBadge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { createFileRoute } from '@tanstack/react-router'
 import {
   fmtDate,
   fmtDateTime,
@@ -40,6 +12,7 @@ import {
 } from "@/lib/frota";
 import { cn } from "@/lib/utils";
 import { AuditTimeline } from "@/components/AuditTimeline";
+import { VehicleMaintenanceCard } from "@/components/VehicleMaintenanceCard";
 
 export const Route = createFileRoute("/_authenticated/admin/veiculos/$vehicleId")({
   component: FichaVeiculo,
@@ -121,6 +94,20 @@ function FichaVeiculo() {
         .order("starts_at", { ascending: false });
       if (error) throw error;
       return data as BlockRow[];
+    },
+  });
+
+  const { data: odometerHistory = [] } = useQuery({
+    queryKey: ["vehicle-odometer", vehicleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("odometer_history")
+        .select("*, profiles(full_name)")
+        .eq("vehicle_id", vehicleId)
+        .order("recorded_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -322,35 +309,68 @@ function FichaVeiculo() {
           <TabsTrigger value="viagens">Viagens</TabsTrigger>
           <TabsTrigger value="manutencao">Manutenção</TabsTrigger>
           <TabsTrigger value="abastecimento">Abastecimento</TabsTrigger>
+          <TabsTrigger value="hodometro">Hodômetro</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="geral" className="mt-4">
+        <TabsContent value="geral" className="mt-4 space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="md:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-bold uppercase tracking-wider">Dados do Veículo</CardTitle>
+                <div className="rounded-full bg-primary/10 p-2">
+                  <Info className="h-4 w-4 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                  {[
+                    ["Placa", <span className="rounded bg-muted px-2 py-0.5 font-bold ring-1 ring-border">{vehicle?.plate}</span>],
+                    ["Marca / Fabricante", vehicle?.manufacturer],
+                    ["Modelo", vehicle?.model],
+                    ["Ano / Modelo", vehicle?.year ?? "—"],
+                    ["Tipo de Veículo", vehicle?.vehicle_type ?? "—"],
+                    ["Combustível", vehicle?.fuel ?? "—"],
+                    ["Capacidade", `${vehicle?.capacity ?? "—"} pessoas`],
+                    ["Patrimônio / ID", vehicle?.asset_number ?? "—"],
+                    ["Hodômetro Atual", <span className="flex items-center gap-1 font-bold text-primary"><Gauge className="h-3.5 w-3.5" /> {fmtKm(vehicle?.odometer)}</span>],
+                    ["Status Operacional", <StatusBadge status={vehicle?.base_status ?? "DISPONIVEL"} kind="fleet" className="h-5" />],
+                  ].map(([label, value]) => (
+                    <div key={String(label)} className="flex justify-between gap-4 border-b border-border/50 py-2.5">
+                      <dt className="text-muted-foreground">{label}</dt>
+                      <dd className="text-right font-medium">{value ?? "—"}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-bold uppercase tracking-wider">Manutenção Preventiva</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                 <VehicleMaintenanceCard vehicle={vehicle} />
+                 
+                 <div className="rounded-lg border border-warning/20 bg-warning/5 p-4 text-xs text-warning-foreground">
+                    <div className="flex items-center gap-2 font-bold uppercase tracking-wider mb-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Aviso de Segurança
+                    </div>
+                    As revisões devem ser realizadas rigorosamente conforme o manual do fabricante ou a cada 10.000km rodados.
+                 </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Dados do veículo</CardTitle>
+              <CardTitle className="text-base font-bold uppercase tracking-wider">Observações Adicionais</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                {[
-                  ["Placa", vehicle?.plate],
-                  ["Fabricante", vehicle?.manufacturer],
-                  ["Modelo", vehicle?.model],
-                  ["Ano", vehicle?.year ?? "—"],
-                  ["Tipo", vehicle?.vehicle_type ?? "—"],
-                  ["Combustível", vehicle?.fuel ?? "—"],
-                  ["Lugares", vehicle?.capacity ?? "—"],
-                  ["Patrimônio", vehicle?.asset_number ?? "—"],
-                  ["Hodômetro", fmtKm(vehicle?.odometer)],
-                  ["Próxima Revisão", vehicle?.next_preventive_km ? `${fmtKm(vehicle.next_preventive_km)} (${fmtKm(vehicle.next_preventive_km - (vehicle.odometer ?? 0))} restantes)` : "—"],
-                  ["Observações", vehicle?.notes ?? "—"],
-                ].map(([label, value]) => (
-                  <div key={String(label)} className="flex justify-between gap-4 border-b border-border py-2">
-                    <dt className="text-muted-foreground">{label}</dt>
-                    <dd className="text-right">{String(value ?? "—")}</dd>
-                  </div>
-                ))}
-              </dl>
+              <p className="text-sm text-muted-foreground italic">
+                {vehicle?.notes || "Nenhuma observação registrada para este veículo."}
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -578,6 +598,62 @@ function FichaVeiculo() {
                   <p className="text-lg font-semibold">{trips.length} / {blocks.length}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      <TabsContent value="hodometro" className="mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-bold uppercase tracking-wider">Histórico do Hodômetro</CardTitle>
+              <Gauge className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {odometerHistory.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum histórico de quilometragem registrado.</p>
+              ) : (
+                <div className="relative overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-3">Data/Hora</th>
+                        <th className="px-4 py-3 text-right">Anterior</th>
+                        <th className="px-4 py-3 text-right">Novo</th>
+                        <th className="px-4 py-3 text-right">Percurso</th>
+                        <th className="px-4 py-3">Origem</th>
+                        <th className="px-4 py-3">Registrado por</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {odometerHistory.map((h: any) => (
+                        <tr key={h.id} className="hover:bg-muted/30">
+                          <td className="px-4 py-3 whitespace-nowrap">{fmtDateTime(h.recorded_at)}</td>
+                          <td className="px-4 py-3 text-right font-mono text-muted-foreground">{h.old_value?.toLocaleString() ?? "—"} km</td>
+                          <td className="px-4 py-3 text-right font-mono font-bold">{h.new_value.toLocaleString()} km</td>
+                          <td className="px-4 py-3 text-right font-mono text-primary">
+                            {h.old_value ? `+${(h.new_value - h.old_value).toLocaleString()} km` : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1 ring-inset",
+                              h.origin === 'trip_start' ? "bg-info/10 text-info ring-info/30" :
+                              h.origin === 'trip_end' ? "bg-success/10 text-success ring-success/30" :
+                              h.origin === 'manual' ? "bg-warning/10 text-warning ring-warning/30" :
+                              "bg-muted text-muted-foreground ring-border"
+                            )}>
+                              {h.origin === 'trip_start' ? "Saída Viagem" :
+                               h.origin === 'trip_end' ? "Retorno Viagem" :
+                               h.origin === 'manual' ? "Manual" :
+                               h.origin === 'maintenance' ? "Manutenção" :
+                               h.origin === 'fuel' ? "Abastecimento" : h.origin}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{h.profiles?.full_name || "Sistema"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

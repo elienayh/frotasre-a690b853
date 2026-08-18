@@ -1,7 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CalendarRange, FileText, Pencil, Plus, Trash2, Wrench } from "lucide-react";
+import { 
+  CalendarRange, 
+  FileText, 
+  Pencil, 
+  Plus, 
+  Trash2, 
+  Wrench, 
+  Gauge, 
+  Fuel, 
+  Users, 
+  ChevronRight,
+  Info
+} from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -38,6 +50,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fmtDateTime, fmtKm, isoToLocalInput, localInputToIso, FLEET_STATUS_LABEL } from "@/lib/frota";
+import { VehicleMaintenanceCard } from "@/components/VehicleMaintenanceCard";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/veiculos/")({
   component: Veiculos,
@@ -56,6 +70,14 @@ interface VehicleRow {
   odometer: number;
   notes: string | null;
   is_active: boolean;
+  last_oil_change_km?: number | null;
+  next_oil_change_km?: number | null;
+  last_tire_change_km?: number | null;
+  next_tire_change_km?: number | null;
+  last_alignment_km?: number | null;
+  next_alignment_km?: number | null;
+  last_balancing_km?: number | null;
+  next_balancing_km?: number | null;
 }
 
 const VEHICLE_TYPES = ["CARRO", "VAN", "MICRO-ONIBUS", "ONIBUS", "CAMINHONETE", "OUTRO"] as const;
@@ -94,7 +116,7 @@ function Veiculos() {
       const { data, error } = await supabase
         .from("vehicles")
         .select(
-          "id, plate, manufacturer, model, year, vehicle_type, fuel, capacity, asset_number, odometer, notes, is_active",
+          "id, plate, manufacturer, model, year, vehicle_type, fuel, capacity, asset_number, odometer, notes, is_active, last_oil_change_km, next_oil_change_km, last_tire_change_km, next_tire_change_km, last_alignment_km, next_alignment_km, last_balancing_km, next_balancing_km",
         )
         .order("plate");
       if (error) throw error;
@@ -284,118 +306,119 @@ function Veiculos() {
             const status = statusByVehicle.get(v.id);
             const block = blockByVehicle.get(v.id);
             return (
-              <li key={v.id} className="rounded-lg border border-border bg-card p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-display text-base font-semibold">
-                      {v.manufacturer} {v.model}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {v.plate}
-                      {v.year ? ` · ${v.year}` : ""}
-                    </p>
+              <li key={v.id} className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card transition-all hover:border-primary/30 hover:shadow-md">
+                <Link 
+                  to="/admin/veiculos/$vehicleId" 
+                  params={{ vehicleId: v.id }}
+                  className="absolute inset-0 z-0"
+                />
+                
+                <div className="relative z-10 p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-display text-lg font-bold tracking-tight text-foreground">
+                          {v.manufacturer} {v.model}
+                        </p>
+                        <StatusBadge
+                          status={v.is_active ? (status?.status ?? "DISPONIVEL") : "INATIVO"}
+                          kind="fleet"
+                          className="h-5"
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-bold text-foreground ring-1 ring-border">
+                          {v.plate}
+                        </span>
+                        {v.year ? ` · ${v.year}` : ""}
+                        {v.asset_number ? ` · Pat: ${v.asset_number}` : ""}
+                      </p>
+                    </div>
+                    <div className="hidden group-hover:block">
+                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
                   </div>
-                  <StatusBadge
-                    status={v.is_active ? (status?.status ?? "DISPONIVEL") : "INATIVO"}
-                    kind="fleet"
-                  />
+
+                  <div className="mt-6 grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-full bg-primary/10 p-2">
+                        <Gauge className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Hodômetro</p>
+                        <p className="text-sm font-semibold">{fmtKm(v.odometer)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-full bg-success/10 p-2">
+                        <Users className="h-4 w-4 text-success" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Capacidade</p>
+                        <p className="text-sm font-semibold">{v.capacity} lug.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-full bg-warning/10 p-2">
+                        <Fuel className="h-4 w-4 text-warning" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Combustível</p>
+                        <p className="text-sm font-semibold">{v.fuel || "—"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-full bg-info/10 p-2">
+                        <Info className="h-4 w-4 text-info" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tipo</p>
+                        <p className="text-sm font-semibold truncate max-w-[80px]">{v.vehicle_type || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 space-y-4">
+                    <VehicleMaintenanceCard vehicle={v} />
+                    
+                    <div className="space-y-1 rounded-md border border-border/40 bg-muted/20 p-2.5 text-xs text-muted-foreground">
+                      <p className="flex justify-between">
+                        <span>Próxima viagem:</span>
+                        <span className="font-medium text-foreground">
+                          {status?.next_trip_at
+                            ? `${fmtDateTime(status.next_trip_at)}`
+                            : "nenhuma"}
+                        </span>
+                      </p>
+                      {block && (
+                        <p className="flex justify-between text-warning">
+                          <span>Em manutenção:</span>
+                          <span className="font-medium truncate ml-2">{block.workshop || "Oficina"}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <dl className="mt-4 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Tipo</dt>
-                    <dd>{v.vehicle_type ?? "—"}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Combustível</dt>
-                    <dd>{v.fuel ?? "—"}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Lugares</dt>
-                    <dd>{v.capacity}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Hodômetro</dt>
-                    <dd>{fmtKm(v.odometer)}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Patrimônio</dt>
-                    <dd>{v.asset_number ?? "—"}</dd>
-                  </div>
-                </dl>
-
-                <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                  <p>
-                    Próxima viagem:{" "}
-                    {status?.next_trip_at
-                      ? `${fmtDateTime(status.next_trip_at)}${status.next_trip_dest ? ` · ${status.next_trip_dest}` : ""}`
-                      : "nenhuma"}
-                  </p>
-                  {block ? (
-                    <p className="text-warning">
-                      Manutenção atual: {block.workshop ?? "oficina não informada"} · até{" "}
-                      {fmtDateTime(block.ends_at)}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-                  <Label htmlFor={`active-${v.id}`} className="text-sm font-normal">
-                    Veículo ativo
-                  </Label>
-                  <Switch
-                    id={`active-${v.id}`}
-                    checked={v.is_active}
-                    onCheckedChange={(checked) =>
-                      toggleActive.mutate({ id: v.id, is_active: checked })
-                    }
-                  />
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/admin/veiculos/$vehicleId" params={{ vehicleId: v.id }}>
-                      <FileText className="mr-1 h-4 w-4" /> Ficha
-                    </Link>
+                <div className="relative z-20 mt-auto grid grid-cols-2 divide-x divide-border border-t border-border">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-none h-10 text-xs hover:bg-muted"
+                    onClick={() => openForm(v)}
+                  >
+                    <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar
                   </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/admin/disponibilidade">
-                      <CalendarRange className="mr-1 h-4 w-4" /> Agenda
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => openForm(v)}>
-                    <Pencil className="mr-1 h-4 w-4" /> Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-none h-10 text-xs hover:bg-muted"
                     onClick={() => {
                       setNextStatus(status?.status ?? "DISPONIVEL");
                       setStatusFor(v);
                     }}
                   >
-                    Status
-                  </Button>
-                  {block ? (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => endMaintenance.mutate(block.id)}
-                    >
-                      <Wrench className="mr-1 h-4 w-4" /> Liberar
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={() => setMaintenance(v)}>
-                      <Wrench className="mr-1 h-4 w-4" /> Manutenção
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="col-span-2"
-                    onClick={() => setRemoving(v)}
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" /> Excluir
+                    <Wrench className="mr-1.5 h-3.5 w-3.5" /> Status
                   </Button>
                 </div>
               </li>

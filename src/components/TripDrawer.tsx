@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgendaTrip, tripCity, tripDriverName } from "@/hooks/useAgenda";
 import { AllocateDialog } from "@/components/AllocateDialog";
+import { TripMileageDialog } from "@/components/TripMileageDialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OccupantsList } from "@/components/OccupantsList";
 import { AuditTimeline } from "@/components/AuditTimeline";
@@ -34,6 +35,8 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   const { data: trip, isLoading } = useAgendaTrip(tripId);
   const [askingRide, setAskingRide] = useState(false);
   const [allocating, setAllocating] = useState<TripRow | null>(null);
+  const [mileageMode, setMileageMode] = useState<"start" | "end">("start");
+  const [mileageOpen, setMileageOpen] = useState(false);
 
   const { data: rides = [] } = useQuery({
     queryKey: ["trip-rides", tripId],
@@ -169,6 +172,26 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
               <section className="space-y-2">
                 <h3 className="font-display text-sm font-semibold">Ocupantes</h3>
                 <OccupantsList tripId={trip.id} requesterId={trip.requester_id} />
+                <Separator />
+                <section className="space-y-2">
+                  <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Controle de Quilometragem</h3>
+                  <dl className="space-y-2 text-sm">
+                    <Field 
+                      label="KM Saída" 
+                      value={trip.odometer_start ? `${trip.odometer_start.toLocaleString()} km` : "—"} 
+                    />
+                    <Field 
+                      label="KM Retorno" 
+                      value={trip.odometer_end ? `${trip.odometer_end.toLocaleString()} km` : "—"} 
+                    />
+                    {trip.odometer_start && trip.odometer_end && (
+                      <div className="flex justify-between gap-4 border-t border-border/50 pt-2 font-bold text-primary">
+                        <dt>Percurso Total</dt>
+                        <dd>{(trip.odometer_end - trip.odometer_start).toLocaleString()} km</dd>
+                      </div>
+                    )}
+                  </dl>
+                </section>
               </section>
 
               <Separator />
@@ -337,23 +360,39 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                       >
                         Editar transporte
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => changeStatus.mutate("EM_ANDAMENTO")}
-                      >
-                        Iniciar viagem
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => changeStatus.mutate("CONCLUIDA")}
-                      >
-                        Concluir
-                      </Button>
+                      
+                      {trip.status === "APROVADA" || trip.status === "PROGRAMADA" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-info text-info hover:bg-info/10"
+                          onClick={() => {
+                            setMileageMode("start");
+                            setMileageOpen(true);
+                          }}
+                        >
+                          Iniciar Viagem
+                        </Button>
+                      ) : null}
+
+                      {trip.status === "EM_ANDAMENTO" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-success text-success hover:bg-success/10"
+                          onClick={() => {
+                            setMileageMode("end");
+                            setMileageOpen(true);
+                          }}
+                        >
+                          Finalizar
+                        </Button>
+                      ) : null}
+
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="col-span-2 text-destructive hover:bg-destructive/10"
                         onClick={() => changeStatus.mutate("CANCELADA")}
                       >
                         Cancelar viagem
@@ -371,6 +410,14 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
       </Sheet>
 
       <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
+      <TripMileageDialog
+        trip={trip}
+        vehicle={trip.vehicles}
+        isOpen={mileageOpen}
+        onOpenChange={setMileageOpen}
+        mode={mileageMode}
+        onSuccess={invalidate}
+      />
     </>
   );
 }

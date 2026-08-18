@@ -1,102 +1,81 @@
-import type { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
-export type TripStatus = Database["public"]["Enums"]["trip_status"];
-export type VehicleRow = Database["public"]["Tables"]["vehicles"]["Row"];
-export type DriverRow = Database["public"]["Tables"]["drivers"]["Row"];
-export type DestinationRow = Database["public"]["Tables"]["destinations"]["Row"];
-export type TripRow = Database["public"]["Tables"]["trip_requests"]["Row"];
-export type BlockRow = Database["public"]["Tables"]["vehicle_blocks"]["Row"];
+/** Formata quilometragem com separador de milhar. */
+export function fmtKm(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return `${new Intl.NumberFormat("pt-BR").format(value)} km`;
+}
 
-export const TRIP_STATUS_LABEL: Record<string, string> = {
-  PENDENTE: "Aguardando aprovação",
-  CORRECAO: "Correção solicitada",
-  APROVADA: "Aprovada",
-  PROGRAMADA: "Programada",
-  EM_ANDAMENTO: "Em andamento",
-  CONCLUIDA: "Concluída",
-  REJEITADA: "Rejeitada",
-  CANCELADA: "Cancelada",
-};
+/** Formata data dd/mm/aaaa. */
+export function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("pt-BR");
+}
 
+/** Formata hora hh:mm. */
+export function fmtTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** Formata data e hora dd/mm/aaaa hh:mm. */
+export function fmtDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return `${fmtDate(iso)} ${fmtTime(iso)}`;
+}
+
+/** Converte ISO para formato aceito em <input type="datetime-local">. */
+export function isoToLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Converte local input para ISO UTC. */
+export function localInputToIso(value: string | null | undefined): string {
+  if (!value) return "";
+  return new Date(value).toISOString();
+}
+
+/** Data de hoje em formato <input type="date">. */
+export function todayInput(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Mapeamento de status da frota para labels amigáveis. */
 export const FLEET_STATUS_LABEL: Record<string, string> = {
   DISPONIVEL: "Disponível",
   RESERVADO: "Reservado",
   EM_VIAGEM: "Em viagem",
   EM_MANUTENCAO: "Em manutenção",
   INDISPONIVEL: "Indisponível",
-  OCUPADO: "Ocupado",
-  CAPACIDADE: "Capacidade insuficiente",
   INATIVO: "Inativo",
 };
 
-/** Classe de cor semântica para cada status (tokens do design system). */
+/** Mapeamento de status de viagem para labels amigáveis. */
+export const TRIP_STATUS_LABEL: Record<string, string> = {
+  PENDENTE: "Pendente",
+  APROVADA: "Aprovada",
+  PROGRAMADA: "Programada",
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDA: "Concluída",
+  CANCELADA: "Cancelada",
+  REJEITADA: "Rejeitada",
+};
+
+/** Estilo de cor para o status. */
 export function statusTone(status: string): string {
-  switch (status) {
-    case "APROVADA":
-    case "PROGRAMADA":
-    case "DISPONIVEL":
-    case "CONCLUIDA":
-      return "bg-success/15 text-success border-success/30";
-    case "PENDENTE":
-    case "CORRECAO":
-    case "RESERVADO":
-      return "bg-warning/15 text-warning border-warning/30";
-    case "EM_VIAGEM":
-    case "EM_ANDAMENTO":
-      return "bg-info/15 text-info border-info/30";
-    case "REJEITADA":
-    case "CANCELADA":
-    case "EM_MANUTENCAO":
-    case "INDISPONIVEL":
-    case "OCUPADO":
-    case "CAPACIDADE":
-    case "INATIVO":
-      return "bg-destructive/15 text-destructive border-destructive/30";
-    default:
-      return "bg-muted text-muted-foreground border-border";
-  }
-}
-
-const dateFmt = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: "America/Sao_Paulo",
-});
-const timeFmt = new Intl.DateTimeFormat("pt-BR", {
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "America/Sao_Paulo",
-});
-const shortDateFmt = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  timeZone: "America/Sao_Paulo",
-});
-
-export function fmtDate(value: string | Date | null | undefined): string {
-  if (!value) return "—";
-  return dateFmt.format(new Date(value));
-}
-
-export function fmtTime(value: string | Date | null | undefined): string {
-  if (!value) return "—";
-  return timeFmt.format(new Date(value));
-}
-
-export function fmtShortDate(value: string | Date | null | undefined): string {
-  if (!value) return "—";
-  return shortDateFmt.format(new Date(value)).replace(".", "").toUpperCase();
-}
-
-export function fmtDateTime(value: string | Date | null | undefined): string {
-  if (!value) return "—";
-  return `${fmtDate(value)} às ${fmtTime(value)}`;
-}
-
-export function fmtKm(value: number | null | undefined): string {
-  if (value == null) return "—";
-  return `${new Intl.NumberFormat("pt-BR").format(value)} km`;
+  const s = String(status).toUpperCase();
+  if (["APROVADA", "PROGRAMADA", "DISPONIVEL", "CONCLUIDA", "ATENDIDA"].includes(s))
+    return "border-success/30 bg-success/10 text-success";
+  if (["PENDENTE", "RESERVADO", "EM_ANDAMENTO", "ATRASADA", "PARCIAL"].includes(s))
+    return "border-warning/30 bg-warning/10 text-warning";
+  if (["REJEITADA", "CANCELADA", "INDISPONIVEL", "INATIVO", "EM_MANUTENCAO", "INCIDENTE"].includes(s))
+    return "border-destructive/30 bg-destructive/10 text-destructive";
+  return "border-border bg-muted/50 text-muted-foreground";
 }
 
 /** Calcula a autonomia estimada baseada nos últimos abastecimentos. */
@@ -112,38 +91,45 @@ export function calculateAutonomy(fuels: any[]): string {
   return `${consumption} km/L`;
 }
 
-/** Converte o valor de um <input type="datetime-local"> em ISO UTC. */
-export function localInputToIso(value: string): string {
-  if (!value) return "";
-  return new Date(value).toISOString();
-}
-
-/** Converte ISO UTC no formato aceito por <input type="datetime-local">. */
-export function isoToLocalInput(value: string | null | undefined): string {
-  if (!value) return "";
-  const d = new Date(value);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-/** Junta data (yyyy-mm-dd) + hora (hh:mm) locais em ISO UTC. */
+/** Helper para converter data/hora em ISO. */
 export function dateTimeToIso(date: string, time: string): string {
   return new Date(`${date}T${time}`).toISOString();
 }
 
-export function todayInput(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/** Tradução amigável de erros comuns do banco. */
+export function friendlyDbError(msg: string): string {
+  if (msg.includes("duplicate") || msg.includes("unique")) return "Já existe um registro com estes dados.";
+  if (msg.includes("foreign key")) return "Não é possível realizar a ação: existem registros vinculados.";
+  return msg;
 }
 
-/** Traduz erros vindos do banco para mensagens compreensíveis. */
-export function friendlyDbError(message: string): string {
-  if (message.includes("trips_vehicle_no_overlap")) {
-    return "Este veículo já está reservado para outra viagem em horário conflitante.";
-  }
-  if (message.includes("trips_driver_no_overlap")) {
-    return "Este motorista já está escalado para outra viagem em horário conflitante.";
-  }
-  return message;
+/** Tipos de viagem comuns. */
+export interface TripRow {
+  id?: string;
+  code?: number;
+  status?: string;
+  departure_at?: string;
+  return_at?: string;
+  destination_text?: string;
+  purpose?: string;
+  passengers?: number;
+  requester_id?: string | null;
+  requester_name?: string | null;
+  requester_notes?: string | null;
+  admin_notes?: string | null;
+  vehicle_id?: string | null;
+  assigned_driver_user_id?: string | null;
+  requested_driver_id?: string | null;
+  suggested_driver?: string | null;
+  needs_sre_driver?: boolean;
+  allows_rides?: boolean;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  organized_at?: string | null;
+  organized_by?: string | null;
+  odometer_start?: number | null;
+  odometer_end?: number | null;
+  city_id?: string | null;
+  city_text?: string | null;
+  destination_id?: string | null;
 }
