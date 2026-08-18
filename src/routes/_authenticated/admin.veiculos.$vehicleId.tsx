@@ -1126,6 +1126,33 @@ function FichaVeiculo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={statusOpen} onOpenChange={setStatusOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar status do veículo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="v-status">Status operacional</Label>
+            <Select value={nextStatus} onValueChange={(v) => setNextStatus(v as FleetStatus)}>
+              <SelectTrigger id="v-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {FLEET_STATUS_LABEL[s]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => changeStatus.mutate(nextStatus)} disabled={changeStatus.isPending}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
