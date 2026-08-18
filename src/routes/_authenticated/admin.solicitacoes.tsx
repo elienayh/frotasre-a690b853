@@ -172,6 +172,7 @@ function AdminSolicitacoes() {
             <TabsTrigger value="pendentes">Pendentes ({pending.length})</TabsTrigger>
             <TabsTrigger value="programadas">Programadas ({scheduled.length})</TabsTrigger>
             <TabsTrigger value="encerradas">Encerradas ({closed.length})</TabsTrigger>
+            <TabsTrigger value="caronas">Solicitações de Carona</TabsTrigger>
           </TabsList>
           <TabsContent value="pendentes" className="mt-4">
             {renderList(pending, true)}
@@ -182,8 +183,12 @@ function AdminSolicitacoes() {
           <TabsContent value="encerradas" className="mt-4">
             {renderList(closed, false)}
           </TabsContent>
+          <TabsContent value="caronas" className="mt-4">
+            <RideRequestsPanel />
+          </TabsContent>
         </Tabs>
       )}
+
 
       <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
 
