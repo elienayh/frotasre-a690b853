@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AllocateDialog } from "@/components/AllocateDialog";
+import { RideRequestsPanel } from "@/components/RideRequestsPanel";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
