@@ -156,7 +156,7 @@ export function TripForm({ trip }: TripFormProps) {
   function handleReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const parsed = schema.safeParse({
+    const data = {
       date: form.get("date"),
       return_date: form.get("return_date"),
       departure: form.get("departure"),
@@ -165,16 +165,33 @@ export function TripForm({ trip }: TripFormProps) {
       passengers,
       requester_notes: form.get("requester_notes") || undefined,
       allows_rides: allowsRides,
-    });
+    };
+
+    const parsed = schema.safeParse(data);
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifique os dados informados");
+      const firstError = parsed.error.issues[0];
+      toast.error(firstError?.message ?? "Verifique os dados informados");
+
+      // Tenta rolar até o campo com erro
+      if (firstError?.path && firstError.path.length > 0) {
+        const fieldName = String(firstError.path[0]);
+        const element = document.getElementsByName(fieldName)[0] || document.getElementById(fieldName);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+            element.focus();
+          }
+        }
+      }
       return;
     }
     const occupancy = calculateTripOccupancy(validStops(), occupantIds, 5);
 
     if (occupancy.isExceeded) {
-      toast.error(`A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros). Atualmente: ${occupancy.totalPeople} pessoas.`);
+      toast.error(
+        `A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros). Atualmente: ${occupancy.totalPeople} pessoas.`,
+      );
       return;
     }
 
@@ -350,169 +367,203 @@ export function TripForm({ trip }: TripFormProps) {
   }
 
   return (
-    <form onSubmit={handleReview} className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Quando</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="date">Data da viagem</Label>
-              <Input id="date" name="date" type="date" defaultValue={defaults.date} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="return_date">Data de retorno</Label>
-              <Input
-                id="return_date"
-                name="return_date"
-                type="date"
-                defaultValue={defaults.return_date}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="departure">Horário de saída</Label>
-              <Input
-                id="departure"
-                name="departure"
-                type="time"
-                defaultValue={defaults.departure}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ret">Retorno previsto</Label>
-              <Input id="ret" name="ret" type="time" defaultValue={defaults.ret} required />
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">
-              Viagens de vários dias: informe a data de retorno diferente da data da viagem.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Itinerário e Ocupação</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <TripStops value={stops} onChange={setStops} />
-
-            <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleReview} className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Quando</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="passengers">Número de passageiros extras</Label>
+                <Label htmlFor="date">Data da viagem</Label>
+                <Input id="date" name="date" type="date" defaultValue={defaults.date} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="return_date">Data de retorno</Label>
                 <Input
-                  id="passengers"
-                  name="passengers"
-                  type="number"
-                  min={0}
-                  max={4}
-                  value={passengers}
-                  onChange={(e) => setPassengers(Math.max(0, Math.min(4, Number(e.target.value) || 0)))}
+                  id="return_date"
+                  name="return_date"
+                  type="date"
+                  defaultValue={defaults.return_date}
                   required
                 />
-                <p className="text-[10px] text-muted-foreground">
-                  O motorista já é contabilizado automaticamente.
-                </p>
               </div>
               <div className="space-y-2">
-                <Label>Ocupação Total do Veículo</Label>
-                <div className={cn(
-                  "rounded-md border px-3 py-2 text-sm",
-                  occupancy.isExceeded ? "border-destructive/20 bg-destructive/5" : "border-info/20 bg-info/5"
-                )}>
-                  <div className="flex justify-between font-bold">
-                    <span>
-                      {occupancy.totalPeople} de {occupancy.capacity} pessoas
-                    </span>
-                    <span className={occupancy.isExceeded ? "text-destructive" : "text-success"}>
-                      {occupancy.isExceeded ? `${occupancy.totalPeople - occupancy.capacity} excedente(s)` : `${occupancy.remaining} vaga(s) restam`}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    ({occupancy.driversCount} motorista{occupancy.driversCount > 1 ? 's' : ''} + {occupancy.passengersCount} passageiro{occupancy.passengersCount !== 1 ? 's' : ''})
+                <Label htmlFor="departure">Horário de saída</Label>
+                <Input
+                  id="departure"
+                  name="departure"
+                  type="time"
+                  defaultValue={defaults.departure}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ret">Retorno previsto</Label>
+                <Input id="ret" name="ret" type="time" defaultValue={defaults.ret} required />
+              </div>
+              <p className="text-xs text-muted-foreground sm:col-span-2">
+                Viagens de vários dias: informe a data de retorno diferente da data da viagem.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Itinerário e Ocupação</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <TripStops value={stops} onChange={setStops} />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="passengers">Número de passageiros extras</Label>
+                  <Input
+                    id="passengers"
+                    name="passengers"
+                    type="number"
+                    min={0}
+                    max={4}
+                    value={passengers}
+                    onChange={(e) =>
+                      setPassengers(Math.max(0, Math.min(4, Number(e.target.value) || 0)))
+                    }
+                    required
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    O motorista já é contabilizado automaticamente.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label>Ocupação Total do Veículo</Label>
+                  <div
+                    className={cn(
+                      "rounded-md border px-3 py-2 text-sm",
+                      occupancy.isExceeded
+                        ? "border-destructive/20 bg-destructive/5"
+                        : "border-info/20 bg-info/5",
+                    )}
+                  >
+                    <div className="flex justify-between font-bold">
+                      <span>
+                        {occupancy.totalPeople} de {occupancy.capacity} pessoas
+                      </span>
+                      <span className={occupancy.isExceeded ? "text-destructive" : "text-success"}>
+                        {occupancy.isExceeded
+                          ? `${occupancy.totalPeople - occupancy.capacity} excedente(s)`
+                          : `${occupancy.remaining} vaga(s) restam`}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      ({occupancy.driversCount} motorista{occupancy.driversCount > 1 ? "s" : ""} +{" "}
+                      {occupancy.passengersCount} passageiro{occupancy.passengersCount !== 1 ? "s" : ""}
+                      )
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <OccupantsPicker
-              count={passengers}
-              value={occupantIds}
-              onChange={setOccupantIds}
-              exclude={occupancy.uniqueDriverIds}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Motivo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="purpose">Motivo da viagem</Label>
-              <Textarea
-                id="purpose"
-                name="purpose"
-                rows={3}
-                maxLength={600}
-                defaultValue={trip?.purpose ?? ""}
-                placeholder="Ex.: Visita técnica de acompanhamento pedagógico"
-                required
+              <OccupantsPicker
+                count={passengers}
+                value={occupantIds}
+                onChange={setOccupantIds}
+                exclude={occupancy.uniqueDriverIds}
               />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Motivo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="purpose">Motivo da viagem</Label>
+                <Textarea
+                  id="purpose"
+                  name="purpose"
+                  rows={3}
+                  maxLength={600}
+                  defaultValue={trip?.purpose ?? ""}
+                  placeholder="Ex.: Visita técnica de acompanhamento pedagógico"
+                  required
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Informações Adicionais</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="requester_notes">Observações</Label>
-              <Textarea
-                id="requester_notes"
-                name="requester_notes"
-                rows={2}
-                maxLength={600}
-                defaultValue={trip?.requester_notes ?? ""}
-              />
-            </div>
-            <div className="flex items-start gap-3 rounded-md border border-border p-3">
-              <Checkbox
-                id="allows_rides"
-                checked={allowsRides}
-                onCheckedChange={(c) => setAllowsRides(c === true)}
-              />
-              <Label htmlFor="allows_rides" className="text-sm font-normal leading-snug">
-                Aceito caronas de outros servidores nesta viagem, se houver lugares livres.
-              </Label>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Informações Adicionais</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="requester_notes">Observações</Label>
+                <Textarea
+                  id="requester_notes"
+                  name="requester_notes"
+                  rows={2}
+                  maxLength={600}
+                  defaultValue={trip?.requester_notes ?? ""}
+                />
+              </div>
+              <div className="flex items-start gap-3 rounded-md border border-border p-3">
+                <Checkbox
+                  id="allows_rides"
+                  checked={allowsRides}
+                  onCheckedChange={(c) => setAllowsRides(c === true)}
+                />
+                <Label htmlFor="allows_rides" className="text-sm font-normal leading-snug">
+                  Aceito caronas de outros servidores nesta viagem, se houver lugares livres.
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <aside>
+          <Card className="border-info/40 bg-info/5">
+            <CardHeader>
+              <CardTitle className="text-base">Como funciona</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                A capacidade total é de 5 pessoas (1 motorista + 4 passageiros). O motorista pode
+                ser indicado pelo solicitante ou definido pela DAFI.
+              </p>
+              <p>Você será notificado quando a solicitação for aprovada, ajustada ou recusada.</p>
+              <p>O registro oficial no PW/Prodemge é feito pela DAFI após a aprovação.</p>
+            </CardContent>
+          </Card>
+        </aside>
       </div>
 
-      <aside className="space-y-4">
-        <Card className="border-info/40 bg-info/5">
-          <CardHeader>
-            <CardTitle className="text-base">Como funciona</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>
-              A capacidade total é de 5 pessoas (1 motorista + 4 passageiros). O motorista
-              pode ser indicado pelo solicitante ou definido pela DAFI.
+      <div className="mt-8 border-t pt-8">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="text-center">
+            <p className="text-sm font-medium text-foreground">
+              Antes de enviar, revise as informações da sua solicitação.
             </p>
-            <p>Você será notificado quando a solicitação for aprovada, ajustada ou recusada.</p>
-            <p>O registro oficial no PW/Prodemge é feito pela DAFI após a aprovação.</p>
-          </CardContent>
-        </Card>
-        <Button type="submit" className="w-full" size="lg">
-          Revisar e enviar
-        </Button>
-      </aside>
+            <p className="text-xs text-muted-foreground">
+              Campos obrigatórios serão validados ao prosseguir.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-40"
+              onClick={() => void navigate({ to: "/viagens" })}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" className="w-full px-8 sm:w-64" size="lg">
+              Revisar e enviar
+            </Button>
+          </div>
+        </div>
+      </div>
     </form>
   );
 }
