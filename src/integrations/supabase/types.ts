@@ -942,6 +942,7 @@ export type Database = {
           external_name: string | null
           external_phone: string | null
           id: string
+          is_driver: boolean | null
           is_external: boolean
           notes: string | null
           status: string
@@ -957,6 +958,7 @@ export type Database = {
           external_name?: string | null
           external_phone?: string | null
           id?: string
+          is_driver?: boolean | null
           is_external?: boolean
           notes?: string | null
           status?: string
@@ -972,6 +974,7 @@ export type Database = {
           external_name?: string | null
           external_phone?: string | null
           id?: string
+          is_driver?: boolean | null
           is_external?: boolean
           notes?: string | null
           status?: string
