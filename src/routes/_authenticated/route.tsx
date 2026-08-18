@@ -5,7 +5,18 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
+    
+    // Se não estiver logado, redireciona para login
     if (error || !data.user) throw redirect({ to: "/auth" });
+
+    // Validação de domínio institucional no carregamento da rota protegida (Segurança Camada 2)
+    if (!data.user.email?.endsWith("@educacao.mg.gov.br")) {
+      await supabase.auth.signOut();
+      throw redirect({ 
+        to: "/auth"
+      });
+    }
+
     return { user: data.user };
   },
   component: () => <Outlet />,

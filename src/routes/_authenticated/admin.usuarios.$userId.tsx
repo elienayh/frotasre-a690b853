@@ -128,31 +128,6 @@ function UsuarioEdicao() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const resetPassword = async () => {
-    // Usamos o server function para pegar o email real do Auth
-    const { email: targetEmail } = await fetchEmail({ data: { userId } });
-    
-    if (!targetEmail) {
-       toast.error("E-mail do usuário não localizado no sistema de autenticação.");
-       return;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
-    });
-
-    if (error) {
-      toast.error("Erro ao enviar e-mail: " + error.message);
-    } else {
-      toast.success("E-mail de redefinição enviado com sucesso!");
-      // Registrar no histórico
-      await supabase.from("permission_history").insert({
-        target_user_id: userId,
-        actor_id: currentUser?.id ?? null,
-        action: "Solicitação de redefinição de senha",
-      });
-    }
-  };
 
   if (isLoading) return <AppShell title="Carregando..." description="Buscando dados no servidor..."><div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></AppShell>;
   if (!profile) return (
@@ -188,7 +163,7 @@ function UsuarioEdicao() {
         <TabsList className="bg-muted/50 p-1 rounded-2xl h-12">
           <TabsTrigger value="dados" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><UserIcon className="mr-2 h-4 w-4" /> Dados</TabsTrigger>
           <TabsTrigger value="permissoes" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><Shield className="mr-2 h-4 w-4" /> Permissões</TabsTrigger>
-          <TabsTrigger value="seguranca" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><Mail className="mr-2 h-4 w-4" /> Segurança</TabsTrigger>
+          <TabsTrigger value="identidade" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><Shield className="mr-2 h-4 w-4" /> Identidade Google</TabsTrigger>
           <TabsTrigger value="viagens" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><RouteIcon className="mr-2 h-4 w-4" /> Viagens</TabsTrigger>
           <TabsTrigger value="historico" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><History className="mr-2 h-4 w-4" /> Histórico</TabsTrigger>
         </TabsList>
@@ -333,30 +308,29 @@ function UsuarioEdicao() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="seguranca">
+        <TabsContent value="identidade">
           <Card className="rounded-[2rem] border-none shadow-xl bg-card/60 backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="font-display text-xl font-black uppercase tracking-tight">Segurança</CardTitle>
-              <CardDescription>Gestão de credenciais através do Supabase Auth.</CardDescription>
+              <CardTitle className="font-display text-xl font-black uppercase tracking-tight">Identidade Institucional</CardTitle>
+              <CardDescription>Gestão da conta institucional vinculada via Google OAuth.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="p-6 border border-warning/20 bg-warning/5 rounded-2xl space-y-4">
+              <div className="p-6 border border-primary/20 bg-primary/5 rounded-2xl space-y-4">
                 <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 text-warning" />
-                  <p className="font-bold text-sm">Redefinição de Senha</p>
+                  <Mail className="h-5 w-5 text-primary" />
+                  <p className="font-bold text-sm">Conta Autenticada</p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Ao solicitar a redefinição, o usuário receberá um e-mail com um link seguro para definir uma nova senha.
-                  O sistema não armazena e nem exibe senhas.
-                </p>
-                <Button variant="outline" onClick={async () => {
-                  const { email } = await fetchEmail({ data: { userId } });
-                  if (confirm(`Enviar e-mail de redefinição para ${email || "este usuário"}?`)) {
-                    resetPassword();
-                  }
-                }}>
-                  <Mail className="mr-2 h-4 w-4" /> Enviar e-mail de redefinição
-                </Button>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">E-mail do Google</p>
+                  <p className="text-lg font-bold">{profile.full_name ? profile.full_name : "Carregando..."}</p>
+                  <p className="text-sm font-medium opacity-70">O login agora é feito exclusivamente via Google Institucional.</p>
+                </div>
+                
+                <div className="pt-2">
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                    Domínio Validado: @educacao.mg.gov.br
+                  </Badge>
+                </div>
               </div>
 
               <div className="p-6 border border-destructive/20 bg-destructive/5 rounded-2xl space-y-4">
@@ -373,6 +347,7 @@ function UsuarioEdicao() {
                   disabled={!isSuperAdmin}
                   onClick={async () => {
                    if (confirm(`TEM CERTEZA ABSOLUTA? Isso excluirá o acesso de ${profile.full_name} permanentemente.`)) {
+
                      try {
                        await deleteAccount({ data: { userId } });
                        toast.success("Usuário excluído do sistema e do Auth.");
