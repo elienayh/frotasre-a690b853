@@ -30,8 +30,8 @@ export function usePendingCounts() {
         // 2. VEÍCULOS: Manutenção vencida ou crítica
         supabase
           .from("vehicles")
-          .select("id")
-          .or("maintenance_status.eq.VENCIDA,maintenance_status.eq.CRÍTICO"),
+          .select("id, odometer, next_oil_change_km, next_tire_change_km, next_oil_filter_change_km, next_air_filter_change_km, next_alignment_km, next_balancing_km")
+          .eq("is_active", true),
         // 3. USUÁRIOS: Inativos (aguardando ativação)
         supabase
           .from("profiles")
