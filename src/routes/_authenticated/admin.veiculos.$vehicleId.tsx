@@ -248,14 +248,14 @@ function FichaVeiculo() {
       if (error) throw error;
 
       // Add to history
-      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_km', '');
+      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_change_km', '');
       if (maintenanceType) {
         await supabase.from("maintenance_history").insert({
           vehicle_id: vehicleId,
           maintenance_type: maintenanceType.toUpperCase(),
           performed_at_km: vehicle?.odometer ?? 0,
           performed_date: todayInput(),
-          next_planned_km: payload[`next_${maintenanceType}_km`],
+          next_planned_km: payload[`next_${maintenanceType}_change_km`],
           notes: payload[`${maintenanceType}_notes`] || 'Atualização manual da próxima manutenção',
         });
       }
