@@ -292,7 +292,6 @@ export function TripForm({ trip }: TripFormProps) {
           );
           if (occError) throw new Error(occError.message);
         }
-        }
 
         // Envio de e-mail assíncrono para o setor de transportes
         void notifyEmail({
