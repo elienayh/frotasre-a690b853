@@ -1,4 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { 
+  ArrowLeft, 
+  Wrench, 
+  Gauge, 
+  Info, 
+  AlertTriangle, 
+  TriangleAlert,
+  Calendar,
+  Plus
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { supabase } from "@/integrations/supabase/client"
 import {
   fmtDate,
   fmtDateTime,
@@ -9,10 +23,25 @@ import {
   todayInput,
   FLEET_STATUS_LABEL,
   calculateAutonomy,
+  friendlyDbError,
 } from "@/lib/frota";
+
 import { cn } from "@/lib/utils";
 import { AuditTimeline } from "@/components/AuditTimeline";
 import { VehicleMaintenanceCard } from "@/components/VehicleMaintenanceCard";
+import { AppShell } from "@/components/AppShell";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+
+
 
 export const Route = createFileRoute("/_authenticated/admin/veiculos/$vehicleId")({
   component: FichaVeiculo,
@@ -48,6 +77,7 @@ interface BlockRow {
 function FichaVeiculo() {
   const { vehicleId } = Route.useParams();
   const queryClient = useQueryClient();
+
   const [maintOpen, setMaintOpen] = useState(false);
   const [finishing, setFinishing] = useState<BlockRow | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -60,13 +90,20 @@ function FichaVeiculo() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("*, next_preventive_km, preventive_km_interval")
+        .select(`
+          *,
+          last_oil_change_km, next_oil_change_km, oil_change_date, oil_change_notes,
+          last_tire_change_km, next_tire_change_km, tire_change_date, tire_change_notes,
+          last_alignment_km, next_alignment_km, alignment_date, alignment_notes,
+          last_balancing_km, next_balancing_km, balancing_date, balancing_notes
+        `)
         .eq("id", vehicleId)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
 
   const { data: trips = [] } = useQuery({
     queryKey: ["vehicle-trips", vehicleId],
@@ -125,17 +162,18 @@ function FichaVeiculo() {
     },
   });
 
-  const openBlock = blocks.find((b) => b.is_open) ?? null;
+  const openBlock = blocks.find((b: BlockRow) => b.is_open) ?? null;
   const nowIso = new Date().toISOString();
   const upcoming = useMemo(
     () =>
       trips
         .filter(
-          (t) =>
+          (t: any) =>
             t.return_at >= nowIso &&
             ["APROVADA", "PROGRAMADA", "EM_ANDAMENTO"].includes(t.status),
         )
-        .sort((a, b) => a.departure_at.localeCompare(b.departure_at)),
+
+        .sort((a: any, b: any) => a.departure_at.localeCompare(b.departure_at)),
     [trips, nowIso],
   );
 
@@ -191,42 +229,46 @@ function FichaVeiculo() {
         })
         .eq("id", block.id);
       if (error) throw new Error(error.message);
-
-      if (odometer && odometer > (vehicle?.odometer ?? 0)) {
-        const updateData: any = { odometer };
-        if (isPreventive) {
-          updateData.next_preventive_km = odometer + (vehicle?.preventive_km_interval ?? 10000);
-        }
-        const { error: odoError } = await supabase
-          .from("vehicles")
-          .update(updateData)
-          .eq("id", vehicleId);
-        if (odoError) throw new Error(odoError.message);
-      }
-
-      const { data: remaining, error: remainingError } = await supabase
-        .from("vehicle_blocks")
-        .select("id")
-        .eq("vehicle_id", vehicleId)
-        .eq("is_open", true);
-      if (remainingError) throw new Error(remainingError.message);
-      if ((remaining ?? []).length === 0) {
-        const { error: statusError } = await supabase
-          .from("vehicles")
-          .update({ base_status: "DISPONIVEL" })
-          .eq("id", vehicleId);
-        if (statusError) throw new Error(statusError.message);
-      }
     },
     onSuccess: () => {
       toast.success("Manutenção finalizada.");
       setFinishing(null);
       invalidate();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyDbError(e.message)),
+  });
+
+  const updateMaintenance = useMutation({
+    mutationFn: async (payload: any) => {
+
+      const { error } = await supabase
+        .from("vehicles")
+        .update(payload)
+        .eq("id", vehicleId);
+      if (error) throw error;
+
+      // Add to history
+      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_km', '');
+      if (maintenanceType) {
+        await supabase.from("maintenance_history").insert({
+          vehicle_id: vehicleId,
+          maintenance_type: maintenanceType.toUpperCase(),
+          performed_at_km: vehicle?.odometer ?? 0,
+          performed_date: todayInput(),
+          next_planned_km: payload[`next_${maintenanceType}_km`],
+          notes: payload[`${maintenanceType}_notes`] || 'Atualização manual da próxima manutenção',
+        });
+      }
+    },
+    onSuccess: () => {
+      toast.success("Manutenção atualizada.");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(friendlyDbError(e.message)),
   });
 
   const changeStatus = useMutation({
+
     mutationFn: async (status: FleetStatus) => {
       const { error } = await supabase
         .from("vehicles")
@@ -466,16 +508,109 @@ function FichaVeiculo() {
             </Card>
           ) : null}
 
+
+
+
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Histórico de manutenções</CardTitle>
+              <CardTitle className="text-base">Controle de Manutenções Preventivas</CardTitle>
             </CardHeader>
             <CardContent>
-              {blocks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum registro.</p>
+              {!vehicle ? (
+                <p className="text-sm text-muted-foreground">Carregando dados do veículo...</p>
               ) : (
+                <>
+                  <ul className="space-y-6">
+                    {[
+                      { id: 'oil', label: 'Óleo', lastKm: vehicle?.last_oil_change_km, nextKm: vehicle?.next_oil_change_km, date: vehicle?.oil_change_date, notes: vehicle?.oil_change_notes },
+                      { id: 'tire', label: 'Pneus', lastKm: vehicle?.last_tire_change_km, nextKm: vehicle?.next_tire_change_km, date: vehicle?.tire_change_date, notes: vehicle?.tire_change_notes },
+                      { id: 'alignment', label: 'Alinhamento', lastKm: vehicle?.last_alignment_km, nextKm: vehicle?.next_alignment_km, date: vehicle?.alignment_date, notes: vehicle?.alignment_notes },
+                      { id: 'balancing', label: 'Balanceamento', lastKm: vehicle?.last_balancing_km, nextKm: vehicle?.next_balancing_km, date: vehicle?.balancing_date, notes: vehicle?.balancing_notes },
+                    ].map((item) => (
+                      <li key={item.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+
+
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <h4 className="font-display text-base font-bold uppercase tracking-tight text-primary">
+                            {item.label}
+                          </h4>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            <span>Última: <strong>{fmtKm(item.lastKm)}</strong></span>
+                            <span>Data: <strong>{fmtDate(item.date)}</strong></span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 min-w-[200px]">
+                           <Label htmlFor={`next-${item.id}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                             Próxima Troca (KM)
+                           </Label>
+                           <div className="flex gap-2">
+                             <Input 
+                                id={`next-${item.id}`}
+                                type="number"
+                                className="h-9 font-mono font-bold"
+                                defaultValue={item.nextKm || 0}
+                                onBlur={(e) => {
+                                  const val = Number(e.target.value);
+                                  if (val !== item.nextKm) {
+                                    updateMaintenance.mutate({ [`next_${item.id}_change_km`]: val });
+                                  }
+                                }}
+                             />
+                             <Button size="sm" variant="secondary" className="h-9 px-3">
+                               Salvar
+                             </Button>
+                           </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="flex justify-between mb-1.5 text-xs font-medium">
+                          <span className="text-muted-foreground">Progresso</span>
+                          <span className={cn(
+                            "font-bold",
+                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) ? "text-destructive" :
+                            (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 ? "text-warning" : "text-success"
+                          )}>
+                            {(item.nextKm ?? 0) - (vehicle?.odometer ?? 0) > 0 
+                              ? `${((item.nextKm ?? 0) - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`
+                              : "MANUTENÇÃO VENCIDA"}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
+                          <div 
+                            className={cn(
+                              "h-full transition-all",
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) ? "bg-destructive animate-pulse" :
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 ? "bg-warning" : "bg-success"
+                            )}
+                            style={{ 
+                              width: `${Math.max(0, Math.min(100, 
+                                item.lastKm && item.nextKm && item.nextKm > item.lastKm
+                                  ? ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) * 100
+                                  : 0
+                              ))}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {item.notes && (
+                        <p className="mt-3 text-xs italic text-muted-foreground border-t border-border/50 pt-2">
+                          Obs: {item.notes}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                <Separator className="my-8" />
+
+                <h3 className="mb-4 font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">Registros de Oficina</h3>
                 <ul className="space-y-3 text-sm">
-                  {blocks.map((b) => (
+                  {blocks.map((b: BlockRow) => (
+
                     <li key={b.id} className="rounded-md border border-border p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-medium">
@@ -497,10 +632,15 @@ function FichaVeiculo() {
                       ) : null}
                     </li>
                   ))}
-                </ul>
+                  </ul>
+                </>
               )}
+
+
+
             </CardContent>
           </Card>
+
         </TabsContent>
 
         <TabsContent value="abastecimento" className="mt-4">
@@ -673,7 +813,7 @@ function FichaVeiculo() {
                   ATENÇÃO: este veículo possui viagens programadas durante o período de manutenção.
                 </p>
                 <ul className="mt-1 space-y-0.5 text-muted-foreground">
-                  {upcoming.slice(0, 5).map((t) => (
+                  {upcoming.slice(0, 5).map((t: any) => (
                     <li key={t.id}>
                       #{t.code} · {t.destination_text} · {fmtDateTime(t.departure_at)}
                     </li>

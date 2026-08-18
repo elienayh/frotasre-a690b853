@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { 
@@ -101,6 +102,8 @@ const vehicleSchema = z.object({
 
 function Veiculos() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<VehicleRow | null>(null);
   const [removing, setRemoving] = useState<VehicleRow | null>(null);
@@ -306,12 +309,12 @@ function Veiculos() {
             const status = statusByVehicle.get(v.id);
             const block = blockByVehicle.get(v.id);
             return (
-              <li key={v.id} className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card transition-all hover:border-primary/30 hover:shadow-md">
-                <Link 
-                  to="/admin/veiculos/$vehicleId" 
-                  params={{ vehicleId: v.id }}
-                  className="absolute inset-0 z-0"
-                />
+              <li 
+                key={v.id} 
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card transition-all hover:border-primary/30 hover:shadow-md cursor-pointer"
+                onClick={() => navigate({ to: "/admin/veiculos/$vehicleId", params: { vehicleId: v.id } })}
+              >
+
                 
                 <div className="relative z-10 p-5">
                   <div className="flex items-start justify-between gap-4">
@@ -405,7 +408,10 @@ function Veiculos() {
                     variant="ghost" 
                     size="sm" 
                     className="rounded-none h-10 text-xs hover:bg-muted"
-                    onClick={() => openForm(v)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openForm(v);
+                    }}
                   >
                     <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar
                   </Button>
@@ -413,7 +419,8 @@ function Veiculos() {
                     variant="ghost" 
                     size="sm" 
                     className="rounded-none h-10 text-xs hover:bg-muted"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setNextStatus(status?.status ?? "DISPONIVEL");
                       setStatusFor(v);
                     }}
@@ -421,6 +428,7 @@ function Veiculos() {
                     <Wrench className="mr-1.5 h-3.5 w-3.5" /> Status
                   </Button>
                 </div>
+
               </li>
             );
           })}

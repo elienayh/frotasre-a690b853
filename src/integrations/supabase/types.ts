@@ -1362,7 +1362,11 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          alignment_date: string | null
+          alignment_notes: string | null
           asset_number: string | null
+          balancing_date: string | null
+          balancing_notes: string | null
           base_status: Database["public"]["Enums"]["vehicle_status"]
           capacity: number
           created_at: string
@@ -1382,15 +1386,23 @@ export type Database = {
           next_tire_change_km: number | null
           notes: string | null
           odometer: number
+          oil_change_date: string | null
+          oil_change_notes: string | null
           photo_url: string | null
           plate: string
           preventive_km_interval: number | null
+          tire_change_date: string | null
+          tire_change_notes: string | null
           updated_at: string
           vehicle_type: string | null
           year: number | null
         }
         Insert: {
+          alignment_date?: string | null
+          alignment_notes?: string | null
           asset_number?: string | null
+          balancing_date?: string | null
+          balancing_notes?: string | null
           base_status?: Database["public"]["Enums"]["vehicle_status"]
           capacity?: number
           created_at?: string
@@ -1410,15 +1422,23 @@ export type Database = {
           next_tire_change_km?: number | null
           notes?: string | null
           odometer?: number
+          oil_change_date?: string | null
+          oil_change_notes?: string | null
           photo_url?: string | null
           plate: string
           preventive_km_interval?: number | null
+          tire_change_date?: string | null
+          tire_change_notes?: string | null
           updated_at?: string
           vehicle_type?: string | null
           year?: number | null
         }
         Update: {
+          alignment_date?: string | null
+          alignment_notes?: string | null
           asset_number?: string | null
+          balancing_date?: string | null
+          balancing_notes?: string | null
           base_status?: Database["public"]["Enums"]["vehicle_status"]
           capacity?: number
           created_at?: string
@@ -1438,9 +1458,13 @@ export type Database = {
           next_tire_change_km?: number | null
           notes?: string | null
           odometer?: number
+          oil_change_date?: string | null
+          oil_change_notes?: string | null
           photo_url?: string | null
           plate?: string
           preventive_km_interval?: number | null
+          tire_change_date?: string | null
+          tire_change_notes?: string | null
           updated_at?: string
           vehicle_type?: string | null
           year?: number | null
