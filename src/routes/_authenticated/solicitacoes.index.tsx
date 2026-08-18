@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +17,11 @@ export const Route = createFileRoute("/_authenticated/solicitacoes/")({
 
 function MinhasSolicitacoes() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate({ to: "/viagens", replace: true });
+  }, [navigate]);
   const queryClient = useQueryClient();
 
   const { data: trips = [], isLoading } = useQuery({
@@ -55,7 +61,7 @@ function MinhasSolicitacoes() {
       description="Acompanhe o andamento dos seus pedidos de viagem"
       actions={
         <Button asChild size="sm">
-          <Link to="/solicitacoes/nova">
+          <Link to="/solicitacoes/nova" search={{ initialDate: undefined }}>
             <Plus className="mr-1 h-4 w-4" /> Nova
           </Link>
         </Button>

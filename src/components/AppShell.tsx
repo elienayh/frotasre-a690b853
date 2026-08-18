@@ -36,9 +36,7 @@ interface NavItem {
 }
 
 const SERVER_ITEMS: NavItem[] = [
-  { to: "/agenda-publica", label: "Calendário de Viagens", icon: CalendarRange },
-  { to: "/painel", label: "Painel", icon: Gauge },
-  { to: "/solicitacoes", label: "Minhas Solicitações", icon: ClipboardList },
+  { to: "/agenda-publica", label: "Cronograma", icon: CalendarRange },
   { to: "/viagens", label: "Minhas Viagens", icon: RouteIcon },
 ];
 
