@@ -27,6 +27,7 @@ import { Route as AuthenticatedSolicitacoesIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedSolicitacoesNovaRouteImport } from './routes/_authenticated/solicitacoes.nova'
 import { Route as AuthenticatedAdminMotoristasIndexRouteImport } from './routes/_authenticated/admin.motoristas.index'
 import { Route as AuthenticatedAdminMotoristasDriverIdRouteImport } from './routes/_authenticated/admin.motoristas.$driverId'
+import { Route as AuthenticatedAdminUsuariosIndexRouteImport } from './routes/_authenticated/admin.usuarios.index'
 import { Route as AuthenticatedAdminUsuariosUserIdRouteImport } from './routes/_authenticated/admin.usuarios.$userId'
 import { Route as AuthenticatedAdminVeiculosIndexRouteImport } from './routes/_authenticated/admin.veiculos.index'
 import { Route as AuthenticatedAdminVeiculosVehicleIdRouteImport } from './routes/_authenticated/admin.veiculos.$vehicleId'
@@ -132,6 +133,12 @@ const AuthenticatedAdminMotoristasDriverIdRoute =
     path: '/admin/motoristas/$driverId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminUsuariosIndexRoute =
+  AuthenticatedAdminUsuariosIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAdminUsuariosRoute,
+  } as any)
 const AuthenticatedAdminUsuariosUserIdRoute =
   AuthenticatedAdminUsuariosUserIdRouteImport.update({
     id: '/$userId',
@@ -178,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
   '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
   '/admin/motoristas/': typeof AuthenticatedAdminMotoristasIndexRoute
+  '/admin/usuarios/': typeof AuthenticatedAdminUsuariosIndexRoute
   '/admin/veiculos/': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -193,7 +201,6 @@ export interface FileRoutesByTo {
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
   '/admin/solicitacoes': typeof AuthenticatedAdminSolicitacoesRoute
-  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRouteWithChildren
   '/solicitacoes/nova': typeof AuthenticatedSolicitacoesNovaRoute
   '/solicitacoes': typeof AuthenticatedSolicitacoesIndexRoute
   '/admin/motoristas/$driverId': typeof AuthenticatedAdminMotoristasDriverIdRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
   '/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
   '/admin/motoristas': typeof AuthenticatedAdminMotoristasIndexRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosIndexRoute
   '/admin/veiculos': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRoutesById {
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/veiculos/$vehicleId': typeof AuthenticatedAdminVeiculosVehicleIdRoute
   '/_authenticated/solicitacoes/$tripId/editar': typeof AuthenticatedSolicitacoesTripIdEditarRoute
   '/_authenticated/admin/motoristas/': typeof AuthenticatedAdminMotoristasIndexRoute
+  '/_authenticated/admin/usuarios/': typeof AuthenticatedAdminUsuariosIndexRoute
   '/_authenticated/admin/veiculos/': typeof AuthenticatedAdminVeiculosIndexRoute
 }
 export interface FileRouteTypes {
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/admin/veiculos/$vehicleId'
     | '/solicitacoes/$tripId/editar'
     | '/admin/motoristas/'
+    | '/admin/usuarios/'
     | '/admin/veiculos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -266,7 +276,6 @@ export interface FileRouteTypes {
     | '/admin/destinos'
     | '/admin/disponibilidade'
     | '/admin/solicitacoes'
-    | '/admin/usuarios'
     | '/solicitacoes/nova'
     | '/solicitacoes'
     | '/admin/motoristas/$driverId'
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/veiculos/$vehicleId'
     | '/solicitacoes/$tripId/editar'
     | '/admin/motoristas'
+    | '/admin/usuarios'
     | '/admin/veiculos'
   id:
     | '__root__'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/veiculos/$vehicleId'
     | '/_authenticated/solicitacoes/$tripId/editar'
     | '/_authenticated/admin/motoristas/'
+    | '/_authenticated/admin/usuarios/'
     | '/_authenticated/admin/veiculos/'
   fileRoutesById: FileRoutesById
 }
@@ -436,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMotoristasDriverIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/usuarios/': {
+      id: '/_authenticated/admin/usuarios/'
+      path: '/'
+      fullPath: '/admin/usuarios/'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminUsuariosRoute
+    }
     '/_authenticated/admin/usuarios/$userId': {
       id: '/_authenticated/admin/usuarios/$userId'
       path: '/$userId'
@@ -469,12 +487,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminUsuariosRouteChildren {
   AuthenticatedAdminUsuariosUserIdRoute: typeof AuthenticatedAdminUsuariosUserIdRoute
+  AuthenticatedAdminUsuariosIndexRoute: typeof AuthenticatedAdminUsuariosIndexRoute
 }
 
 const AuthenticatedAdminUsuariosRouteChildren: AuthenticatedAdminUsuariosRouteChildren =
   {
     AuthenticatedAdminUsuariosUserIdRoute:
       AuthenticatedAdminUsuariosUserIdRoute,
+    AuthenticatedAdminUsuariosIndexRoute: AuthenticatedAdminUsuariosIndexRoute,
   }
 
 const AuthenticatedAdminUsuariosRouteWithChildren =
