@@ -399,7 +399,7 @@ function FichaVeiculo() {
                 <CardTitle className="text-base font-bold uppercase tracking-wider">Manutenção Preventiva</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                 <VehicleMaintenanceCard vehicle={vehicle} />
+                  <VehicleMaintenanceCard vehicle={vehicle} />
                  
                  <div className="rounded-lg border border-warning/20 bg-warning/5 p-4 text-xs text-warning-foreground">
                     <div className="flex items-center gap-2 font-bold uppercase tracking-wider mb-2">
