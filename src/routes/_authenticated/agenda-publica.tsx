@@ -342,22 +342,6 @@ function CalendarioViagens() {
         )}
 
         <section className="min-w-0 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-display text-2xl font-black tracking-tight text-foreground">
-                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-                </h2>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  {isLoading ? "Sincronizando..." : `${filtered.length} solicitações encontradas`}
-                </p>
-              </div>
-            </div>
-          </div>
-
           <Card className="overflow-hidden border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl">
             <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
               {WEEKDAYS.map((w) => (
@@ -382,7 +366,7 @@ function CalendarioViagens() {
                   <div
                     key={key}
                     className={cn(
-                      "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-colors duration-200 group cursor-pointer",
+                      "min-h-[180px] border-b border-r border-border/40 p-3 last:border-r-0 transition-colors duration-200 group cursor-pointer",
                       outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
                     )}
                     onClick={() => {
@@ -390,10 +374,10 @@ function CalendarioViagens() {
                       navigate({ to: "/solicitacoes/nova", search: { initialDate: isoDate } });
                     }}
                   >
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-3 flex items-center justify-between">
                       <span
                         className={cn(
-                          "inline-flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black transition-all duration-300",
+                          "inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-black transition-all duration-300 relative",
                           isToday
                             ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110"
                             : outside
@@ -404,11 +388,13 @@ function CalendarioViagens() {
                         {d.getDate()}
                       </span>
                       {isToday && (
-                        <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
+                        </div>
                       )}
                     </div>
                     
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-2">
                       {shown.map((t) => {
                         const color = sectorColor(t.requester?.sector);
                         return (
@@ -420,25 +406,24 @@ function CalendarioViagens() {
                                 setTripId(t.id);
                               }}
                               className={cn(
-                                "w-full rounded-xl border px-2 py-2 text-left text-[10px] leading-tight transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
+                                "w-full rounded-xl border border-l-4 px-2.5 py-2.5 text-left transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
                                 color.chip,
                                 color.border,
-                                "bg-opacity-90 backdrop-blur-sm"
+                                "bg-opacity-95 backdrop-blur-sm"
                               )}
                             >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className={cn("font-black tracking-tight", color.text)}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className={cn("text-[10px] font-black tracking-widest uppercase", color.text)}>
                                   {fmtTime(t.departure_at)}
                                 </span>
                                 <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
                               </div>
-                              <span className={cn("block font-black text-[11px] uppercase tracking-tight", color.text)}>
+                              <span className={cn("block font-black text-xs uppercase tracking-tight leading-none mb-1", color.text)}>
                                 {tripCity(t)}
                               </span>
-                              <span className="block truncate opacity-80 font-medium text-[9px] mt-0.5 leading-tight">
+                              <span className="block truncate opacity-70 font-semibold text-[10px] leading-tight">
                                 {t.destination_text}
                               </span>
-
                             </button>
                           </li>
                         );
@@ -451,9 +436,9 @@ function CalendarioViagens() {
                               e.stopPropagation();
                               setExpandedDay(expanded ? null : key);
                             }}
-                            className="w-full rounded-xl px-2 py-1.5 text-center text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                            className="w-full rounded-xl px-2 py-2 text-center text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                           >
-                            {expanded ? "ver menos" : `+${items.length - 3} itens`}
+                            {expanded ? "ver menos" : `+ ${items.length - 3} viagens`}
                           </button>
                         </li>
                       ) : null}
