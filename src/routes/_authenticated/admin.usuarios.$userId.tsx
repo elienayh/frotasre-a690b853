@@ -82,6 +82,21 @@ function UsuarioEdicao() {
 
   const patch = useMutation({
     mutationFn: async (values: any) => {
+      // Registra alterações relevantes no histórico antes de atualizar
+      if (profile) {
+        const changes = Object.keys(values).filter(key => (profile as any)[key] !== values[key]);
+        for (const key of changes) {
+           await supabase.from("permission_history").insert({
+             target_user_id: userId,
+             actor_id: currentUser?.id ?? null,
+             action: "Alteração de dados",
+             field_changed: key,
+             old_value: String((profile as any)[key]),
+             new_value: String(values[key])
+           });
+        }
+      }
+
       const { error } = await supabase.from("profiles").update(values).eq("id", userId);
       if (error) throw error;
     },

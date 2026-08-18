@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { cnhStatus } from "@/lib/motoristas";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
   component: UsuariosList,
@@ -55,10 +56,11 @@ function UsuariosList() {
     <AppShell title="Gestão de Usuários" description="Clique em um usuário para gerenciar permissões e configurações.">
       <div className="grid gap-4">
         {profiles.map((p) => (
-          <div
+          <Link
             key={p.id}
-            onClick={() => navigate({ to: "/admin/usuarios/$userId", params: { userId: p.id } })}
-            className="group cursor-pointer rounded-[2rem] border border-border/40 bg-card/60 p-6 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:scale-[1.01]"
+            to="/admin/usuarios/$userId"
+            params={{ userId: p.id }}
+            className="group block overflow-hidden rounded-[2rem] border border-border/40 bg-card/60 p-6 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:scale-[1.01]"
           >
             <div className="flex items-center justify-between">
               <div className="space-y-1">
