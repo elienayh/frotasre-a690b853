@@ -508,7 +508,7 @@ function AdminSolicitacoes() {
             <Button
               variant={decision?.kind === "REJEITADA" ? "destructive" : "default"}
               onClick={() => {
-                if (decision) {
+                if (decision && decision.trip.id) {
                   decide.mutate({
                     id: decision.trip.id,
                     kind: decision.kind,
