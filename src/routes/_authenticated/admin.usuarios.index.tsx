@@ -48,6 +48,17 @@ function UsuariosList() {
     inactive: search?.pending ? true : false,
   });
 
+  // Sync filters when search param changes
+  useEffect(() => {
+    if (search?.pending !== undefined) {
+      setFilters(f => ({
+        ...f,
+        active: !search.pending,
+        inactive: !!search.pending
+      }));
+    }
+  }, [search?.pending]);
+
   const fetchEmails = useServerFn(getUsersEmails);
 
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
