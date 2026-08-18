@@ -293,14 +293,38 @@ function Veiculos() {
     setFormOpen(true);
   }
 
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(v => {
+      const matchesSearch = 
+        v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.model.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const maintenanceStatus = (v as any).maintenance_status;
+      const matchesFilter = search?.filter === 'pending' 
+        ? (maintenanceStatus === 'VENCIDA' || maintenanceStatus === 'CRÍTICO')
+        : true;
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [vehicles, searchTerm, search?.filter]);
+
   return (
     <AppShell
       title="Gestão da Frota"
       description="Controle operacional, disponibilidade e manutenção preventiva."
       actions={
-        <Button size="sm" onClick={() => openForm(null)} className="rounded-xl shadow-lg shadow-primary/20">
-          <Plus className="mr-1.5 h-4 w-4" /> Novo Veículo
-        </Button>
+        <div className="flex items-center gap-2">
+          <Input 
+            placeholder="Buscar veículo..." 
+            className="h-9 w-48 rounded-xl bg-background/50" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Button size="sm" onClick={() => openForm(null)} className="rounded-xl shadow-lg shadow-primary/20">
+            <Plus className="mr-1.5 h-4 w-4" /> Novo Veículo
+          </Button>
+        </div>
       }
     >
 
