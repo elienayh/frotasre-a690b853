@@ -66,6 +66,18 @@ export const TRIP_STATUS_LABEL: Record<string, string> = {
   REJEITADA: "Rejeitada",
 };
 
+/** Estilo de cor para o status. */
+export function statusTone(status: string): string {
+  const s = String(status).toUpperCase();
+  if (["APROVADA", "PROGRAMADA", "DISPONIVEL", "CONCLUIDA", "ATENDIDA"].includes(s))
+    return "border-success/30 bg-success/10 text-success";
+  if (["PENDENTE", "RESERVADO", "EM_ANDAMENTO", "ATRASADA", "PARCIAL"].includes(s))
+    return "border-warning/30 bg-warning/10 text-warning";
+  if (["REJEITADA", "CANCELADA", "INDISPONIVEL", "INATIVO", "EM_MANUTENCAO", "INCIDENTE"].includes(s))
+    return "border-destructive/30 bg-destructive/10 text-destructive";
+  return "border-border bg-muted/50 text-muted-foreground";
+}
+
 /** Calcula a autonomia estimada baseada nos últimos abastecimentos. */
 export function calculateAutonomy(fuels: any[]): string {
   if (fuels.length < 2) return "N/A";
@@ -117,4 +129,7 @@ export interface TripRow {
   organized_by: string | null;
   odometer_start: number | null;
   odometer_end: number | null;
+  city_id?: string | null;
+  city_text?: string | null;
+  destination_id?: string | null;
 }
