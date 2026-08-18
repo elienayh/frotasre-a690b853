@@ -3,7 +3,8 @@ import { ArrowDown, ArrowUp, MapPin, Plus, Trash2 } from "lucide-react";
 import { ComboBox, type ComboOption } from "@/components/ComboBox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useCities, usePlaces } from "@/hooks/useFrotaOptions";
+import { useCities, usePlaces, usePeople } from "@/hooks/useFrotaOptions";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface StopValue {
   key: string;
@@ -11,6 +12,7 @@ export interface StopValue {
   cityText: string | null;
   destinationId: string | null;
   placeText: string | null;
+  driverUserId: string | null;
 }
 
 export function newStop(): StopValue {
@@ -20,6 +22,7 @@ export function newStop(): StopValue {
     cityText: null,
     destinationId: null,
     placeText: null,
+    driverUserId: null,
   };
 }
 
@@ -32,6 +35,8 @@ export interface TripStopsProps {
 export function TripStops({ value, onChange }: TripStopsProps) {
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
+  const { data: people = [] } = usePeople();
+  const { user, profile } = useAuth();
 
   const cityOptions: ComboOption[] = cities.map((c) => ({ value: c.id, label: c.name }));
 
@@ -121,6 +126,7 @@ export function TripStops({ value, onChange }: TripStopsProps) {
                       cityText: null,
                       destinationId: null,
                       placeText: null,
+                      driverUserId: stop.driverUserId,
                     })
                   }
                   onCustom={(text) =>
@@ -129,6 +135,7 @@ export function TripStops({ value, onChange }: TripStopsProps) {
                       cityText: text,
                       destinationId: null,
                       placeText: null,
+                      driverUserId: stop.driverUserId,
                     })
                   }
                 />
@@ -153,6 +160,36 @@ export function TripStops({ value, onChange }: TripStopsProps) {
                   }
                   onCustom={(text) => update(index, { destinationId: null, placeText: text })}
                 />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor={`driver-${stop.key}`}>Motorista</Label>
+                <ComboBox
+                  id={`driver-${stop.key}`}
+                  options={[
+                    { value: "DAFI", label: "DAFI DEFINIR" },
+                    ...(profile?.is_driver_certified
+                      ? [{ value: user?.id || "", label: `EU — ${profile.full_name}` }]
+                      : []),
+                    ...people
+                      .filter((p) => p.is_driver_certified && p.id !== user?.id)
+                      .map((p) => ({
+                        value: p.id,
+                        label: p.full_name,
+                        hint: p.sector || undefined,
+                      })),
+                  ]}
+                  value={stop.driverUserId ?? "DAFI"}
+                  onSelect={(option) =>
+                    update(index, { driverUserId: option.value === "DAFI" ? null : option.value })
+                  }
+                  placeholder="Selecione o motorista"
+                  searchPlaceholder="Pesquisar motorista…"
+                  emptyText="Nenhum motorista credenciado encontrado."
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Selecione um motorista credenciado ou deixe a DAFI definir.
+                </p>
               </div>
             </div>
           </div>

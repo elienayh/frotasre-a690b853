@@ -100,6 +100,7 @@ export function TripForm({ trip }: TripFormProps) {
           cityText: s.city_text,
           destinationId: s.destination_id,
           placeText: s.place_text,
+          driverUserId: s.driver_user_id,
         })),
       );
     } else if (savedStops) {
@@ -110,6 +111,7 @@ export function TripForm({ trip }: TripFormProps) {
           cityText: trip.city_text ?? null,
           destinationId: trip.destination_id ?? null,
           placeText: trip.destination_id ? null : (trip.destination_text ?? null),
+          driverUserId: null,
         },
       ]);
     }
@@ -168,8 +170,13 @@ export function TripForm({ trip }: TripFormProps) {
       toast.error("Informe pelo menos um destino com cidade e local.");
       return;
     }
+    const driversCount = new Set(validStops().map((s) => s.driverUserId).filter(Boolean)).size || 1;
+    if (1 + parsed.data.passengers > 5) {
+      toast.error("A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros).");
+      return;
+    }
     if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
-      toast.error("Selecione todos os ocupantes da viagem.");
+      toast.error("Selecione todos os passageiros da viagem.");
       return;
     }
     setReview(parsed.data);
@@ -190,8 +197,7 @@ export function TripForm({ trip }: TripFormProps) {
       city_text: first.cityText,
       destination_id: first.destinationId,
       destination_text: summary.slice(0, 400),
-      // O condutor deixa de ser escolhido na solicitação: a DAFI define por destino.
-      requested_driver_id: null,
+      requested_driver_id: first.driverUserId,
       suggested_driver: null,
       purpose: review.purpose,
       passengers: review.passengers,
@@ -228,6 +234,7 @@ export function TripForm({ trip }: TripFormProps) {
             city_text: stop.cityText,
             destination_id: stop.destinationId,
             place_text: stop.placeText,
+            driver_user_id: stop.driverUserId,
           })),
         );
         if (stopsError) throw new Error(stopsError.message);
@@ -306,7 +313,16 @@ export function TripForm({ trip }: TripFormProps) {
                 ))}
               </ol>
             </div>
-            <Row label="Motorista" value="DAFI DEFINIR" />
+            <Row
+              label="Motorista(s)"
+              value={
+                [...new Set(list.map((s) => s.driverUserId).filter(Boolean))].length > 0
+                  ? [...new Set(list.map((s) => s.driverUserId).filter(Boolean))]
+                      .map((id) => people.find((p) => p.id === id)?.full_name)
+                      .join(", ")
+                  : "DAFI DEFINIR"
+              }
+            />
             <Row label="Aceita caronas" value={review.allows_rides ? "Sim" : "Não"} />
             {review.requester_notes ? (
               <Row label="Observações" value={review.requester_notes} />
@@ -374,8 +390,8 @@ export function TripForm({ trip }: TripFormProps) {
           <CardContent className="space-y-4">
             <TripStops value={stops} onChange={setStops} />
             <p className="text-xs text-muted-foreground">
-              Cada parada tem cidade e local próprios. O motorista de cada destino é definido pela
-              DAFI após a solicitação.
+              Cada parada tem cidade, local e motorista próprios. Selecione um motorista
+              credenciado ou deixe a DAFI definir.
             </p>
           </CardContent>
         </Card>
@@ -407,30 +423,42 @@ export function TripForm({ trip }: TripFormProps) {
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="passengers">Número de ocupantes</Label>
+                <Label htmlFor="passengers">Número de passageiros</Label>
                 <Input
                   id="passengers"
                   name="passengers"
                   type="number"
-                  min={1}
-                  max={60}
+                  min={0}
+                  max={4}
                   value={passengers}
-                  onChange={(e) => setPassengers(Math.max(0, Number(e.target.value) || 0))}
+                  onChange={(e) => setPassengers(Math.max(0, Math.min(4, Number(e.target.value) || 0)))}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label>Motorista</Label>
-                <div className="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
-                  DAFI DEFINIR
+                <Label>Ocupação Total</Label>
+                <div className="rounded-md border border-info/20 bg-info/5 px-3 py-2 text-sm">
+                  <div className="flex justify-between font-bold">
+                    <span>
+                      {1 + passengers} de 5
+                    </span>
+                    <span className={1 + passengers > 5 ? "text-destructive" : "text-success"}>
+                      {5 - (1 + passengers)} vagas restam
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  O motorista de cada destino é definido pela DAFI na aprovação.
+                <p className="text-[10px] text-muted-foreground">
+                  Regra: 1 motorista + até 4 passageiros.
                 </p>
               </div>
             </div>
 
-            <OccupantsPicker count={passengers} value={occupantIds} onChange={setOccupantIds} />
+            <OccupantsPicker
+              count={passengers}
+              value={occupantIds}
+              onChange={setOccupantIds}
+              exclude={stops.map((s) => s.driverUserId).filter(Boolean) as string[]}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="requester_notes">Observações</Label>
@@ -463,8 +491,8 @@ export function TripForm({ trip }: TripFormProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              O veículo e o motorista de cada destino são definidos pela DAFI. O motorista conta
-              como pessoa a bordo, além dos ocupantes informados.
+              A capacidade total é de 5 pessoas (1 motorista + 4 passageiros). O motorista
+              pode ser indicado pelo solicitante ou definido pela DAFI.
             </p>
             <p>Você será notificado quando a solicitação for aprovada, ajustada ou recusada.</p>
             <p>O registro oficial no PW/Prodemge é feito pela DAFI após a aprovação.</p>

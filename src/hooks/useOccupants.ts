@@ -9,6 +9,7 @@ export interface OccupantRow {
   trip_id: string;
   user_id: string | null;
   is_external: boolean;
+  is_driver: boolean;
   external_name: string | null;
   external_document: string | null;
   external_phone: string | null;
@@ -19,7 +20,7 @@ export interface OccupantRow {
 }
 
 const SELECT =
-  "id, trip_id, user_id, is_external, external_name, external_document, external_phone, notes, status, declined_at, profile:profiles!trip_occupants_user_id_fkey(full_name, sector, registration)";
+  "id, trip_id, user_id, is_external, is_driver, external_name, external_document, external_phone, notes, status, declined_at, profile:profiles!trip_occupants_user_id_fkey(full_name, sector, registration)";
 
 /** Ocupantes vinculados a uma viagem (usuários do sistema e externos). */
 export function useTripOccupants(tripId: string | null | undefined) {
