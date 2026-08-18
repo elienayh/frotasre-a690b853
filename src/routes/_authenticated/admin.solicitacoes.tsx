@@ -30,8 +30,10 @@ type Decision = { trip: TripRow; kind: "REJEITADA" | "CORRECAO" } | null;
 
 function AdminSolicitacoes() {
   const queryClient = useQueryClient();
+  const search = Route.useSearch() as { tab?: string };
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [decision, setDecision] = useState<Decision>(null);
+  const [activeTab, setActiveTab] = useState(search?.tab || "pendentes");
 
   const { data: trips = [], isLoading } = useQuery({
     queryKey: ["admin-trips"],
