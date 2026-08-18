@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +40,7 @@ const profileSchema = z.object({
 
 function UsuarioEdicao() {
   const { userId } = useParams({ from: "/_authenticated/admin/usuarios/$userId" });
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isSuperAdmin, user: currentUser } = useAuth();
   const [sectorDraft, setSectorDraft] = useState<string>("");
