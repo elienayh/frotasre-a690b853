@@ -97,6 +97,12 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
         <Link
           key={item.to}
           to={item.to}
+          search={(prev: any) => {
+            if (item.label === "Aprovações") return { ...prev, tab: "pendentes" };
+            if (item.label === "Veículos") return { ...prev, filter: "pending" };
+            if (item.label === "Usuários") return { ...prev, pending: true };
+            return prev;
+          }}
           onClick={onNavigate}
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
