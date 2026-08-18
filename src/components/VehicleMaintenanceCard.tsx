@@ -38,10 +38,10 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm, icon, compact }: Ma
 
   const totalInterval = nextKm && lastKm ? Math.max(1, nextKm - lastKm) : 0;
   const elapsed = nextKm && lastKm ? currentKm - lastKm : 0;
-  const hasHistory = lastKm !== null;
+  const hasHistory = lastKm !== null && lastKm > 0;
   
-  // Progress is only real if we have a starting point (lastKm)
-  // Otherwise, we just show a neutral bar or no progress
+  // Progress calculation
+  // Normal: 0-70% | Warning: 70-90% | Urgent: 90-100% | Expired: >100%
   const progress = hasHistory && totalInterval > 0
     ? Math.min(Math.max((elapsed / totalInterval) * 100, 0), 100)
     : 0;

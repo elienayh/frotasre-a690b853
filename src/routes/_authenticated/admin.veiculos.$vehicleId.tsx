@@ -79,6 +79,8 @@ function FichaVeiculo() {
   const queryClient = useQueryClient();
 
   const [maintOpen, setMaintOpen] = useState(false);
+  const [preventiveOpen, setPreventiveOpen] = useState(false);
+  const [selectedMaintType, setSelectedMaintType] = useState<string>('OIL');
   const [finishing, setFinishing] = useState<BlockRow | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
   const [nextStatus, setNextStatus] = useState<FleetStatus>("DISPONIVEL");
@@ -562,14 +564,34 @@ function FichaVeiculo() {
                             <span>Última: <strong>{fmtKm(item.lastKm)}</strong></span>
                             <span>Data: <strong>{fmtDate(item.date)}</strong></span>
                           </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            <span>Próxima: <strong>{fmtKm(item.nextKm)}</strong></span>
+                            {item.nextKm && item.lastKm && (
+                              <span>Intervalo: <strong>{fmtKm(item.nextKm - item.lastKm)}</strong></span>
+                            )}
+                          </div>
                         </div>
                         
-                        <div className="flex flex-col gap-2 min-w-[200px]">
-                           <Label htmlFor={`next-${item.id}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                             Próxima Troca (KM)
-                           </Label>
-                           <div className="flex gap-2">
-                             <Input 
+                        <div className="flex gap-2 self-end sm:self-auto">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="rounded-xl border-border/40"
+                            onClick={() => {
+                              setSelectedMaintType(
+                                item.id === 'oil' ? 'OIL' :
+                                item.id === 'tire' ? 'TIRE' :
+                                item.id === 'oil_filter' ? 'OIL_FILTER' :
+                                item.id === 'air_filter' ? 'AIR_FILTER' :
+                                item.id === 'alignment' ? 'ALIGNMENT' : 'BALANCING'
+                              );
+                              setPreventiveOpen(true);
+                            }}
+                          >
+                            <Plus className="mr-1 h-3 w-3" /> Registrar Realizada
+                          </Button>
+                          <div className="flex flex-col gap-1 min-w-[120px]">
+                            <Input 
                                 id={`next-${item.id}`}
                                 type="number"
                                 className="h-9 font-mono font-bold"
@@ -577,15 +599,17 @@ function FichaVeiculo() {
                                 onBlur={(e) => {
                                   const val = Number(e.target.value);
                                   if (val !== item.nextKm) {
-                                    const key = item.id === 'oil' || item.id === 'tire' ? `next_${item.id}_change_km` : `next_${item.id}_km`;
+                                    const key = 
+                                      item.id === 'oil' || item.id === 'tire' || 
+                                      item.id === 'oil_filter' || item.id === 'air_filter' 
+                                        ? `next_${item.id}_change_km` 
+                                        : `next_${item.id}_km`;
                                     updateMaintenance.mutate({ [key]: val });
                                   }
                                 }}
-                             />
-                             <Button size="sm" variant="secondary" className="h-9 px-3">
-                               Salvar
-                             </Button>
-                           </div>
+                            />
+                            <span className="text-[8px] font-bold uppercase text-center text-muted-foreground">Limiar Próxima (KM)</span>
+                          </div>
                         </div>
                       </div>
 
@@ -979,29 +1003,74 @@ function FichaVeiculo() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={statusOpen} onOpenChange={setStatusOpen}>
+      <Dialog open={preventiveOpen} onOpenChange={setPreventiveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Alterar status do veículo</DialogTitle>
+            <DialogTitle>Registrar Manutenção Realizada</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="v-status">Status operacional</Label>
-            <Select value={nextStatus} onValueChange={(v) => setNextStatus(v as FleetStatus)}>
-              <SelectTrigger id="v-status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {FLEET_STATUS_LABEL[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <form
+            id="preventive-form"
+            className="grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              registerMaintenance.mutate(new FormData(e.currentTarget));
+            }}
+          >
+            <input type="hidden" name="type" value={selectedMaintType} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tipo de Manutenção</Label>
+                <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm font-bold text-primary">
+                  {selectedMaintType === 'OIL' ? 'Óleo' :
+                   selectedMaintType === 'TIRE' ? 'Pneus' :
+                   selectedMaintType === 'OIL_FILTER' ? 'Filtro de Óleo' :
+                   selectedMaintType === 'AIR_FILTER' ? 'Filtro de Ar' :
+                   selectedMaintType === 'ALIGNMENT' ? 'Alinhamento' : 'Balanceamento'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-date">Data da Realização</Label>
+                <Input id="p-date" name="performed_date" type="date" required defaultValue={todayInput()} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="p-performed-km">KM da Realização</Label>
+                <Input 
+                  id="p-performed-km" 
+                  name="performed_km" 
+                  type="number" 
+                  required 
+                  defaultValue={vehicle?.odometer ?? 0}
+                  placeholder="Ex: 158000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-next-km">KM da Próxima Manutenção</Label>
+                <Input 
+                  id="p-next-km" 
+                  name="next_km" 
+                  type="number" 
+                  required 
+                  placeholder="Ex: 164000"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="p-notes">Observações</Label>
+              <Textarea id="p-notes" name="notes" placeholder="Descreva os detalhes da manutenção..." rows={3} />
+            </div>
+
+            <div className="rounded-lg bg-muted/50 p-3 text-[10px] text-muted-foreground uppercase leading-relaxed">
+              Ao confirmar, o sistema atualizará a "Última Manutenção" e a "Próxima Manutenção" do veículo, recalculando o progresso automaticamente.
+            </div>
+          </form>
           <DialogFooter>
-            <Button onClick={() => changeStatus.mutate(nextStatus)} disabled={changeStatus.isPending}>
-              Salvar
+            <Button variant="ghost" onClick={() => setPreventiveOpen(false)}>Cancelar</Button>
+            <Button type="submit" form="preventive-form" disabled={registerMaintenance.isPending}>
+              {registerMaintenance.isPending ? "Salvando..." : "Confirmar Registro"}
             </Button>
           </DialogFooter>
         </DialogContent>
