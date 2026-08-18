@@ -390,8 +390,8 @@ export function TripForm({ trip }: TripFormProps) {
           <CardContent className="space-y-4">
             <TripStops value={stops} onChange={setStops} />
             <p className="text-xs text-muted-foreground">
-              Cada parada tem cidade e local próprios. O motorista de cada destino é definido pela
-              DAFI após a solicitação.
+              Cada parada tem cidade, local e motorista próprios. Selecione um motorista
+              credenciado ou deixe a DAFI definir.
             </p>
           </CardContent>
         </Card>
