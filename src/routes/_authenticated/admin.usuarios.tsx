@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Pencil, Route as RouteIcon } from "lucide-react";
+import { Pencil, Route as RouteIcon, History } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -32,6 +32,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuditTimeline } from "@/components/AuditTimeline";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
   component: Usuarios,
@@ -77,6 +79,7 @@ function Usuarios() {
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [sectorDraft, setSectorDraft] = useState<string>("");
   const [tripsOf, setTripsOf] = useState<ProfileRow | null>(null);
+  const [historyOf, setHistoryOf] = useState<ProfileRow | null>(null);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["profiles-admin"],
@@ -348,6 +351,9 @@ function Usuarios() {
                   <Button variant="secondary" size="sm" onClick={() => setTripsOf(p)}>
                     <RouteIcon className="mr-1 h-4 w-4" /> Viagens
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => setHistoryOf(p)}>
+                    <History className="mr-1 h-4 w-4" /> Histórico
+                  </Button>
                 </div>
               </div>
             </li>
@@ -505,6 +511,16 @@ function Usuarios() {
               ))}
             </ul>
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={Boolean(historyOf)} onOpenChange={(o) => !o && setHistoryOf(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Histórico de {historyOf?.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pt-4">
+            {historyOf && <AuditTimeline entityId={historyOf.id} entityType="user" />}
+          </div>
         </DialogContent>
       </Dialog>
     </AppShell>
