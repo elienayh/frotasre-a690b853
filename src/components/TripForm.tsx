@@ -146,6 +146,8 @@ export function TripForm({ trip }: TripFormProps) {
     return stops.filter((s) => (s.cityId || s.cityText) && (s.destinationId || s.placeText));
   }
 
+  const occupancy = calculateTripOccupancy(stops, occupantIds, 5);
+
   function selectedOccupants(count: number): string[] {
     return occupantIds.slice(0, count).filter(Boolean) as string[];
   }
