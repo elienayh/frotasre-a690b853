@@ -15,17 +15,14 @@ export interface EmailData {
  */
 async function logEmail(data: EmailData, status: 'success' | 'error', errorMsg?: string) {
   try {
+    // Usamos a tabela de notificações como repositório de logs administrativos
+    // para não criar tabelas novas sem necessidade.
     await supabaseAdmin.from("notifications").insert({
-      user_id: "00000000-0000-0000-0000-000000000000", // UUID nulo para log administrativo
-      title: `[EMAIL LOG] ${data.subject}`,
-      message: `Status: ${status}${errorMsg ? ` | Erro: ${errorMsg}` : ''}`,
+      user_id: "00000000-0000-0000-0000-000000000000", // UUID nulo (Placeholder System)
+      title: \`[EMAIL LOG] \${data.subject.slice(0, 100)}\`,
+      body: \`Destinatário: \${data.to}\${errorMsg ? \` | Erro: \${errorMsg}\` : ' | Status: Sucesso'}\`,
       type: 'system',
-      metadata: {
-        to: data.to,
-        trip_id: data.tripId,
-        request_id: data.requestId,
-        is_email_log: true
-      }
+      trip_id: data.tripId || null
     });
   } catch (e) {
     console.error("Failed to log email to DB:", e);
