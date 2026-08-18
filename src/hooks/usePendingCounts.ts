@@ -22,11 +22,11 @@ export function usePendingCounts() {
         supabase
           .from("trip_requests")
           .select("id", { count: "exact", head: true })
-          .eq("status", "pending"),
+          .eq("status", "PENDENTE"),
         supabase
           .from("ride_requests")
           .select("id", { count: "exact", head: true })
-          .eq("status", "pending"),
+          .eq("status", "PENDENTE"),
         // 2. VEÍCULOS: Manutenção vencida ou crítica
         supabase
           .from("vehicles")
