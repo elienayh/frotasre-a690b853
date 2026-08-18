@@ -98,9 +98,9 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
           key={item.to}
           to={item.to}
           search={(prev: any) => {
-            if (item.label === "Aprovações") return { ...prev, filter: "pendentes" };
-            if (item.label === "Veículos") return { ...prev, filter: "pending" };
-            if (item.label === "Usuários") return { ...prev, pending: undefined };
+            if (item.label === "Aprovações") return { filter: "pendentes" };
+            if (item.label === "Veículos") return {};
+            if (item.label === "Usuários") return {};
             return prev;
           }}
           onClick={onNavigate}
