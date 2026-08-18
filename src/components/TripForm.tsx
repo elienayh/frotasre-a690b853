@@ -491,8 +491,8 @@ export function TripForm({ trip }: TripFormProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              O veículo e o motorista de cada destino são definidos pela DAFI. O motorista conta
-              como pessoa a bordo, além dos ocupantes informados.
+              A capacidade total é de 5 pessoas (1 motorista + 4 passageiros). O motorista
+              pode ser indicado pelo solicitante ou definido pela DAFI.
             </p>
             <p>Você será notificado quando a solicitação for aprovada, ajustada ou recusada.</p>
             <p>O registro oficial no PW/Prodemge é feito pela DAFI após a aprovação.</p>
