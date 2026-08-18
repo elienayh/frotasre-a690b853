@@ -233,55 +233,73 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   </p>
                 </div>
 
+                <div className="space-y-3">
+                  <h3 className="font-display text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-1.5">
+                    Controle de Quilometragem
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 bg-muted/20 p-3 rounded-xl border border-border/40">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase">KM Saída</p>
+                      <p className="text-sm font-mono font-bold">
+                        {trip.odometer_start ? `${trip.odometer_start.toLocaleString()} km` : "—"}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase">KM Retorno</p>
+                      <p className="text-sm font-mono font-bold">
+                        {trip.odometer_end ? `${trip.odometer_end.toLocaleString()} km` : "—"}
+                      </p>
+                    </div>
+                    {trip.odometer_start && trip.odometer_end && (
+                      <div className="col-span-2 flex justify-between items-center pt-2 border-t border-border/40">
+                        <span className="text-[10px] font-black text-primary uppercase">Percurso Total</span>
+                        <span className="text-sm font-mono font-black text-primary">
+                          {(trip.odometer_end - trip.odometer_start).toLocaleString()} km
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-              <Separator />
+              <Separator className="opacity-40" />
 
-
-              <section className="space-y-2">
-                <h3 className="font-display text-sm font-semibold">Responsabilidade</h3>
-                <dl className="space-y-2 text-sm">
-                  <Field
-                    label="Solicitante"
-                    value={trip.requester?.full_name ?? trip.requester_name ?? "—"}
-                  />
-                  {isAdmin ? (
+              {/* 10. Informações administrativas */}
+              <section className="space-y-4">
+                <h3 className="font-display text-xs font-black uppercase tracking-[0.15em] text-foreground/80">Gestão e Auditoria</h3>
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <dt className="text-[9px] font-bold text-muted-foreground uppercase">Solicitante</dt>
+                    <dd className="text-sm font-bold">{trip.requester?.full_name ?? trip.requester_name ?? "—"}</dd>
+                  </div>
+                  {isAdmin && (
                     <>
-                      <Field
-                        label="Aprovado por"
-                        value={
-                          trip.approver?.full_name
-                            ? `${trip.approver.full_name}${trip.approved_at ? ` · ${fmtDate(trip.approved_at)} ${fmtTime(trip.approved_at)}` : ""}`
-                            : "—"
-                        }
-                      />
-                      <Field
-                        label="Organizado por"
-                        value={
-                          trip.organizer?.full_name
-                            ? `${trip.organizer.full_name}${trip.organized_at ? ` · ${fmtDate(trip.organized_at)} ${fmtTime(trip.organized_at)}` : ""}`
-                            : "—"
-                        }
-                      />
+                      <div className="space-y-1">
+                        <dt className="text-[9px] font-bold text-muted-foreground uppercase">Aprovado por</dt>
+                        <dd className="text-sm font-bold">
+                          {trip.approver?.full_name ?? "—"}
+                          {trip.approved_at && <span className="block text-[9px] font-medium opacity-60 font-mono mt-0.5">{fmtDate(trip.approved_at)}</span>}
+                        </dd>
+                      </div>
+                      <div className="space-y-1">
+                        <dt className="text-[9px] font-bold text-muted-foreground uppercase">Organizado por</dt>
+                        <dd className="text-sm font-bold">
+                          {trip.organizer?.full_name ?? "—"}
+                          {trip.organized_at && <span className="block text-[9px] font-medium opacity-60 font-mono mt-0.5">{fmtDate(trip.organized_at)}</span>}
+                        </dd>
+                      </div>
                     </>
-                  ) : null}
-                  <Field label="Motorista" value={tripDriverName(trip)} />
-                  <Field
-                    label="Veículo"
-                    value={
-                      trip.vehicles
-                        ? `${trip.vehicles.manufacturer} ${trip.vehicles.model} — ${trip.vehicles.plate}`
-                        : "A definir"
-                    }
-                  />
+                  )}
                 </dl>
               </section>
 
-              <Separator />
+              <Separator className="opacity-40" />
 
-              <section className="space-y-2">
-                <h3 className="font-display text-sm font-semibold">Histórico de Alterações</h3>
+              <section className="space-y-3">
+                <h3 className="font-display text-xs font-black uppercase tracking-[0.15em] text-foreground/80">Histórico</h3>
                 <AuditTimeline entityId={trip.id} entityType="trip" />
               </section>
+
 
               <Separator />
 
