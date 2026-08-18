@@ -19,8 +19,8 @@ export function FleetAlerts() {
       
       // Filtra veículos com odômetro próximo da manutenção (500km ou já passou)
       return (data ?? []).filter(v => 
-        v.next_preventive_km > 0 && 
-        (v.odometer || 0) >= (v.next_preventive_km - 500)
+        (v.next_preventive_km ?? 0) > 0 && 
+        (v.odometer || 0) >= ((v.next_preventive_km ?? 0) - 500)
       );
     }
   });
@@ -38,18 +38,19 @@ export function FleetAlerts() {
       <CardContent>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((v) => {
-            const isOverdue = (v.odometer || 0) >= v.next_preventive_km;
+            const nextKm = v.next_preventive_km ?? 0;
+            const isOverdue = (v.odometer || 0) >= nextKm;
             return (
               <li key={v.id} className="rounded-md border border-destructive/20 bg-card p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-display text-sm font-bold">{v.plate}</span>
-                  <Badge variant={isOverdue ? "destructive" : "warning"} className="text-[10px] uppercase">
+                  <Badge variant={isOverdue ? "destructive" : "outline"} className={isOverdue ? "text-[10px] uppercase" : "text-[10px] uppercase text-warning border-warning/30"}>
                     {isOverdue ? "Vencida" : "Próxima"}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">{v.manufacturer} {v.model}</p>
                 <div className="mt-2 flex items-center justify-between text-xs">
-                  <span>{fmtKm(v.odometer)} / {fmtKm(v.next_preventive_km)}</span>
+                  <span>{fmtKm(v.odometer)} / {fmtKm(nextKm)}</span>
                   <Link 
                     to="/admin/veiculos/$vehicleId" 
                     params={{ vehicleId: v.id }}
