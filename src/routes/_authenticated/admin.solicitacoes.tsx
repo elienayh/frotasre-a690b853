@@ -126,7 +126,7 @@ function AdminSolicitacoes() {
       pendentes: ["PENDENTE", "CORRECAO"],
       programadas: ["PROGRAMADA", "EM_ANDAMENTO"],
       aprovadas: ["APROVADA"],
-      carona: ["PENDENTE", "APROVADA", "REJEITADA"], // Specific case for carona filter
+      carona: ["PENDENTE", "APROVADA", "REJEITADA"],
       encerradas: ["CONCLUIDA", "REJEITADA", "CANCELADA"]
     };
 
@@ -136,16 +136,20 @@ function AdminSolicitacoes() {
       // Pendentes combines trips AND rides that are pending
       const pTrips = trips.filter(t => tripStatusMap.pendentes.includes(t.status || ""));
       const pRides = rides.filter(r => r.status === "PENDENTE");
-      combined = [...pTrips, ...pRides].sort((a, b) => {
-        const dateA = ("departure_at" in a ? a.departure_at : (a as RideRow).trip?.departure_at) || 0;
-        const dateB = ("departure_at" in b ? b.departure_at : (b as RideRow).trip?.departure_at) || 0;
-        return new Date(dateA).getTime() - new Date(dateB).getTime();
-      });
-
-
+      combined = [...pTrips, ...pRides];
     } else {
       combined = trips.filter(t => tripStatusMap[activeFilter].includes(t.status || ""));
     }
+
+    // Sort by date (Departure for trips, Related trip departure for rides)
+    combined.sort((a, b) => {
+      const dateA = ("departure_at" in a ? a.departure_at : (a as RideRow).trip?.departure_at) || "";
+      const dateB = ("departure_at" in b ? b.departure_at : (b as RideRow).trip?.departure_at) || "";
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      return new Date(dateA).getTime() - new Date(dateB).getTime();
+    });
+
 
     // Apply search
     if (searchTerm.trim()) {
