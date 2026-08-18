@@ -17,6 +17,7 @@ import { TripStops, newStop, stopLabel, type StopValue } from "@/components/Trip
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
 import { calculateTripOccupancy } from "@/lib/occupancy";
+import { cn } from "@/lib/utils";
 
 const schema = z
   .object({
