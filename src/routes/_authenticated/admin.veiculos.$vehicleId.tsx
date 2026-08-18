@@ -248,14 +248,20 @@ function FichaVeiculo() {
       if (error) throw error;
 
       // Add to history
-      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_change_km', '');
+      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_km', '').replace('_change', '');
       if (maintenanceType) {
+        // Map back to correct keys if needed
+        const dbType = maintenanceType === 'oil' ? 'OIL' : 
+                      maintenanceType === 'tire' ? 'TIRE' :
+                      maintenanceType === 'alignment' ? 'ALIGNMENT' :
+                      maintenanceType === 'balancing' ? 'BALANCING' : maintenanceType.toUpperCase();
+
         await supabase.from("maintenance_history").insert({
           vehicle_id: vehicleId,
-          maintenance_type: maintenanceType.toUpperCase(),
+          maintenance_type: dbType,
           performed_at_km: vehicle?.odometer ?? 0,
           performed_date: todayInput(),
-          next_planned_km: payload[`next_${maintenanceType}_change_km`],
+          next_planned_km: payload[Object.keys(payload).find(k => k.startsWith('next_'))!],
           notes: payload[`${maintenanceType}_notes`] || 'Atualização manual da próxima manutenção',
         });
       }
@@ -561,7 +567,8 @@ function FichaVeiculo() {
                                 onBlur={(e) => {
                                   const val = Number(e.target.value);
                                   if (val !== item.nextKm) {
-                                    updateMaintenance.mutate({ [`next_${item.id}_change_km`]: val });
+                                    const key = item.id === 'oil' || item.id === 'tire' ? `next_${item.id}_change_km` : `next_${item.id}_km`;
+                                    updateMaintenance.mutate({ [key]: val });
                                   }
                                 }}
                              />
@@ -581,22 +588,24 @@ function FichaVeiculo() {
                             (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 && (item.nextKm ?? 0) > 0 ? "text-warning" : "text-success"
                           )}>
                             {!(item.nextKm) || (item.nextKm === 0) ? "Não configurado" :
-                             (vehicle?.odometer ?? 0) >= item.nextKm
-                              ? `VENCIDA (${((vehicle?.odometer ?? 0) - item.nextKm).toLocaleString()} km acima)`
-                              : `${(item.nextKm - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`}
+                             (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0)
+                              ? `MANUTENÇÃO VENCIDA (${((vehicle?.odometer ?? 0) - (item.nextKm ?? 0)).toLocaleString()} km acima)`
+                              : `${((item.nextKm ?? 0) - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`}
                           </span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted/40 border border-border/10">
                           <div 
                             className={cn(
-                              "h-full transition-all",
-                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "bg-destructive animate-pulse" :
-                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 && (item.nextKm ?? 0) > 0 ? "bg-warning" : "bg-success"
+                              "h-full transition-all duration-1000",
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "bg-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]" :
+                              (item.nextKm && item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.9) ? "bg-destructive" :
+                              (item.nextKm && item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.7) ? "bg-warning" : "bg-success"
                             )}
                             style={{ 
                               width: `${Math.max(0, Math.min(100, 
-                                item.nextKm && item.nextKm > (item.lastKm ?? vehicle.odometer)
-                                  ? ((vehicle.odometer - (item.lastKm ?? vehicle.odometer)) / (item.nextKm - (item.lastKm ?? vehicle.odometer))) * 100
+                                (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? 100 :
+                                item.nextKm && item.lastKm && item.nextKm > item.lastKm
+                                  ? ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) * 100
                                   : 0
                               ))}%` 
                             }}

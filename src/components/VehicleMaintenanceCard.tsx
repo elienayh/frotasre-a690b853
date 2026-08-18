@@ -36,34 +36,40 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm, icon, compact }: Ma
     );
   }
 
-  const effectiveLastKm = lastKm ?? currentKm;
-  const totalInterval = Math.max(1, nextKm - effectiveLastKm);
-  const elapsed = currentKm - effectiveLastKm;
+  const totalInterval = nextKm && lastKm ? Math.max(1, nextKm - lastKm) : 0;
+  const elapsed = nextKm && lastKm ? currentKm - lastKm : 0;
   const hasHistory = lastKm !== null;
   
-  const progress = hasHistory 
+  // Progress is only real if we have a starting point (lastKm)
+  // Otherwise, we just show a neutral bar or no progress
+  const progress = hasHistory && totalInterval > 0
     ? Math.min(Math.max((elapsed / totalInterval) * 100, 0), 100)
     : 0;
 
-  const remaining = Math.max(nextKm - currentKm, 0);
+  const remaining = nextKm - currentKm;
+  const isExpired = currentKm >= nextKm;
 
   let status: "normal" | "warning" | "urgent" | "expired" = "normal";
-  if (currentKm >= nextKm) status = "expired";
-  else if (remaining <= 500) status = "urgent";
-  else if (remaining <= 1500) status = "warning";
+  if (isExpired) status = "expired";
+  else {
+    const percentageUsed = progress;
+    if (percentageUsed >= 90) status = "urgent";
+    else if (percentageUsed >= 70) status = "warning";
+    else status = "normal";
+  }
 
   const statusColors = {
     normal: "bg-success",
     warning: "bg-warning",
     urgent: "bg-destructive",
-    expired: "bg-destructive animate-pulse",
+    expired: "bg-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]",
   };
 
   const textColors = {
     normal: "text-success",
     warning: "text-warning",
     urgent: "text-destructive",
-    expired: "text-destructive font-black",
+    expired: "text-destructive font-black underline decoration-2 underline-offset-4",
   };
 
   return (
@@ -97,20 +103,28 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm, icon, compact }: Ma
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className={cn("font-bold tabular-nums", compact ? "text-[8px] text-muted-foreground/50" : "text-[9px] text-muted-foreground/60")}>
-          {remaining.toLocaleString()} km
+        <span className={cn(
+          "font-bold tabular-nums", 
+          isExpired ? "text-destructive" : "text-muted-foreground",
+          compact ? "text-[8px]" : "text-[10px]"
+        )}>
+          {isExpired ? "-" : ""}{Math.abs(remaining).toLocaleString()} km
         </span>
       </div>
       
       <div className="relative">
-        <Progress 
-          value={progress} 
-          className={cn("rounded-full bg-muted/30 overflow-hidden", compact ? "h-1" : "h-1.5")} 
-          indicatorClassName={cn(
-            "transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,0,0,0.1)]",
-            statusColors[status]
-          )} 
-        />
+        <div className={cn(
+          "w-full rounded-full bg-muted/40 border border-border/10 overflow-hidden", 
+          compact ? "h-2" : "h-2.5"
+        )}>
+          <div 
+            className={cn(
+              "h-full transition-all duration-1000 ease-out",
+              statusColors[status]
+            )}
+            style={{ width: `${isExpired ? 100 : progress}%` }}
+          />
+        </div>
         {!hasHistory && (
           <span className={cn("absolute inset-0 flex items-center justify-center font-black uppercase tracking-[0.2em] text-muted-foreground/20 pointer-events-none", compact ? "text-[5px]" : "text-[6px]")}>
             S/ HISTÓRICO
