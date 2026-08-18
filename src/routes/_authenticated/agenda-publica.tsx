@@ -255,6 +255,31 @@ function CalendarioViagens() {
         </div>
       }
     >
+      <div className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+            <CalendarDays className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-display text-4xl font-black tracking-tight text-foreground flex items-center gap-4">
+              {MONTHS[cursor.getMonth()]}
+              <span className="text-primary/30 tracking-tighter">{cursor.getFullYear()}</span>
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                {isLoading ? "Sincronizando dados..." : `${filtered.length} solicitações no período`}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="md:hidden flex items-center gap-4 bg-card/50 px-4 py-2 rounded-2xl border border-border/40">
+            <Stat label="Viagens" value={stats.total} color="text-foreground" />
+            <Stat label="OK" value={stats.aprovadas} color="text-emerald-500" />
+        </div>
+      </div>
+
       <div className={cn("grid gap-8 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
         {showFilters && (
           <aside className="space-y-6 animate-in slide-in-from-left duration-300">
