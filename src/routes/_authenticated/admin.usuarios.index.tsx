@@ -53,13 +53,24 @@ function UsuariosList() {
 
   // Sync filters when search param changes
   useEffect(() => {
-    if (search?.pending !== undefined) {
+    // If pending is undefined, we want to show all (active by default as per UI intent)
+    // or reset to a clean state.
+    if (search?.pending === true) {
       setFilters(f => ({
         ...f,
-        active: !search.pending,
-        inactive: !!search.pending
+        active: false,
+        inactive: true
+      }));
+    } else if (search?.pending === false) {
+      setFilters(f => ({
+        ...f,
+        active: true,
+        inactive: false
       }));
     }
+    // We don't automatically reset filters to "clean" if search.pending is undefined 
+    // to avoid clearing user's manual filter selections during navigation 
+    // UNLESS it's the initial mount and we want a clean state.
   }, [search?.pending]);
 
   const fetchEmails = useServerFn(getUsersEmails);
