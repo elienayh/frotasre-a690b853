@@ -132,7 +132,7 @@ function AdminSolicitacoes() {
       // Registrar no histórico
       await supabase.from("trip_history").insert({
         trip_id: id,
-        user_id: user?.id,
+        actor_id: user?.id ?? null,
         action: kind === "REJEITADA" ? "Solicitação rejeitada" : "Solicitação enviada para correção",
         details: reason
       });
@@ -154,7 +154,7 @@ function AdminSolicitacoes() {
           data: {
             tripId: decision.trip.id,
             userId: decision.trip.requester_id || "",
-            status: decision.kind,
+            status: decision.kind as "APROVADA" | "REJEITADA" | "CORRECAO",
             rejectionReason: rejectionReason
           }
         }).catch(err => console.error("Erro ao enviar e-mail de decisão:", err));
