@@ -149,6 +149,8 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     onSuccess: () => {
       toast.success("Viagem aprovada e transporte definido.");
       void queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({ queryKey: ["admin-trips-all"] });
+
       onClose();
     },
     onError: (e: Error) => toast.error(e.message),
