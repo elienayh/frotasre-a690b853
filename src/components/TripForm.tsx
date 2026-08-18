@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
+import { notifyNewTripRequest } from "@/lib/email.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +48,7 @@ export function TripForm({ trip }: TripFormProps) {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/solicitacoes/nova" }) as any;
   const { user, profile } = useAuth();
+  const notifyEmail = useServerFn(notifyNewTripRequest);
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
   const { data: people = [] } = usePeople();
@@ -289,6 +292,24 @@ export function TripForm({ trip }: TripFormProps) {
           );
           if (occError) throw new Error(occError.message);
         }
+
+        // Envio de e-mail assíncrono para o setor de transportes
+        void notifyEmail({
+          data: {
+            tripId: tripId,
+            requesterName: profile?.full_name || "Servidor SRE",
+            sector: profile?.sector || null,
+            departureAt: payload.departure_at,
+            returnAt: payload.return_at,
+            purpose: payload.purpose,
+            occupants: chosen,
+            stops: list.map(s => ({
+              city: cities.find(c => c.id === s.cityId)?.name || s.cityText || null,
+              place: places.find(p => p.id === s.destinationId)?.name || s.placeText || null,
+              driver_name: people.find(p => p.id === s.driverUserId)?.full_name || null
+            }))
+          }
+        }).catch(err => console.error("Erro ao enviar e-mail de notificação:", err));
       }
 
       toast.success(

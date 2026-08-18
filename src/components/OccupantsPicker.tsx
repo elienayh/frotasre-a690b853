@@ -32,7 +32,7 @@ export function OccupantsPicker({ count, value, onChange, exclude = [] }: Occupa
       [...slots.filter((_, i) => i !== index), ...exclude].filter(Boolean) as string[],
     );
     return people
-      .filter((p) => !taken.has(p.id))
+      .filter((p) => !taken.has(p.id) && (p.is_active !== false)) // Apenas ativos
       .map((p) => ({
         value: p.id,
         label: p.full_name,

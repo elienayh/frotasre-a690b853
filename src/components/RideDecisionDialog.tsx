@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyRideDecision } from "@/lib/email.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,7 @@ interface RideDecisionDialogProps {
 
 export function RideDecisionDialog({ ride, onClose }: RideDecisionDialogProps) {
   const queryClient = useQueryClient();
+  const notifyEmail = useServerFn(notifyRideDecision);
 
   const decide = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "APROVADA" | "REJEITADA" }) => {
@@ -44,6 +47,15 @@ export function RideDecisionDialog({ ride, onClose }: RideDecisionDialogProps) {
     },
     onSuccess: () => {
       toast.success("Solicitação de carona atualizada.");
+      if (ride) {
+        void notifyEmail({
+          data: {
+            rideId: ride.id,
+            userId: ride.requester_id,
+            status: decide.variables?.status === "APROVADA" ? "APROVADA" : "REJEITADA"
+          }
+        }).catch(err => console.error("Erro ao enviar e-mail de carona:", err));
+      }
       void queryClient.invalidateQueries({ queryKey: ["admin-ride-requests-all"] });
       void queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
       onClose();
