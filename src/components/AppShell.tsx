@@ -222,7 +222,7 @@ export interface AppShellProps {
   fullWidth?: boolean;
 }
 
-export function AppShell({ title, description, actions, children }: AppShellProps) {
+export function AppShell({ title, description, actions, children, fullWidth }: AppShellProps) {
   const { profile, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
