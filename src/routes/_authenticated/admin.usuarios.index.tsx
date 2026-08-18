@@ -38,15 +38,18 @@ function UsuariosList() {
   const navigate = useNavigate();
   const search = Route.useSearch() as { pending?: boolean };
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
+  
+  // Initialize filters based on search param or defaults
+  const [filters, setFilters] = useState(() => ({
     admin: false,
     superAdmin: false,
     coordinator: false,
     driver: false,
     certified: false,
-    active: search?.pending ? false : true,
-    inactive: search?.pending ? true : false,
-  });
+    // Only apply pending filter if explicitly passed as true
+    active: search?.pending === true ? false : true,
+    inactive: search?.pending === true ? true : false,
+  }));
 
   // Sync filters when search param changes
   useEffect(() => {
