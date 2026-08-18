@@ -471,33 +471,54 @@ function AdminSolicitacoes() {
       <RideDecisionDialog ride={rideToDecide} onClose={() => setRideToDecide(null)} />
 
 
-      <Dialog open={Boolean(decision)} onOpenChange={(open) => !open && setDecision(null)}>
+      <Dialog open={!!decision} onOpenChange={(open) => !open && setDecision(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {decision?.kind === "REJEITADA" ? "Recusar solicitação" : "Solicitar correção"}
+            <DialogTitle className={cn(decision?.kind === "REJEITADA" && "text-destructive flex items-center gap-2")}>
+              {decision?.kind === "REJEITADA" ? (
+                <>
+                  <XCircle className="h-5 w-5" /> Rejeitar Solicitação
+                </>
+              ) : "Solicitar Correção"}
             </DialogTitle>
+            <DialogDescription>
+              Explique o motivo para o solicitante. Esta ação será registrada no histórico.
+            </DialogDescription>
           </DialogHeader>
-          <form
-            id="decision-form"
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = new FormData(e.currentTarget);
-              const reason = String(form.get("reason") ?? "").trim();
-              if (reason.length < 5) {
-                toast.error("Descreva o motivo para o solicitante.");
-                return;
-              }
-              decide.mutate({ id: decision!.trip.id || "", kind: decision!.kind, reason });
-            }}
-          >
-            <Label htmlFor="reason">Motivo</Label>
-            <Textarea id="reason" name="reason" rows={3} maxLength={400} required />
-          </form>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="reason">
+                Motivo da {decision?.kind === "REJEITADA" ? "rejeição" : "correção"}
+              </Label>
+              <Textarea
+                id="reason"
+                placeholder={decision?.kind === "REJEITADA" ? "Ex: Não há veículo disponível para a data solicitada." : "Ex: Favor informar o setor correto."}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+
           <DialogFooter>
-            <Button type="submit" form="decision-form" disabled={decide.isPending}>
-              Confirmar
+            <Button variant="outline" onClick={() => setDecision(null)} disabled={decide.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              variant={decision?.kind === "REJEITADA" ? "destructive" : "default"}
+              onClick={() => {
+                if (decision) {
+                  decide.mutate({
+                    id: decision.trip.id,
+                    kind: decision.kind,
+                    reason: rejectionReason,
+                  });
+                }
+              }}
+              disabled={decide.isPending || !rejectionReason.trim()}
+            >
+              {decide.isPending ? "Processando..." : decision?.kind === "REJEITADA" ? "Confirmar rejeição" : "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>
