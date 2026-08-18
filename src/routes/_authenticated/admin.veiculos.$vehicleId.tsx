@@ -673,13 +673,13 @@ function FichaVeiculo() {
                               : `${((item.nextKm ?? 0) - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`}
                           </span>
                         </div>
-                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted/40 border border-border/10">
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted/40 border border-border/10 relative">
                           <div 
                             className={cn(
                               "h-full transition-all duration-1000",
                               (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "bg-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]" :
-                              (item.nextKm && item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.9) ? "bg-destructive" :
-                              (item.nextKm && item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.7) ? "bg-warning" : "bg-success"
+                              (item.nextKm && item.lastKm && item.nextKm > item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.9) ? "bg-destructive" :
+                              (item.nextKm && item.lastKm && item.nextKm > item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.7) ? "bg-warning" : "bg-success"
                             )}
                             style={{ 
                               width: `${Math.max(0, Math.min(100, 
@@ -690,6 +690,11 @@ function FichaVeiculo() {
                               ))}%` 
                             }}
                           />
+                          {(!item.lastKm || item.lastKm === 0) && item.nextKm && (
+                            <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black uppercase tracking-[0.2em] text-muted-foreground/30 pointer-events-none">
+                              SEM HISTÓRICO
+                            </span>
+                          )}
                         </div>
                       </div>
 
