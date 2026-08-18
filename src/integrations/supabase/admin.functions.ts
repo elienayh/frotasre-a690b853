@@ -10,20 +10,14 @@ import { supabase } from "./client";
 export const getUserEmail = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    // Tenta buscar o email no profile primeiro (assumindo que existe a coluna)
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", data.userId)
-      .single();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: authUser, error } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     
-    if (error || !profile?.email) {
-       // Em Lovable Cloud, se o email não estiver no profile, 
-       // o admin pode precisar cadastrá-lo ou sincronizá-lo.
+    if (error || !authUser?.user) {
        return { email: null };
     }
     
-    return { email: profile.email };
+    return { email: authUser.user.email ?? null };
   });
 
 export const deleteUserAccount = createServerFn({ method: "POST" })
