@@ -16,7 +16,7 @@ export interface EmailData {
 async function logEmail(data: EmailData, status: 'success' | 'error', errorMsg?: string) {
   try {
     await supabaseAdmin.from("notifications").insert({
-      user_id: null, // Log administrativo quando não houver usuário específico
+      user_id: "00000000-0000-0000-0000-000000000000", // UUID nulo para log administrativo
       title: `[EMAIL LOG] ${data.subject}`,
       message: `Status: ${status}${errorMsg ? ` | Erro: ${errorMsg}` : ''}`,
       type: 'system',
