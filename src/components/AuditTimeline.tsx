@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDateTime } from "@/lib/frota";
-import { History, User, Lock, Activity } from "lucide-react";
+import { Activity, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AuditTimelineProps {
@@ -25,7 +25,7 @@ export function AuditTimeline({ entityId, entityType }: AuditTimelineProps) {
           date: item.created_at,
           actor: item.actor?.full_name ?? "Sistema",
           action: item.action,
-          details: item.field_changed ? `${item.field_changed}: ${item.old_value} → ${item.new_value}` : item.notes,
+          details: item.details,
           type: "trip"
         }));
       } else {
