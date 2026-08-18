@@ -265,6 +265,18 @@ export function AppShell({ title, description, actions, children }: AppShellProp
             <Button
               variant="ghost"
               size="icon"
+              asChild
+              className="rounded-full hover:bg-primary/10 hover:text-primary text-muted-foreground transition-all duration-200"
+              title="Registros de E-mail"
+            >
+              <a href="mailto:sre.carangola.transportes@educacao.mg.gov.br" target="_blank" rel="noopener noreferrer">
+                <Mail className="h-5 w-5" />
+              </a>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleSignOut}
               className="rounded-full hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-all duration-200"
               title="Sair"
@@ -302,11 +314,12 @@ export function AppShell({ title, description, actions, children }: AppShellProp
                 <NavList onNavigate={() => setOpen(false)} />
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/40 bg-card/80 backdrop-blur-md">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="font-bold text-sm">{profile?.full_name || user?.email}</p>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground">{isAdmin ? "Admin" : "Servidor"}</p>
-                  </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Button variant="outline" asChild className="flex-1 rounded-xl gap-2">
+                    <a href="mailto:sre.carangola.transportes@educacao.mg.gov.br">
+                      <Mail className="h-4 w-4" /> E-mail Oficial
+                    </a>
+                  </Button>
                   <ThemeToggle />
                 </div>
                 <Button variant="destructive" className="w-full rounded-xl gap-2 shadow-lg shadow-destructive/20" onClick={handleSignOut}>

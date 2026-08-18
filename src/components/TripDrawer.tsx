@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Car, MapPin, Users } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Car, MapPin, Users, Mail } from "lucide-react";
+import { notifyRideDecision } from "@/lib/email.functions";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +36,7 @@ export interface TripDrawerProps {
 export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const notifyRideEmail = useServerFn(notifyRideDecision);
   const { data: trip, isLoading } = useAgendaTrip(tripId);
   const { data: tripStops = [] } = useTripStops(tripId);
   const { data: occupantsData = [] } = useQuery({
@@ -106,7 +109,17 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
       const { error } = await supabase.from("ride_requests").update({ status }).eq("id", id);
       if (error) throw new Error(error.message);
     },
-    onSuccess: invalidate,
+    onSuccess: (_, variables) => {
+      invalidate();
+      // Envio de e-mail de decisão de carona no Drawer
+      void notifyRideEmail({
+        data: {
+          rideId: variables.id,
+          userId: rides.find(r => r.id === variables.id)?.requester_id || "",
+          status: variables.status
+        }
+      }).catch(err => console.error("Erro ao enviar e-mail de carona:", err));
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
