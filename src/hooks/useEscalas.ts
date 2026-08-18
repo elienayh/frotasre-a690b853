@@ -227,16 +227,16 @@ export function useScheduleIncidents(scheduleId: string | null) {
   });
 }
 
-/** Motoristas cadastrados e ativos, para montar a escala. */
+/** Usuários credenciados para dirigir, para montar a escala. */
 export function useDriverOptions() {
   return useQuery({
     queryKey: ["driver-options-profiles"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, cnh_expires_at, is_sre_driver")
+        .select("id, full_name, cnh_expires_at, is_driver_certified")
         .eq("is_active", true)
-        .eq("is_sre_driver", true)
+        .eq("is_driver_certified", true)
         .order("full_name");
       if (error) throw error;
       return (data ?? []).map((p) => ({
