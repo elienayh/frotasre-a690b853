@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +47,17 @@ function UsuariosList() {
     active: search?.pending ? false : true,
     inactive: search?.pending ? true : false,
   });
+
+  // Sync filters when search param changes
+  useEffect(() => {
+    if (search?.pending !== undefined) {
+      setFilters(f => ({
+        ...f,
+        active: !search.pending,
+        inactive: !!search.pending
+      }));
+    }
+  }, [search?.pending]);
 
   const fetchEmails = useServerFn(getUsersEmails);
 

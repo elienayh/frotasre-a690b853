@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -34,6 +34,13 @@ function AdminSolicitacoes() {
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [decision, setDecision] = useState<Decision>(null);
   const [activeTab, setActiveTab] = useState(search?.tab || "pendentes");
+
+  // Sync tab with URL search parameter
+  useEffect(() => {
+    if (search?.tab && search.tab !== activeTab) {
+      setActiveTab(search.tab);
+    }
+  }, [search?.tab]);
 
   const { data: trips = [], isLoading } = useQuery({
     queryKey: ["admin-trips"],

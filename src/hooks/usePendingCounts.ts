@@ -30,8 +30,8 @@ export function usePendingCounts() {
         // 2. VEÍCULOS: Manutenção vencida ou crítica
         supabase
           .from("vehicles")
-          .select("id")
-          .or("maintenance_status.eq.VENCIDA,maintenance_status.eq.CRÍTICO"),
+          .select("id, odometer, next_oil_change_km, next_tire_change_km, next_oil_filter_change_km, next_air_filter_change_km, next_alignment_km, next_balancing_km")
+          .eq("is_active", true),
         // 3. USUÁRIOS: Inativos (aguardando ativação)
         supabase
           .from("profiles")
@@ -39,11 +39,21 @@ export function usePendingCounts() {
           .eq("is_active", false),
       ]);
 
+      const pendingVehicles = (vehiclesRes.data || []).filter(v => {
+        const check = (nextKm: any) => nextKm && v.odometer >= nextKm;
+        return (
+          check(v.next_oil_change_km) ||
+          check(v.next_tire_change_km) ||
+          check(v.next_oil_filter_change_km) ||
+          check(v.next_air_filter_change_km) ||
+          check(v.next_alignment_km) ||
+          check(v.next_balancing_km)
+        );
+      });
+
       return {
         approvals: (tripsRes.count || 0) + (ridesRes.count || 0),
-        // Para veículos, o count exato via PostgREST head pode ser limitado se usarmos or,
-        // mas aqui estamos pegando os IDs e contando os únicos.
-        vehicles: new Set((vehiclesRes.data || []).map(v => v.id)).size,
+        vehicles: pendingVehicles.length,
         users: usersRes.count || 0,
       };
     },
