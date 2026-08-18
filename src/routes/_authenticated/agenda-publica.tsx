@@ -1,13 +1,53 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { 
+  CalendarDays, 
+  ChevronLeft, 
+  ChevronRight, 
+  Filter, 
+  LayoutGrid, 
+  LayoutList, 
+  Calendar as CalendarIcon,
+  Columns,
+  Search,
+  Plus
+} from "lucide-react";
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  eachDayOfInterval, 
+  isSameDay, 
+  isSameMonth, 
+  addMonths, 
+  subMonths,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
+  isToday
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 import { AppShell } from "@/components/AppShell";
 import { TripDrawer } from "@/components/TripDrawer";
+import { TripCard } from "@/components/TripCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -20,42 +60,25 @@ import { useAgendaTrips, tripCity, tripDriverName, type AgendaTrip } from "@/hoo
 import { useCities } from "@/hooks/useFrotaOptions";
 import { useVehicles } from "@/hooks/useFleet";
 import { SECTORS, sectorColor } from "@/lib/setores";
-import { TRIP_STATUS_LABEL, fmtTime } from "@/lib/frota";
+import { TRIP_STATUS_LABEL, fmtTime, statusTone } from "@/lib/frota";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 export const Route = createFileRoute("/_authenticated/agenda-publica")({
   component: CalendarioViagens,
 });
 
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const MONTHS = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
 const STATUSES = ["PENDENTE", "APROVADA", "PROGRAMADA", "EM_ANDAMENTO", "CONCLUIDA"];
 const ALL = "__all__";
 
-function dayKey(value: string | Date): string {
-  const d = new Date(value);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+type ViewMode = "week" | "day" | "month" | "list";
 
 function CalendarioViagens() {
-  const today = new Date();
   const navigate = useNavigate();
-  const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [cursor, setCursor] = useState(new Date());
   const [tripId, setTripId] = useState<string | null>(null);
-  const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const [fDestino, setFDestino] = useState("");
@@ -68,45 +91,63 @@ function CalendarioViagens() {
   const { data: cities = [] } = useCities();
   const { data: vehicles = [] } = useVehicles();
 
-  const gridStart = useMemo(() => {
-    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    const start = new Date(first);
-    start.setDate(first.getDate() - first.getDay());
-    start.setHours(0, 0, 0, 0);
-    return start;
-  }, [cursor]);
-
-  const gridEnd = useMemo(() => {
-    const end = new Date(gridStart);
-    end.setDate(gridStart.getDate() + 42);
-    return end;
-  }, [gridStart]);
+  const { start, end } = useMemo(() => {
+    if (viewMode === "month") {
+      const monthStart = startOfMonth(cursor);
+      const start = startOfWeek(monthStart, { weekStartsOn: 0 });
+      const end = endOfWeek(endOfMonth(cursor), { weekStartsOn: 0 });
+      return { start, end };
+    }
+    if (viewMode === "week") {
+      const start = startOfWeek(cursor, { weekStartsOn: 0 });
+      const end = endOfWeek(cursor, { weekStartsOn: 0 });
+      return { start, end };
+    }
+    if (viewMode === "day") {
+      const start = new Date(cursor);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(cursor);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    // List view: fetch current month by default or a wider range
+    const start = startOfMonth(cursor);
+    const end = endOfMonth(cursor);
+    return { start, end };
+  }, [cursor, viewMode]);
 
   const { data: trips = [], isLoading } = useAgendaTrips(
-    gridStart.toISOString(),
-    gridEnd.toISOString(),
+    start.toISOString(),
+    end.toISOString()
   );
 
-  const filtered = useMemo(
-    () =>
-      trips.filter((t) => {
-        if (fCidade !== ALL && t.city_id !== fCidade) return false;
-        if (fSetor !== ALL && (t.requester?.sector ?? "") !== fSetor) return false;
-        if (fVeiculo !== ALL && t.vehicle_id !== fVeiculo) return false;
-        if (fStatus !== ALL && t.status !== fStatus) return false;
-        if (fDestino.trim()) {
-          const needle = fDestino.trim().toLowerCase();
-          const haystack = `${t.destination_text} ${tripCity(t)}`.toLowerCase();
-          if (!haystack.includes(needle)) return false;
-        }
-        if (fMotorista.trim()) {
-          if (!tripDriverName(t).toLowerCase().includes(fMotorista.trim().toLowerCase()))
-            return false;
-        }
-        return true;
-      }),
-    [trips, fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista],
-  );
+  const filtered = useMemo(() => {
+    return trips.filter((t) => {
+      if (fCidade !== ALL && t.city_id !== fCidade) return false;
+      if (fSetor !== ALL && (t.requester?.sector ?? "") !== fSetor) return false;
+      if (fVeiculo !== ALL && t.vehicle_id !== fVeiculo) return false;
+      if (fStatus !== ALL && t.status !== fStatus) return false;
+      if (fDestino.trim()) {
+        const needle = fDestino.trim().toLowerCase();
+        const haystack = `${t.destination_text} ${tripCity(t)}`.toLowerCase();
+        if (!haystack.includes(needle)) return false;
+      }
+      if (fMotorista.trim()) {
+        if (!tripDriverName(t).toLowerCase().includes(fMotorista.trim().toLowerCase()))
+          return false;
+      }
+      return true;
+    });
+  }, [trips, fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista]);
+
+  const stats = useMemo(() => {
+    return {
+      total: filtered.length,
+      approved: filtered.filter(t => t.status === "APROVADA" || t.status === "PROGRAMADA").length,
+      pending: filtered.filter(t => t.status === "PENDENTE").length,
+      ongoing: filtered.filter(t => t.status === "EM_ANDAMENTO").length,
+    };
+  }, [filtered]);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -119,46 +160,15 @@ function CalendarioViagens() {
     return count;
   }, [fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista]);
 
-  const byDay = useMemo(() => {
-    const map = new Map<string, AgendaTrip[]>();
-    for (const t of filtered) {
-      const key = dayKey(t.departure_at);
-      const list = map.get(key);
-      if (list) list.push(t);
-      else map.set(key, [t]);
+  const navigatePeriod = (direction: "next" | "prev") => {
+    if (viewMode === "month") {
+      setCursor(direction === "next" ? addMonths(cursor, 1) : subMonths(cursor, 1));
+    } else if (viewMode === "week") {
+      setCursor(direction === "next" ? addWeeks(cursor, 1) : subWeeks(cursor, 1));
+    } else if (viewMode === "day") {
+      setCursor(direction === "next" ? addDays(cursor, 1) : subDays(cursor, 1));
     }
-    // Also group by return_at if multi-day trips exist
-    for (const t of filtered) {
-      const depKey = dayKey(t.departure_at);
-      const retKey = dayKey(t.return_at);
-      if (depKey !== retKey) {
-        // Multi-day trip
-        const d = new Date(t.departure_at);
-        d.setDate(d.getDate() + 1);
-        while (dayKey(d) <= retKey) {
-           const key = dayKey(d);
-           const list = map.get(key);
-           if (list) {
-             if (!list.find(x => x.id === t.id)) list.push(t);
-           } else {
-             map.set(key, [t]);
-           }
-           d.setDate(d.getDate() + 1);
-        }
-      }
-    }
-    return map;
-  }, [filtered]);
-
-  const days = useMemo(
-    () =>
-      Array.from({ length: 42 }, (_, i) => {
-        const d = new Date(gridStart);
-        d.setDate(gridStart.getDate() + i);
-        return d;
-      }),
-    [gridStart],
-  );
+  };
 
   const clearFilters = () => {
     setFDestino("");
@@ -169,20 +179,39 @@ function CalendarioViagens() {
     setFMotorista("");
   };
 
-  const todayKey = dayKey(today);
-
   return (
     <AppShell
       title="Cronograma"
-      description="Agenda institucional da frota, por dia e por setor."
+      description="Agenda operacional da frota."
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="hidden md:block">
+            <TabsList className="bg-muted/50 p-1 rounded-xl h-9 border border-border/40">
+              <TabsTrigger value="day" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-7">Dia</TabsTrigger>
+              <TabsTrigger value="week" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-7">Semana</TabsTrigger>
+              <TabsTrigger value="month" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-7">Mês</TabsTrigger>
+              <TabsTrigger value="list" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-7">Lista</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/40">
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => navigatePeriod("prev")}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" className="h-7 px-3 text-[10px] font-black uppercase tracking-widest rounded-lg" onClick={() => setCursor(new Date())}>
+              Hoje
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => navigatePeriod("next")}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
           <Button
             variant={activeFiltersCount > 0 ? "default" : "outline"}
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              "rounded-xl font-bold transition-all",
+              "rounded-xl font-bold h-9",
               activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
             )}
           >
@@ -194,243 +223,87 @@ function CalendarioViagens() {
               </span>
             )}
           </Button>
-
-          <div className="flex items-center gap-1 ml-2">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Mês anterior"
-              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
-            >
-              Hoje
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Próximo mês"
-              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       }
     >
-      <div className={cn("grid gap-8 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
+      <div className={cn("grid gap-6 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
         {showFilters && (
           <aside className="space-y-6 animate-in slide-in-from-left duration-300">
-          <Card className="p-6 border-none shadow-xl bg-card/60 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <p className="flex items-center gap-2 font-display text-base font-bold text-foreground">
-                <Filter className="h-4 w-4 text-primary" /> Filtros
-              </p>
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs font-bold text-muted-foreground hover:text-primary">
-                Limpar
-              </Button>
-            </div>
-
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="f-destino" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Destino</Label>
-                <Input
-                  id="f-destino"
-                  value={fDestino}
-                  onChange={(e) => setFDestino(e.target.value)}
-                  placeholder="Escola, órgão…"
-                  className="rounded-xl border-border/40 bg-background/50"
-                />
-              </div>
-
-              <FilterSelect
-                id="f-cidade"
-                label="Cidade"
-                value={fCidade}
-                onChange={setFCidade}
-                options={cities.map((c) => ({ value: c.id, label: c.name }))}
-              />
-              <FilterSelect
-                id="f-setor"
-                label="Setor"
-                value={fSetor}
-                onChange={setFSetor}
-                options={SECTORS.map((s) => ({ value: s, label: s }))}
-              />
-              <FilterSelect
-                id="f-veiculo"
-                label="Veículo"
-                value={fVeiculo}
-                onChange={setFVeiculo}
-                options={vehicles.map((v) => ({
-                  value: v.id,
-                  label: `${v.manufacturer} ${v.model} — ${v.plate}`,
-                }))}
-              />
-              <FilterSelect
-                id="f-status"
-                label="Status"
-                value={fStatus}
-                onChange={setFStatus}
-                options={STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABEL[s] ?? s }))}
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="f-motorista" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Motorista</Label>
-                <Input
-                  id="f-motorista"
-                  value={fMotorista}
-                  onChange={(e) => setFMotorista(e.target.value)}
-                  placeholder="Nome do condutor"
-                  className="rounded-xl border-border/40 bg-background/50"
-                />
-              </div>
-
-              <div className="space-y-3 border-t border-border/40 pt-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-                  Legenda de Setores
+            <Card className="p-6 border-none shadow-xl bg-card/60 backdrop-blur-xl rounded-3xl">
+              <div className="flex items-center justify-between mb-6">
+                <p className="flex items-center gap-2 font-display text-base font-bold text-foreground">
+                  <Filter className="h-4 w-4 text-primary" /> Filtros
                 </p>
-                <ul className="space-y-2">
-                  {SECTORS.map((s) => (
-                    <li key={s} className="flex items-center gap-3 text-sm font-medium text-foreground/80">
-                      <span className={cn("h-3 w-3 rounded-full shadow-sm", sectorColor(s).dot)} />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs font-bold text-muted-foreground hover:text-primary">
+                  Limpar
+                </Button>
               </div>
-            </div>
-          </Card>
-        </aside>
+
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">Destino</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                    <Input
+                      value={fDestino}
+                      onChange={(e) => setFDestino(e.target.value)}
+                      placeholder="Pesquisar escola..."
+                      className="rounded-xl pl-9 border-border/40 bg-background/50 h-10 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <FilterSelect label="Cidade" value={fCidade} onChange={setFCidade} options={cities.map((c) => ({ value: c.id, label: c.name }))} />
+                <FilterSelect label="Setor" value={fSetor} onChange={setFSetor} options={SECTORS.map((s) => ({ value: s, label: s }))} />
+                <FilterSelect label="Status" value={fStatus} onChange={setFStatus} options={STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABEL[s] ?? s }))} />
+
+                <div className="pt-4 border-t border-border/40 space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                    Resumo do Período
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <StatItem label="Viagens" value={stats.total} color="bg-primary/10 text-primary" />
+                    <StatItem label="Aprovadas" value={stats.approved} color="bg-success/10 text-success" />
+                    <StatItem label="Pendentes" value={stats.pending} color="bg-warning/10 text-warning" />
+                    <StatItem label="Em curso" value={stats.ongoing} color="bg-info/10 text-info" />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </aside>
         )}
 
         <section className="min-w-0 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-display text-2xl font-black tracking-tight text-foreground">
-                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-                </h2>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  {isLoading ? "Sincronizando..." : `${filtered.length} solicitações encontradas`}
-                </p>
-              </div>
+          <header className="flex flex-col gap-1">
+            <h2 className="font-display text-3xl font-black tracking-tighter text-foreground uppercase">
+              {viewMode === "day" 
+                ? format(cursor, "d 'de' MMMM", { locale: ptBR })
+                : format(cursor, "MMMM 'de' yyyy", { locale: ptBR })}
+            </h2>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] font-black tracking-widest px-2 py-0.5 border-primary/20 text-primary uppercase">
+                {viewMode === "week" ? "Visão Semanal" : viewMode === "month" ? "Visão Mensal" : viewMode === "day" ? "Visão Diária" : "Visão Lista"}
+              </Badge>
+              {isLoading && (
+                <span className="text-[10px] font-bold text-muted-foreground animate-pulse">Sincronizando dados...</span>
+              )}
             </div>
-          </div>
+          </header>
 
-          <Card className="overflow-hidden border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl">
-            <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
-              {WEEKDAYS.map((w) => (
-                <div
-                  key={w}
-                  className="px-2 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70"
-                >
-                  {w}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7">
-              {days.map((d) => {
-                const key = dayKey(d);
-                const items = byDay.get(key) ?? [];
-                const outside = d.getMonth() !== cursor.getMonth();
-                const isToday = key === todayKey;
-                const expanded = expandedDay === key;
-                const shown = expanded ? items : items.slice(0, 3);
-                
-                return (
-                  <div
-                    key={key}
-                    className={cn(
-                      "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-colors duration-200 group cursor-pointer",
-                      outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
-                    )}
-                    onClick={() => {
-                      const isoDate = d.toISOString().split('T')[0];
-                      navigate({ to: "/solicitacoes/nova", search: { initialDate: isoDate } });
-                    }}
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <span
-                        className={cn(
-                          "inline-flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black transition-all duration-300",
-                          isToday
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110"
-                            : outside
-                              ? "text-muted-foreground/40"
-                              : "text-foreground group-hover:text-primary",
-                        )}
-                      >
-                        {d.getDate()}
-                      </span>
-                      {isToday && (
-                        <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
-                      )}
-                    </div>
-                    
-                    <ul className="space-y-1.5">
-                      {shown.map((t) => {
-                        const color = sectorColor(t.requester?.sector);
-                        return (
-                          <li key={t.id}>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setTripId(t.id);
-                              }}
-                              className={cn(
-                                "w-full rounded-xl border px-2 py-2 text-left text-[10px] leading-tight transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
-                                color.chip,
-                                color.border,
-                                "bg-opacity-90 backdrop-blur-sm"
-                              )}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className={cn("font-black tracking-tight", color.text)}>
-                                  {fmtTime(t.departure_at)}
-                                </span>
-                                <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
-                              </div>
-                              <span className={cn("block font-black text-[11px] uppercase tracking-tight", color.text)}>
-                                {tripCity(t)}
-                              </span>
-                              <span className="block truncate opacity-80 font-medium text-[9px] mt-0.5 leading-tight">
-                                {t.destination_text}
-                              </span>
-
-                            </button>
-                          </li>
-                        );
-                      })}
-                      {items.length > 3 ? (
-                        <li>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedDay(expanded ? null : key);
-                            }}
-                            className="w-full rounded-xl px-2 py-1.5 text-center text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
-                          >
-                            {expanded ? "ver menos" : `+${items.length - 3} itens`}
-                          </button>
-                        </li>
-                      ) : null}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={viewMode + cursor.toISOString()}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {viewMode === "week" && <WeekTimeline cursor={cursor} trips={filtered} onTripClick={setTripId} />}
+              {viewMode === "day" && <DayTimeline cursor={cursor} trips={filtered} onTripClick={setTripId} />}
+              {viewMode === "month" && <MonthTimeline cursor={cursor} trips={filtered} onTripClick={setTripId} onDayClick={(d) => { setCursor(d); setViewMode("day"); }} />}
+              {viewMode === "list" && <ListTimeline trips={filtered} onTripClick={setTripId} />}
+            </motion.div>
+          </AnimatePresence>
         </section>
       </div>
 
@@ -439,14 +312,233 @@ function CalendarioViagens() {
   );
 }
 
+function StatItem({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className={cn("rounded-xl p-2 text-center border border-border/20", color)}>
+      <p className="text-[18px] font-black leading-none mb-1">{value}</p>
+      <p className="text-[8px] font-black uppercase tracking-widest opacity-80">{label}</p>
+    </div>
+  );
+}
+
+function WeekTimeline({ cursor, trips, onTripClick }: { cursor: Date; trips: AgendaTrip[]; onTripClick: (id: string) => void }) {
+  const start = startOfWeek(cursor, { weekStartsOn: 0 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const navigate = useNavigate();
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+      {weekDays.map((day) => {
+        const dayTrips = trips.filter(t => isSameDay(new Date(t.departure_at), day));
+        const active = isToday(day);
+
+        return (
+          <div key={day.toISOString()} className="space-y-4">
+            <div className={cn(
+              "p-3 rounded-2xl border flex flex-col items-center transition-all",
+              active ? "bg-primary border-primary shadow-lg shadow-primary/20" : "bg-card border-border/40"
+            )}>
+              <span className={cn("text-[10px] font-black uppercase tracking-widest", active ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                {format(day, "eee", { locale: ptBR })}
+              </span>
+              <span className={cn("text-2xl font-black tracking-tighter", active ? "text-primary-foreground" : "text-foreground")}>
+                {format(day, "dd")}
+              </span>
+              <Badge variant="outline" className={cn("mt-1 text-[9px] font-black border-none px-2", active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                {dayTrips.length} {dayTrips.length === 1 ? 'VIAGEM' : 'VIAGENS'}
+              </Badge>
+            </div>
+
+            <div className="space-y-3 min-h-[200px]">
+              {dayTrips.length > 0 ? (
+                dayTrips.sort((a,b) => a.departure_at.localeCompare(b.departure_at)).map(t => (
+                  <TripCard key={t.id} trip={t} onClick={onTripClick} />
+                ))
+              ) : (
+                <button
+                  onClick={() => navigate({ to: "/solicitacoes/nova", search: { initialDate: format(day, "yyyy-MM-dd") } })}
+                  className="w-full h-24 border-2 border-dashed border-border/40 rounded-2xl flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/40 hover:text-primary transition-all group"
+                >
+                  <Plus className="h-5 w-5 opacity-40 group-hover:opacity-100" />
+                  <span className="text-[9px] font-black uppercase tracking-widest">Nova Solicitação</span>
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DayTimeline({ cursor, trips, onTripClick }: { cursor: Date; trips: AgendaTrip[]; onTripClick: (id: string) => void }) {
+  const dayTrips = trips.filter(t => isSameDay(new Date(t.departure_at), cursor)).sort((a,b) => a.departure_at.localeCompare(b.departure_at));
+
+  return (
+    <div className="bg-card/40 backdrop-blur-xl rounded-3xl border border-border/40 p-6">
+      {dayTrips.length > 0 ? (
+        <div className="space-y-6 relative before:absolute before:left-24 before:top-0 before:bottom-0 before:w-px before:bg-border/40">
+          {dayTrips.map((t) => (
+            <div key={t.id} className="flex gap-8 group">
+              <div className="w-20 text-right shrink-0 pt-4">
+                <span className="text-sm font-black text-primary tracking-tighter">{fmtTime(t.departure_at)}</span>
+                <span className="block text-[9px] font-bold text-muted-foreground uppercase opacity-60">Partida</span>
+              </div>
+              <div className="flex-1 relative">
+                <div className="absolute -left-[36.5px] top-5 w-2 h-2 rounded-full bg-primary ring-4 ring-card z-10" />
+                <TripCard trip={t} onClick={onTripClick} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="py-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
+          <CalendarDays className="h-12 w-12 opacity-10" />
+          <p className="text-sm font-bold">Nenhuma viagem programada para este dia.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MonthTimeline({ cursor, trips, onTripClick, onDayClick }: { cursor: Date; trips: AgendaTrip[]; onTripClick: (id: string) => void; onDayClick: (d: Date) => void }) {
+  const monthStart = startOfMonth(cursor);
+  const start = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const end = endOfWeek(endOfMonth(cursor), { weekStartsOn: 0 });
+  const days = eachDayOfInterval({ start, end });
+
+  return (
+    <Card className="overflow-hidden border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl">
+      <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
+        {["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"].map((w) => (
+          <div key={w} className="px-2 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+            {w}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {days.map((d) => {
+          const dayTrips = trips.filter(t => isSameDay(new Date(t.departure_at), d));
+          const outside = !isSameMonth(d, monthStart);
+          const active = isToday(d);
+          const shown = dayTrips.slice(0, 3);
+          const remaining = dayTrips.length - 3;
+
+          return (
+            <div
+              key={d.toISOString()}
+              className={cn(
+                "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-all cursor-pointer hover:bg-accent/20",
+                outside ? "bg-muted/10 opacity-40" : "bg-transparent"
+              )}
+              onClick={() => onDayClick(d)}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <span className={cn(
+                  "inline-flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black",
+                  active ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110" : "text-foreground"
+                )}>
+                  {format(d, "dd")}
+                </span>
+                {dayTrips.length > 0 && (
+                  <span className="text-[9px] font-black text-muted-foreground opacity-50">{dayTrips.length}V</span>
+                )}
+              </div>
+              <div className="space-y-1">
+                {shown.map(t => (
+                  <TripCard key={t.id} trip={t} onClick={onTripClick} compact />
+                ))}
+                {remaining > 0 && (
+                  <div className="text-center py-1 text-[9px] font-black uppercase text-primary tracking-widest">
+                    +{remaining} viagens
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function ListTimeline({ trips, onTripClick }: { trips: AgendaTrip[]; onTripClick: (id: string) => void }) {
+  return (
+    <Card className="border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="border-border/40 bg-muted/30 hover:bg-muted/30">
+            <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Horário</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Destino</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Solicitante</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Veículo</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Motorista</TableHead>
+            <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {trips.length > 0 ? (
+            trips.map((t) => (
+              <TableRow 
+                key={t.id} 
+                className="border-border/40 cursor-pointer hover:bg-accent/20 group transition-colors"
+                onClick={() => onTripClick(t.id)}
+              >
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-black text-foreground">{fmtTime(t.departure_at)}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-60">{format(new Date(t.departure_at), "dd/MM")}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-black text-primary uppercase tracking-tight">{tripCity(t)}</span>
+                    <span className="text-[11px] font-medium text-muted-foreground line-clamp-1">{t.destination_text}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-foreground">{t.requester?.full_name || "—"}</span>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase">{t.requester?.sector || "—"}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs font-bold text-foreground">
+                    {t.vehicles ? `${t.vehicles.manufacturer} ${t.vehicles.model} (${t.vehicles.plate})` : "A definir"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs font-bold text-foreground">{tripDriverName(t)}</span>
+                </TableCell>
+                <TableCell>
+                  <div className={cn(
+                    "inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest",
+                    statusTone(t.status)
+                  )}>
+                    {TRIP_STATUS_LABEL[t.status] || t.status}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="h-32 text-center text-muted-foreground font-bold">
+                Nenhuma viagem encontrada para o período.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
 function FilterSelect({
-  id,
   label,
   value,
   onChange,
   options,
 }: {
-  id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -454,15 +546,15 @@ function FilterSelect({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">{label}</Label>
+      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">{label}</Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id} className="rounded-xl border-border/40 bg-background/50">
-          <SelectValue placeholder="Todos" />
+        <SelectTrigger className="rounded-xl border-border/40 bg-background/50 h-10 text-sm">
+          <SelectValue placeholder={`Selecionar ${label.toLowerCase()}...`} />
         </SelectTrigger>
-        <SelectContent className="rounded-2xl border-border/40 backdrop-blur-xl">
-          <SelectItem value={ALL} className="rounded-xl">Todos</SelectItem>
+        <SelectContent className="rounded-2xl border-border/40 shadow-2xl backdrop-blur-3xl">
+          <SelectItem value={ALL} className="text-xs font-bold">Todos</SelectItem>
           {options.map((o) => (
-            <SelectItem key={o.value} value={o.value} className="rounded-xl">
+            <SelectItem key={o.value} value={o.value} className="text-xs font-medium">
               {o.label}
             </SelectItem>
           ))}
@@ -471,4 +563,5 @@ function FilterSelect({
     </div>
   );
 }
+
 
