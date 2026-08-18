@@ -106,10 +106,10 @@ export function TripForm({ trip }: TripFormProps) {
       setStops([
         {
           key: "legacy",
-          cityId: trip.city_id,
-          cityText: trip.city_text,
-          destinationId: trip.destination_id,
-          placeText: trip.destination_id ? null : trip.destination_text,
+          cityId: trip.city_id ?? null,
+          cityText: trip.city_text ?? null,
+          destinationId: trip.destination_id ?? null,
+          placeText: trip.destination_id ? null : (trip.destination_text ?? null),
         },
       ]);
     }

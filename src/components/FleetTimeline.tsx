@@ -76,7 +76,7 @@ export function FleetTimeline() {
           />
         </div>
         <p className="text-sm text-muted-foreground">
-          {fmtDate(dayDate)} · {isLoading ? "carregando…" : `${trips.length} viagem(ns)`}
+          {fmtDate(dayDate.toISOString())} · {isLoading ? "carregando…" : `${trips.length} viagem(ns)`}
         </p>
       </div>
 
