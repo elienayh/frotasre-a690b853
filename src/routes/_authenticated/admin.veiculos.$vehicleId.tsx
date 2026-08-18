@@ -283,8 +283,52 @@ function FichaVeiculo() {
     onError: (e: Error) => toast.error(friendlyDbError(e.message)),
   });
 
-  const changeStatus = useMutation({
+  const registerMaintenance = useMutation({
+    mutationFn: async (form: FormData) => {
+      const type = String(form.get("type"));
+      const performedKm = Number(form.get("performed_km"));
+      const performedDate = String(form.get("performed_date"));
+      const nextKm = Number(form.get("next_km"));
+      const notes = String(form.get("notes") || "");
 
+      if (nextKm <= performedKm) {
+        throw new Error("A próxima manutenção deve ser maior que a KM da realização.");
+      }
+
+      const { error: histError } = await supabase.from("maintenance_history").insert({
+        vehicle_id: vehicleId,
+        maintenance_type: type,
+        performed_at_km: performedKm,
+        performed_date: performedDate,
+        next_planned_km: nextKm,
+        notes: notes
+      });
+      if (histError) throw histError;
+
+      const typeMap: Record<string, any> = {
+        OIL: { last_oil_change_km: performedKm, next_oil_change_km: nextKm, oil_change_date: performedDate, oil_change_notes: notes },
+        TIRE: { last_tire_change_km: performedKm, next_tire_change_km: nextKm, tire_change_date: performedDate, tire_change_notes: notes },
+        OIL_FILTER: { last_oil_filter_change_km: performedKm, next_oil_filter_change_km: nextKm, oil_filter_change_date: performedDate, oil_filter_change_notes: notes },
+        AIR_FILTER: { last_air_filter_change_km: performedKm, next_air_filter_change_km: nextKm, air_filter_change_date: performedDate, air_filter_change_notes: notes },
+        ALIGNMENT: { last_alignment_km: performedKm, next_alignment_km: nextKm, alignment_date: performedDate, alignment_notes: notes },
+        BALANCING: { last_balancing_km: performedKm, next_balancing_km: nextKm, balancing_date: performedDate, balancing_notes: notes },
+      };
+
+      const { error: vehError } = await supabase
+        .from("vehicles")
+        .update(typeMap[type] || {})
+        .eq("id", vehicleId);
+      if (vehError) throw vehError;
+    },
+    onSuccess: () => {
+      toast.success("Manutenção registrada com sucesso!");
+      setPreventiveOpen(false);
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const changeStatus = useMutation({
     mutationFn: async (status: FleetStatus) => {
       const { error } = await supabase
         .from("vehicles")
