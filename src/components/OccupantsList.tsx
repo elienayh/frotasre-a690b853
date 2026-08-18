@@ -67,8 +67,27 @@ export function OccupantsList({
 
   const mine = occupants.find((o) => o.user_id === user?.id && o.status === "CONFIRMADO");
 
+  const occupancy = calculateTripOccupancy(
+    stops,
+    occupants.filter(o => !o.is_external).map(o => o.user_id),
+    5
+  );
+
   return (
     <div className={cn("space-y-3", className)}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
+          Ocupação Total: {occupancy.totalPeople} de {occupancy.capacity}
+        </h3>
+        {!readOnly && occupancy.remaining > 0 && (
+          <div className="flex gap-2">
+            <Button size="xs" variant="outline" onClick={() => setExternalOpen(true)}>
+              <UserPlus className="mr-1 h-3 w-3" /> Externo
+            </Button>
+          </div>
+        )}
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando ocupantes…</p>
       ) : occupants.length === 0 ? (
