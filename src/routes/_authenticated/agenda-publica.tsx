@@ -7,7 +7,7 @@ import { TripDrawer } from "@/components/TripDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -57,6 +57,7 @@ function CalendarioViagens() {
   const [tripId, setTripId] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"Mês" | "Semana" | "Dia" | "Lista">("Mês");
 
   const [fDestino, setFDestino] = useState("");
   const [fCidade, setFCidade] = useState(ALL);
@@ -108,6 +109,15 @@ function CalendarioViagens() {
     [trips, fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista],
   );
 
+  const stats = useMemo(() => {
+    return {
+      total: filtered.length,
+      aprovadas: filtered.filter(t => t.status === "APROVADA" || t.status === "PROGRAMADA").length,
+      aguardando: filtered.filter(t => t.status === "PENDENTE").length,
+      emAndamento: filtered.filter(t => t.status === "EM_ANDAMENTO").length,
+    };
+  }, [filtered]);
+
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (fCidade !== ALL) count++;
@@ -127,12 +137,10 @@ function CalendarioViagens() {
       if (list) list.push(t);
       else map.set(key, [t]);
     }
-    // Also group by return_at if multi-day trips exist
     for (const t of filtered) {
       const depKey = dayKey(t.departure_at);
       const retKey = dayKey(t.return_at);
       if (depKey !== retKey) {
-        // Multi-day trip
         const d = new Date(t.departure_at);
         d.setDate(d.getDate() + 1);
         while (dayKey(d) <= retKey) {
@@ -175,54 +183,103 @@ function CalendarioViagens() {
     <AppShell
       title="Cronograma"
       description="Agenda institucional da frota, por dia e por setor."
+      fullWidth
       actions={
-        <div className="flex items-center gap-2">
-          <Button
-            variant={activeFiltersCount > 0 ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className={cn(
-              "rounded-xl font-bold transition-all",
-              activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
-            )}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Filtros
-            {activeFiltersCount > 0 && (
-              <span className="ml-2 rounded-full bg-primary-foreground text-primary px-1.5 py-0.5 text-[10px] font-black">
-                {activeFiltersCount}
-              </span>
-            )}
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6 mr-6 bg-card/50 px-6 py-2 rounded-2xl border border-border/40">
+            <Stat label="Total" value={stats.total} color="text-foreground" />
+            <Stat label="Aprovadas" value={stats.aprovadas} color="text-emerald-500" />
+            <Stat label="Aguardando" value={stats.aguardando} color="text-amber-500" />
+            <Stat label="Em andamento" value={stats.emAndamento} color="text-blue-500" />
+          </div>
 
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              size="icon"
-              aria-label="Mês anterior"
-              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
+              variant={activeFiltersCount > 0 ? "default" : "outline"}
               size="sm"
-              onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "rounded-xl font-bold transition-all",
+                activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
+              )}
             >
-              Hoje
+              <Filter className="mr-2 h-4 w-4" />
+              Filtros
+              {activeFiltersCount > 0 && (
+                <span className="ml-2 rounded-full bg-primary-foreground text-primary px-1.5 py-0.5 text-[10px] font-black">
+                  {activeFiltersCount}
+                </span>
+              )}
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Próximo mês"
-              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+
+            <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl">
+              {["Semana", "Dia", "Mês", "Lista"].map((m) => (
+                <Button
+                  key={m}
+                  variant={viewMode === m ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode(m as any)}
+                  className="rounded-lg text-xs font-bold"
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1 ml-2">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Mês anterior"
+                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+              >
+                Hoje
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Próximo mês"
+                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       }
     >
+      <div className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+            <CalendarDays className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-display text-4xl font-black tracking-tight text-foreground flex items-center gap-4">
+              {MONTHS[cursor.getMonth()]}
+              <span className="text-primary/30 tracking-tighter">{cursor.getFullYear()}</span>
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                {isLoading ? "Sincronizando dados..." : `${filtered.length} solicitações no período`}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="md:hidden flex items-center gap-4 bg-card/50 px-4 py-2 rounded-2xl border border-border/40">
+            <Stat label="Viagens" value={stats.total} color="text-foreground" />
+            <Stat label="OK" value={stats.aprovadas} color="text-emerald-500" />
+        </div>
+      </div>
+
       <div className={cn("grid gap-8 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
         {showFilters && (
           <aside className="space-y-6 animate-in slide-in-from-left duration-300">
@@ -310,22 +367,6 @@ function CalendarioViagens() {
         )}
 
         <section className="min-w-0 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-display text-2xl font-black tracking-tight text-foreground">
-                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-                </h2>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  {isLoading ? "Sincronizando..." : `${filtered.length} solicitações encontradas`}
-                </p>
-              </div>
-            </div>
-          </div>
-
           <Card className="overflow-hidden border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl">
             <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
               {WEEKDAYS.map((w) => (
@@ -350,7 +391,7 @@ function CalendarioViagens() {
                   <div
                     key={key}
                     className={cn(
-                      "min-h-[140px] border-b border-r border-border/40 p-2 last:border-r-0 transition-colors duration-200 group cursor-pointer",
+                      "min-h-[180px] border-b border-r border-border/40 p-3 last:border-r-0 transition-colors duration-200 group cursor-pointer",
                       outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
                     )}
                     onClick={() => {
@@ -358,10 +399,10 @@ function CalendarioViagens() {
                       navigate({ to: "/solicitacoes/nova", search: { initialDate: isoDate } });
                     }}
                   >
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-3 flex items-center justify-between">
                       <span
                         className={cn(
-                          "inline-flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black transition-all duration-300",
+                          "inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-black transition-all duration-300 relative",
                           isToday
                             ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110"
                             : outside
@@ -372,11 +413,13 @@ function CalendarioViagens() {
                         {d.getDate()}
                       </span>
                       {isToday && (
-                        <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
+                        </div>
                       )}
                     </div>
                     
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-2">
                       {shown.map((t) => {
                         const color = sectorColor(t.requester?.sector);
                         return (
@@ -388,25 +431,24 @@ function CalendarioViagens() {
                                 setTripId(t.id);
                               }}
                               className={cn(
-                                "w-full rounded-xl border px-2 py-2 text-left text-[10px] leading-tight transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
+                                "w-full rounded-xl border border-l-4 px-2.5 py-2.5 text-left transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
                                 color.chip,
                                 color.border,
-                                "bg-opacity-90 backdrop-blur-sm"
+                                "bg-opacity-95 backdrop-blur-sm"
                               )}
                             >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className={cn("font-black tracking-tight", color.text)}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className={cn("text-[10px] font-black tracking-widest uppercase", color.text)}>
                                   {fmtTime(t.departure_at)}
                                 </span>
                                 <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
                               </div>
-                              <span className={cn("block font-black text-[11px] uppercase tracking-tight", color.text)}>
+                              <span className={cn("block font-black text-xs uppercase tracking-tight leading-none mb-1", color.text)}>
                                 {tripCity(t)}
                               </span>
-                              <span className="block truncate opacity-80 font-medium text-[9px] mt-0.5 leading-tight">
+                              <span className="block truncate opacity-70 font-semibold text-[10px] leading-tight">
                                 {t.destination_text}
                               </span>
-
                             </button>
                           </li>
                         );
@@ -419,9 +461,9 @@ function CalendarioViagens() {
                               e.stopPropagation();
                               setExpandedDay(expanded ? null : key);
                             }}
-                            className="w-full rounded-xl px-2 py-1.5 text-center text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+                            className="w-full rounded-xl px-2 py-2 text-center text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
                           >
-                            {expanded ? "ver menos" : `+${items.length - 3} itens`}
+                            {expanded ? "ver menos" : `+ ${items.length - 3} viagens`}
                           </button>
                         </li>
                       ) : null}
@@ -436,6 +478,19 @@ function CalendarioViagens() {
 
       <TripDrawer tripId={tripId} onClose={() => setTripId(null)} />
     </AppShell>
+  );
+}
+
+function Stat({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="flex flex-col items-center min-w-[70px]">
+      <span className={cn("text-xl font-black tracking-tighter leading-none", color)}>
+        {value}
+      </span>
+      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mt-1">
+        {label}
+      </span>
+    </div>
   );
 }
 

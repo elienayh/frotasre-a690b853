@@ -219,9 +219,10 @@ export interface AppShellProps {
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
+  fullWidth?: boolean;
 }
 
-export function AppShell({ title, description, actions, children }: AppShellProps) {
+export function AppShell({ title, description, actions, children, fullWidth }: AppShellProps) {
   const { profile, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -371,7 +372,7 @@ export function AppShell({ title, description, actions, children }: AppShellProp
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="px-4 py-8 md:px-8 max-w-7xl mx-auto"
+            className={cn("px-4 py-8 md:px-8 mx-auto", fullWidth ? "max-w-none" : "max-w-7xl")}
           >
             {children}
           </motion.div>
