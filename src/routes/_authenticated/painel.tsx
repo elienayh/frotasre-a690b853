@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fmtDate, fmtTime } from "@/lib/frota";
 import { FleetSituation } from "@/components/FleetSituation";
+import { FleetAlerts } from "@/components/FleetAlerts";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   component: PainelPage,
@@ -107,7 +108,10 @@ function PainelPage() {
       }
     >
       {isAdmin ? (
-        <section className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mb-8 space-y-6">
+          <FleetAlerts />
+          
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Indicator
             icon={<CheckCircle2 className="h-4 w-4 text-success" />}
             label="Veículos disponíveis"
@@ -153,6 +157,7 @@ function PainelPage() {
             value={fleetCount("EM_VIAGEM")}
             to="/admin/disponibilidade"
           />
+          </div>
         </section>
       ) : (
         <div className="mb-8 grid gap-4 md:grid-cols-3">
