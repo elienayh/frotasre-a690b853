@@ -55,7 +55,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [sector, setSector] = useState<string>("");
 
-  const target = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/painel";
+  const target = search.redirect && search.redirect.startsWith("/") ? search.redirect : "/agenda-publica";
 
   useEffect(() => {
     if (!loading && session) {
