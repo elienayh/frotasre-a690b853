@@ -403,6 +403,7 @@ function AdminSolicitacoes() {
       
       <RideDecisionDialog ride={rideToDecide} onClose={() => setRideToDecide(null)} />
 
+
       <Dialog open={Boolean(decision)} onOpenChange={(open) => !open && setDecision(null)}>
         <DialogContent>
           <DialogHeader>
