@@ -113,6 +113,8 @@ function UsuariosList() {
     return !!value;
   }).length;
 
+  const isLoading = profilesLoading || rolesLoading;
+
   const filteredProfiles = useMemo(() => {
     // If we're still loading, don't filter yet to avoid showing "No users found"
     if (isLoading) return [];
@@ -138,8 +140,6 @@ function UsuariosList() {
       return matchesSearch && matchesFilters;
     });
   }, [profiles, roles, emails, searchTerm, filters, isLoading]);
-
-  const isLoading = profilesLoading || rolesLoading;
 
   return (
     <AppShell title="Gestão de Usuários" description="Gerencie usuários, funções e permissões.">
