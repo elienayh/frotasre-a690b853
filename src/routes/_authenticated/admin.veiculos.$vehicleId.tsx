@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, TriangleAlert, Wrench } from "lucide-react";
+import { ArrowLeft, Plus, TriangleAlert, Wrench, Fuel, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +36,9 @@ import {
   localInputToIso,
   todayInput,
   FLEET_STATUS_LABEL,
+  calculateAutonomy,
 } from "@/lib/frota";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/veiculos/$vehicleId")({
   component: FichaVeiculo,
@@ -84,7 +86,7 @@ function FichaVeiculo() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("*")
+        .select("*, next_preventive_km, preventive_km_interval")
         .eq("id", vehicleId)
         .maybeSingle();
       if (error) throw error;
@@ -186,6 +188,8 @@ function FichaVeiculo() {
     mutationFn: async ({ block, form }: { block: BlockRow; form: FormData }) => {
       const returnedAt = localInputToIso(String(form.get("returned_at")));
       const odometer = Number(form.get("odometer_out")) || null;
+      const isPreventive = form.get("is_preventive") === "true";
+      
       const { error } = await supabase
         .from("vehicle_blocks")
         .update({
@@ -201,9 +205,13 @@ function FichaVeiculo() {
       if (error) throw new Error(error.message);
 
       if (odometer && odometer > (vehicle?.odometer ?? 0)) {
+        const updateData: any = { odometer };
+        if (isPreventive) {
+          updateData.next_preventive_km = odometer + (vehicle?.preventive_km_interval ?? 10000);
+        }
         const { error: odoError } = await supabase
           .from("vehicles")
-          .update({ odometer })
+          .update(updateData)
           .eq("id", vehicleId);
         if (odoError) throw new Error(odoError.message);
       }
@@ -333,6 +341,7 @@ function FichaVeiculo() {
                   ["Lugares", vehicle?.capacity ?? "—"],
                   ["Patrimônio", vehicle?.asset_number ?? "—"],
                   ["Hodômetro", fmtKm(vehicle?.odometer)],
+                  ["Próxima Revisão", vehicle?.next_preventive_km ? `${fmtKm(vehicle.next_preventive_km)} (${fmtKm(vehicle.next_preventive_km - (vehicle.odometer ?? 0))} restantes)` : "—"],
                   ["Observações", vehicle?.notes ?? "—"],
                 ].map(([label, value]) => (
                   <div key={String(label)} className="flex justify-between gap-4 border-b border-border py-2">
@@ -532,13 +541,33 @@ function FichaVeiculo() {
             <CardHeader>
               <CardTitle className="text-base">Histórico consolidado</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>{trips.length} viagens registradas</p>
-              <p>{blocks.length} manutenções/bloqueios</p>
-              <p>{fuels.length} abastecimentos recentes</p>
-              <p className="text-muted-foreground">
-                Hodômetro atual: {fmtKm(vehicle?.odometer)}
-              </p>
+            <CardContent className="space-y-4 text-sm">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Manutenção Preventiva</span>
+                  <span>{fmtKm(vehicle?.odometer)} / {fmtKm(vehicle?.next_preventive_km)}</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
+                  <div 
+                    className={cn(
+                      "h-full transition-all",
+                      (vehicle?.odometer ?? 0) >= (vehicle?.next_preventive_km ?? 0) - 500 ? "bg-destructive" : "bg-primary"
+                    )}
+                    style={{ width: `${Math.min(100, ((vehicle?.odometer ?? 0) / (vehicle?.next_preventive_km || 1)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-lg bg-accent/50 p-3">
+                  <p className="text-xs text-muted-foreground">Consumo Médio</p>
+                  <p className="text-lg font-semibold">{calculateAutonomy(fuels)}</p>
+                </div>
+                <div className="rounded-lg bg-accent/50 p-3">
+                  <p className="text-xs text-muted-foreground">Viagens / Manutenções</p>
+                  <p className="text-lg font-semibold">{trips.length} / {blocks.length}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -679,6 +708,10 @@ function FichaVeiculo() {
             <div className="space-y-2">
               <Label htmlFor="fm-cost">Custo final (R$)</Label>
               <Input id="fm-cost" name="cost" type="number" step="0.01" min={0} />
+            </div>
+            <div className="flex items-center space-x-2 py-2">
+              <input type="checkbox" id="fm-preventive" name="is_preventive" value="true" className="h-4 w-4 rounded border-border" />
+              <Label htmlFor="fm-preventive" className="font-normal">Esta manutenção é uma revisão preventiva (reseta km)</Label>
             </div>
             <div className="space-y-2">
               <Label htmlFor="fm-notes">Observações</Label>
