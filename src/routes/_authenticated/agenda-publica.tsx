@@ -127,6 +127,26 @@ function CalendarioViagens() {
       if (list) list.push(t);
       else map.set(key, [t]);
     }
+    // Also group by return_at if multi-day trips exist
+    for (const t of filtered) {
+      const depKey = dayKey(t.departure_at);
+      const retKey = dayKey(t.return_at);
+      if (depKey !== retKey) {
+        // Multi-day trip
+        const d = new Date(t.departure_at);
+        d.setDate(d.getDate() + 1);
+        while (dayKey(d) <= retKey) {
+           const key = dayKey(d);
+           const list = map.get(key);
+           if (list) {
+             if (!list.find(x => x.id === t.id)) list.push(t);
+           } else {
+             map.set(key, [t]);
+           }
+           d.setDate(d.getDate() + 1);
+        }
+      }
+    }
     return map;
   }, [filtered]);
 

@@ -108,9 +108,9 @@ function MinhasViagens() {
       description="Acompanhe todas as suas viagens e solicitações em um só lugar."
       actions={
         <Button asChild size="sm" className="rounded-xl shadow-lg shadow-primary/20">
-          <a href="/solicitacoes/nova" onClick={(e) => { e.preventDefault(); window.location.assign("/solicitacoes/nova"); }}>
+          <Link to="/solicitacoes/nova" search={{ initialDate: undefined }}>
             <Plus className="mr-1.5 h-4 w-4" /> Nova Solicitação
-          </a>
+          </Link>
         </Button>
       }
     >
@@ -178,7 +178,7 @@ function MinhasViagens() {
               <p className="text-sm text-muted-foreground">Tente ajustar seus filtros ou faça uma nova solicitação.</p>
             </div>
             <Button asChild variant="outline" className="rounded-xl">
-               <a href="/solicitacoes/nova" onClick={(e) => { e.preventDefault(); window.location.assign("/solicitacoes/nova"); }}>Nova Solicitação</a>
+               <Link to="/solicitacoes/nova" search={{ initialDate: undefined }}>Nova Solicitação</Link>
             </Button>
           </div>
         ) : (

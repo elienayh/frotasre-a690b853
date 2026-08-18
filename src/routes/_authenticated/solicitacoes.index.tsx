@@ -61,7 +61,7 @@ function MinhasSolicitacoes() {
       description="Acompanhe o andamento dos seus pedidos de viagem"
       actions={
         <Button asChild size="sm">
-          <Link to="/solicitacoes/nova">
+          <Link to="/solicitacoes/nova" search={{ initialDate: undefined }}>
             <Plus className="mr-1 h-4 w-4" /> Nova
           </Link>
         </Button>

@@ -114,7 +114,7 @@ function PainelPage() {
       description={isAdmin ? "Gestão Estratégica da DAFI" : "Visão geral do seu setor"}
       actions={
         <Button asChild size="sm" className="rounded-xl shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95">
-          <Link to="/solicitacoes/nova">
+          <Link to="/solicitacoes/nova" search={{ initialDate: undefined }}>
             <Plus className="mr-1.5 h-4 w-4" /> Nova solicitação
           </Link>
         </Button>
