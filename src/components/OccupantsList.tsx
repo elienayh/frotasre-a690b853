@@ -88,6 +88,11 @@ export function OccupantsList({
                   >
                     {occupantName(o)}
                   </span>
+                  {o.is_driver && (
+                    <Badge variant="secondary" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 bg-primary/10 border-primary/20 text-primary uppercase">
+                      Motorista
+                    </Badge>
+                  )}
                   {o.is_external && (
                     <Badge variant="outline" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 bg-muted/50 border-muted-foreground/20 uppercase">
                       Externo
@@ -123,7 +128,7 @@ export function OccupantsList({
                 )}
               </span>
 
-              {canManage ? (
+              {canManage && !o.is_driver ? (
                 <Button
                   type="button"
                   variant="ghost"
