@@ -173,6 +173,12 @@ export function TripForm({ trip }: TripFormProps) {
       toast.error(`A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros). Atualmente: ${occupancy.totalPeople} pessoas.`);
       return;
     }
+
+    if (validStops().length === 0) {
+      toast.error("Informe pelo menos um destino com cidade e local.");
+      return;
+    }
+
     if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
       toast.error("Selecione todos os passageiros da viagem.");
       return;
