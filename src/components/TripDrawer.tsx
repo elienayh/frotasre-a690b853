@@ -22,6 +22,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { fmtDate, fmtTime, friendlyDbError, type TripRow } from "@/lib/frota";
 import { sectorColor } from "@/lib/setores";
 import { cn } from "@/lib/utils";
+import { useTripStops } from "@/hooks/useTripStops";
+import { calculateTripOccupancy } from "@/lib/occupancy";
 
 export interface TripDrawerProps {
   tripId: string | null;
@@ -33,6 +35,19 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const { data: trip, isLoading } = useAgendaTrip(tripId);
+  const { data: tripStops = [] } = useTripStops(tripId);
+  const { data: occupantsData = [] } = useQuery({
+    queryKey: ["trip-occupants-drawer", tripId],
+    enabled: Boolean(tripId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trip_occupants")
+        .select("user_id, is_external")
+        .eq("trip_id", tripId!);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const [askingRide, setAskingRide] = useState(false);
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [mileageMode, setMileageMode] = useState<"start" | "end">("start");
@@ -94,6 +109,12 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
     onSuccess: invalidate,
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const occupancy = calculateTripOccupancy(
+    tripStops,
+    occupantsData.filter(o => !o.is_external).map(o => o.user_id),
+    5
+  );
 
   const alreadyAsked = rides.some((r) => r.requester_id === user?.id);
   const color = sectorColor(trip?.requester?.sector);

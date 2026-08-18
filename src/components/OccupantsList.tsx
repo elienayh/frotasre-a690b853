@@ -20,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
 import { occupantName, useOccupantMutations, useTripOccupants } from "@/hooks/useOccupants";
 import { cn } from "@/lib/utils";
+import { calculateTripOccupancy } from "@/lib/occupancy";
+import { useTripStops } from "@/hooks/useTripStops";
 
 export interface OccupantsListProps {
   tripId: string;

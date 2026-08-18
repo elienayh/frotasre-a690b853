@@ -16,6 +16,7 @@ import { OccupantsPicker } from "@/components/OccupantsPicker";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
+import { calculateTripOccupancy } from "@/lib/occupancy";
 
 const schema = z
   .object({
@@ -166,13 +167,10 @@ export function TripForm({ trip }: TripFormProps) {
       toast.error(parsed.error.issues[0]?.message ?? "Verifique os dados informados");
       return;
     }
-    if (validStops().length === 0) {
-      toast.error("Informe pelo menos um destino com cidade e local.");
-      return;
-    }
-    const driversCount = new Set(validStops().map((s) => s.driverUserId).filter(Boolean)).size || 1;
-    if (1 + parsed.data.passengers > 5) {
-      toast.error("A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros).");
+    const occupancy = calculateTripOccupancy(validStops(), occupantIds, 5);
+
+    if (occupancy.isExceeded) {
+      toast.error(`A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros). Atualmente: ${occupancy.totalPeople} pessoas.`);
       return;
     }
     if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
