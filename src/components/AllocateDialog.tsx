@@ -37,10 +37,11 @@ import {
 export interface AllocateDialogProps {
   trip: TripRow | null;
   onClose: () => void;
+  onReject?: (trip: TripRow) => void;
 }
 
 /** Etapa "Definir Transporte": DAFI escolhe veículo, motorista e horário definitivo. */
-export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
+export function AllocateDialog({ trip, onClose, onReject }: AllocateDialogProps) {
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useAuth();
   const notifyEmail = useServerFn(notifyTripDecision);
@@ -395,16 +396,30 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
         </form>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} type="button">
-            Fechar
-          </Button>
-          <Button
-            type="submit"
-            form="allocate-form"
-            disabled={approve.isPending || !vehicleId || capacityBlocked}
-          >
-            Aprovar viagem
-          </Button>
+          <div className="flex w-full items-center justify-between">
+            <Button variant="ghost" onClick={onClose} type="button">
+              Fechar
+            </Button>
+            <div className="flex gap-2">
+              {trip?.status === "PENDENTE" && onReject && (
+                <Button 
+                  variant="outline" 
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => onReject(trip)}
+                  type="button"
+                >
+                  Rejeitar
+                </Button>
+              )}
+              <Button
+                type="submit"
+                form="allocate-form"
+                disabled={approve.isPending || !vehicleId || capacityBlocked}
+              >
+                Aprovar viagem
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
