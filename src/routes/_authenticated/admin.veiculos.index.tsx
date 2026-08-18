@@ -13,7 +13,8 @@ import {
   Fuel, 
   Users, 
   ChevronRight,
-  Info
+  Info,
+  CarFront
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
