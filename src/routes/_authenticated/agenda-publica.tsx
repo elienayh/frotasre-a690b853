@@ -456,6 +456,19 @@ function CalendarioViagens() {
   );
 }
 
+function Stat({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="flex flex-col items-center min-w-[70px]">
+      <span className={cn("text-xl font-black tracking-tighter leading-none", color)}>
+        {value}
+      </span>
+      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mt-1">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 function FilterSelect({
   id,
   label,
