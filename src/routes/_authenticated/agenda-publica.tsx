@@ -1,13 +1,53 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { 
+  CalendarDays, 
+  ChevronLeft, 
+  ChevronRight, 
+  Filter, 
+  LayoutGrid, 
+  LayoutList, 
+  Calendar as CalendarIcon,
+  Columns,
+  Search,
+  Plus
+} from "lucide-react";
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  eachDayOfInterval, 
+  isSameDay, 
+  isSameMonth, 
+  addMonths, 
+  subMonths,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
+  isToday
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 import { AppShell } from "@/components/AppShell";
 import { TripDrawer } from "@/components/TripDrawer";
+import { TripCard } from "@/components/TripCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -20,8 +60,10 @@ import { useAgendaTrips, tripCity, tripDriverName, type AgendaTrip } from "@/hoo
 import { useCities } from "@/hooks/useFrotaOptions";
 import { useVehicles } from "@/hooks/useFleet";
 import { SECTORS, sectorColor } from "@/lib/setores";
-import { TRIP_STATUS_LABEL, fmtTime } from "@/lib/frota";
+import { TRIP_STATUS_LABEL, fmtTime, statusTone } from "@/lib/frota";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 export const Route = createFileRoute("/_authenticated/agenda-publica")({
   component: CalendarioViagens,
