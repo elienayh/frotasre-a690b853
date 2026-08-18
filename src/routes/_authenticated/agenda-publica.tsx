@@ -57,6 +57,7 @@ function CalendarioViagens() {
   const [tripId, setTripId] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"Mês" | "Semana" | "Dia" | "Lista">("Mês");
 
   const [fDestino, setFDestino] = useState("");
   const [fCidade, setFCidade] = useState(ALL);
@@ -108,6 +109,15 @@ function CalendarioViagens() {
     [trips, fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista],
   );
 
+  const stats = useMemo(() => {
+    return {
+      total: filtered.length,
+      aprovadas: filtered.filter(t => t.status === "APROVADA" || t.status === "PROGRAMADA").length,
+      aguardando: filtered.filter(t => t.status === "PENDENTE").length,
+      emAndamento: filtered.filter(t => t.status === "EM_ANDAMENTO").length,
+    };
+  }, [filtered]);
+
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (fCidade !== ALL) count++;
@@ -127,12 +137,10 @@ function CalendarioViagens() {
       if (list) list.push(t);
       else map.set(key, [t]);
     }
-    // Also group by return_at if multi-day trips exist
     for (const t of filtered) {
       const depKey = dayKey(t.departure_at);
       const retKey = dayKey(t.return_at);
       if (depKey !== retKey) {
-        // Multi-day trip
         const d = new Date(t.departure_at);
         d.setDate(d.getDate() + 1);
         while (dayKey(d) <= retKey) {
