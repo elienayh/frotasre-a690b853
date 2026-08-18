@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabase } from "./supabase/client";
+import { supabase } from "./client";
 
 /**
  * Server function para buscar o email do usuário no Supabase Auth.

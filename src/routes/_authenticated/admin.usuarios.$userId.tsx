@@ -364,7 +364,7 @@ function UsuarioEdicao() {
                   onClick={async () => {
                    if (confirm(`TEM CERTEZA ABSOLUTA? Isso excluirá o acesso de ${profile.full_name} permanentemente.`)) {
                      try {
-                       await deleteAccount({ userId });
+                       await deleteAccount({ data: { userId } });
                        toast.success("Usuário excluído do sistema e do Auth.");
                        navigate({ to: "/admin/usuarios" });
                      } catch (err: any) {
