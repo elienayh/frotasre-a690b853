@@ -170,8 +170,13 @@ export function TripForm({ trip }: TripFormProps) {
       toast.error("Informe pelo menos um destino com cidade e local.");
       return;
     }
+    const driversCount = new Set(validStops().map((s) => s.driverUserId).filter(Boolean)).size || 1;
+    if (1 + parsed.data.passengers > 5) {
+      toast.error("A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros).");
+      return;
+    }
     if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
-      toast.error("Selecione todos os ocupantes da viagem.");
+      toast.error("Selecione todos os passageiros da viagem.");
       return;
     }
     setReview(parsed.data);
