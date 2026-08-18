@@ -38,25 +38,39 @@ function UsuariosList() {
   const navigate = useNavigate();
   const search = Route.useSearch() as { pending?: boolean };
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
+  
+  // Initialize filters based on search param or defaults
+  const [filters, setFilters] = useState(() => ({
     admin: false,
     superAdmin: false,
     coordinator: false,
     driver: false,
     certified: false,
-    active: search?.pending ? false : true,
-    inactive: search?.pending ? true : false,
-  });
+    // Only apply pending filter if explicitly passed as true
+    active: search?.pending === true ? false : true,
+    inactive: search?.pending === true ? true : false,
+  }));
 
   // Sync filters when search param changes
   useEffect(() => {
-    if (search?.pending !== undefined) {
+    // If pending is undefined, we want to show all (active by default as per UI intent)
+    // or reset to a clean state.
+    if (search?.pending === true) {
       setFilters(f => ({
         ...f,
-        active: !search.pending,
-        inactive: !!search.pending
+        active: false,
+        inactive: true
+      }));
+    } else if (search?.pending === false) {
+      setFilters(f => ({
+        ...f,
+        active: true,
+        inactive: false
       }));
     }
+    // We don't automatically reset filters to "clean" if search.pending is undefined 
+    // to avoid clearing user's manual filter selections during navigation 
+    // UNLESS it's the initial mount and we want a clean state.
   }, [search?.pending]);
 
   const fetchEmails = useServerFn(getUsersEmails);
@@ -93,9 +107,18 @@ function UsuariosList() {
 
   const roleOf = (id: string) => roles.filter((r) => r.user_id === id).map((r) => r.role);
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length - 1; // -1 for 'active' being default
+  const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'active' && value === true) return false; // Default
+    if (key === 'inactive' && value === false) return false; // Default
+    return !!value;
+  }).length;
+
+  const isLoading = profilesLoading || rolesLoading;
 
   const filteredProfiles = useMemo(() => {
+    // If we're still loading, don't filter yet to avoid showing "No users found"
+    if (isLoading) return [];
+    
     return profiles.filter((p) => {
       const pRoles = roleOf(p.id);
       const email = emails[p.id]?.toLowerCase() || "";
@@ -116,9 +139,7 @@ function UsuariosList() {
 
       return matchesSearch && matchesFilters;
     });
-  }, [profiles, roles, emails, searchTerm, filters]);
-
-  const isLoading = profilesLoading || rolesLoading;
+  }, [profiles, roles, emails, searchTerm, filters, isLoading]);
 
   return (
     <AppShell title="Gestão de Usuários" description="Gerencie usuários, funções e permissões.">
@@ -240,9 +261,17 @@ function UsuariosList() {
         {/* List Content */}
         <div className="grid gap-2">
           {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-[72px] w-full rounded-2xl" />
-            ))
+            <div className="space-y-4 py-10">
+              <div className="flex items-center justify-center gap-3 text-muted-foreground animate-pulse">
+                <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                <span className="text-sm font-medium tracking-wide uppercase">Carregando usuários...</span>
+              </div>
+              <div className="grid gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[72px] w-full rounded-2xl" />
+                ))}
+              </div>
+            </div>
           ) : filteredProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center bg-card/20 rounded-[2rem] border border-dashed border-border/60">
               <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
@@ -250,26 +279,30 @@ function UsuariosList() {
               </div>
               <h3 className="font-display text-lg font-bold text-foreground">Nenhum usuário encontrado</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-[250px]">
-                Não encontramos resultados para "{searchTerm}" com os filtros aplicados.
+                {searchTerm || activeFilterCount > 0 
+                  ? `Não encontramos resultados para "${searchTerm}" com os filtros aplicados.`
+                  : "Não há usuários cadastrados no sistema."}
               </p>
-              <Button 
-                variant="outline" 
-                className="mt-6 rounded-xl"
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilters({
-                    admin: false,
-                    superAdmin: false,
-                    coordinator: false,
-                    driver: false,
-                    certified: false,
-                    active: true,
-                    inactive: false,
-                  });
-                }}
-              >
-                Limpar busca e filtros
-              </Button>
+              {(searchTerm || activeFilterCount > 0) && (
+                <Button 
+                  variant="outline" 
+                  className="mt-6 rounded-xl"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilters({
+                      admin: false,
+                      superAdmin: false,
+                      coordinator: false,
+                      driver: false,
+                      certified: false,
+                      active: true,
+                      inactive: false,
+                    });
+                  }}
+                >
+                  Limpar busca e filtros
+                </Button>
+              )}
             </div>
           ) : (
             filteredProfiles.map((p) => (

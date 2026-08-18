@@ -100,7 +100,7 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
           search={(prev: any) => {
             if (item.label === "Aprovações") return { ...prev, filter: "pendentes" };
             if (item.label === "Veículos") return { ...prev, filter: "pending" };
-            if (item.label === "Usuários") return { ...prev, pending: true };
+            if (item.label === "Usuários") return { ...prev, pending: undefined };
             return prev;
           }}
           onClick={onNavigate}
