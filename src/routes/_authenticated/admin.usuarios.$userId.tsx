@@ -163,10 +163,10 @@ function UsuarioEdicao() {
       description="Gerencie dados cadastrais, permissões e segurança."
     >
       <div className="mb-6">
-        <Button variant="ghost" size="sm" asChild className="-ml-2">
+        <Button variant="ghost" size="sm" asChild className="-ml-2 rounded-xl hover:bg-accent/80 group">
           <Link to="/admin/usuarios">
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Voltar para lista
+            <ChevronLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span className="font-bold uppercase tracking-widest text-[10px]">Voltar para a lista de usuários</span>
           </Link>
         </Button>
       </div>
