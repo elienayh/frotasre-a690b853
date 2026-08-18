@@ -11,6 +11,7 @@ export interface Profile {
   is_active: boolean;
   is_coordinator: boolean;
   is_sre_driver: boolean;
+  is_driver_certified: boolean;
   cpf: string | null;
   birth_date: string | null;
   mobile: string | null;
@@ -61,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at, cnh_first_at, cnh_notes")
+        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, is_driver_certified, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at, cnh_first_at, cnh_notes")
         .eq("id", userId)
         .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),

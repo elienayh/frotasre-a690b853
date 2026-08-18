@@ -126,6 +126,7 @@ export function TripStops({ value, onChange }: TripStopsProps) {
                       cityText: null,
                       destinationId: null,
                       placeText: null,
+                      driverUserId: stop.driverUserId,
                     })
                   }
                   onCustom={(text) =>
@@ -134,6 +135,7 @@ export function TripStops({ value, onChange }: TripStopsProps) {
                       cityText: text,
                       destinationId: null,
                       placeText: null,
+                      driverUserId: stop.driverUserId,
                     })
                   }
                 />

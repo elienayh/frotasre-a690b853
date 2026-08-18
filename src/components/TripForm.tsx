@@ -418,30 +418,42 @@ export function TripForm({ trip }: TripFormProps) {
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="passengers">Número de ocupantes</Label>
+                <Label htmlFor="passengers">Número de passageiros</Label>
                 <Input
                   id="passengers"
                   name="passengers"
                   type="number"
-                  min={1}
-                  max={60}
+                  min={0}
+                  max={4}
                   value={passengers}
-                  onChange={(e) => setPassengers(Math.max(0, Number(e.target.value) || 0))}
+                  onChange={(e) => setPassengers(Math.max(0, Math.min(4, Number(e.target.value) || 0)))}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label>Motorista</Label>
-                <div className="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
-                  DAFI DEFINIR
+                <Label>Ocupação Total</Label>
+                <div className="rounded-md border border-info/20 bg-info/5 px-3 py-2 text-sm">
+                  <div className="flex justify-between font-bold">
+                    <span>
+                      {1 + passengers} de 5
+                    </span>
+                    <span className={1 + passengers > 5 ? "text-destructive" : "text-success"}>
+                      {5 - (1 + passengers)} vagas restam
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  O motorista de cada destino é definido pela DAFI na aprovação.
+                <p className="text-[10px] text-muted-foreground">
+                  Regra: 1 motorista + até 4 passageiros.
                 </p>
               </div>
             </div>
 
-            <OccupantsPicker count={passengers} value={occupantIds} onChange={setOccupantIds} />
+            <OccupantsPicker
+              count={passengers}
+              value={occupantIds}
+              onChange={setOccupantIds}
+              exclude={stops.map((s) => s.driverUserId).filter(Boolean) as string[]}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="requester_notes">Observações</Label>
