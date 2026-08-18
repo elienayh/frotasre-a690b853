@@ -411,8 +411,9 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
 
       <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
       <TripMileageDialog
-        trip={trip}
-        vehicle={trip.vehicles}
+        trip={trip ?? undefined}
+        vehicle={trip?.vehicles ?? undefined}
+
         isOpen={mileageOpen}
         onOpenChange={setMileageOpen}
         mode={mileageMode}

@@ -171,7 +171,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
             <h3 className="mb-2 font-display text-sm font-semibold">Ficha da solicitação</h3>
             <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
               <Field label="Solicitante" value={trip.requester_name ?? "—"} />
-              <Field label="Situação" value={TRIP_STATUS_LABEL[trip.status || "PENDENTE"] ?? trip.status} />
+              <Field label="Situação" value={trip.status ? (TRIP_STATUS_LABEL[trip.status] ?? trip.status) : "PENDENTE"} />
               <Field label="Data da viagem" value={fmtDate(trip.departure_at)} />
               <Field label="Data de retorno" value={fmtDate(trip.return_at)} />
               <Field

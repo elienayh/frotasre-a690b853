@@ -6,6 +6,7 @@ const TRIP_SELECT = `
   id, code, status, departure_at, return_at, destination_text, purpose, passengers,
   occupants_names, requester_name, requester_id, allows_rides, admin_notes, requester_notes,
   needs_sre_driver, requested_driver_id, vehicle_id, assigned_driver_user_id, city_id, city_text,
+  odometer_start, odometer_end,
   cities(name),
   vehicles(id, plate, manufacturer, model, capacity),
   drivers(full_name),
@@ -15,6 +16,7 @@ const TRIP_SELECT = `
   organizer:profiles!trip_requests_organized_by_fkey(full_name),
   approved_at, organized_at, rejection_reason
 `;
+
 
 export interface AgendaTrip {
   id: string;
@@ -53,7 +55,10 @@ export interface AgendaTrip {
   approved_at: string | null;
   organized_at: string | null;
   rejection_reason: string | null;
+  odometer_start: number | null;
+  odometer_end: number | null;
 }
+
 
 /** Nome da cidade principal da viagem (cadastrada ou digitada). */
 export function tripCity(trip: AgendaTrip): string {

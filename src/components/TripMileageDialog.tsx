@@ -84,8 +84,9 @@ export function TripMileageDialog({
         new_value: km,
         origin: mode === "start" ? "trip_start" : "trip_end",
         trip_id: trip.id,
-        recorded_by: user?.id,
+        recorded_by: user?.id || null,
       });
+
 
       if (historyError) throw historyError;
 

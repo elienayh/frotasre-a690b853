@@ -111,7 +111,7 @@ function AdminSolicitacoes() {
                     Solicitante: {t.requester_name ?? "—"}
                   </p>
                 </div>
-                <StatusBadge status={t.status} />
+                <StatusBadge status={t.status as string} />
               </div>
               <p className="mt-3 text-sm">{t.purpose}</p>
               {t.requester_notes ? (
@@ -212,7 +212,7 @@ function AdminSolicitacoes() {
                 toast.error("Descreva o motivo para o solicitante.");
                 return;
               }
-              decide.mutate({ id: decision!.trip.id, kind: decision!.kind, reason });
+              decide.mutate({ id: decision!.trip.id as string, kind: decision!.kind, reason });
             }}
           >
             <Label htmlFor="reason">Motivo</Label>

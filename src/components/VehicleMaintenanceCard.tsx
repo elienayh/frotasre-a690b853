@@ -24,7 +24,7 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
 
   const totalInterval = nextKm - lastKm;
   const elapsed = currentKm - lastKm;
-  const progress = Math.min(Math.max((elapsed / totalInterval) * 100, 0), 100);
+  const progress = Math.min(Math.max((elapsed / Math.max(1, totalInterval)) * 100, 0), 100);
   const remaining = Math.max(nextKm - currentKm, 0);
 
   let status: "normal" | "warning" | "urgent" | "expired" = "normal";
@@ -59,7 +59,7 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
         <span className="text-muted-foreground">{label}</span>
         <div className={cn("flex items-center gap-1", textColors[status])}>
           {icons[status]}
-          <span>{remaining > 0 ? `${remaining.toLocaleString()} km resta(m)` : "Vencida"}</span>
+          <span>{remaining > 0 ? `${remaining.toLocaleString()} km resta(m)` : "MANUTENÇÃO VENCIDA"}</span>
         </div>
       </div>
       <Progress value={progress} className="h-2" indicatorClassName={statusColors[status]} />
@@ -68,6 +68,8 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
 }
 
 export function VehicleMaintenanceCard({ vehicle }: { vehicle: any }) {
+  if (!vehicle) return null;
+  
   return (
     <div className="space-y-4 rounded-md border border-border/50 bg-muted/30 p-4">
       <div className="flex items-center gap-2 border-b border-border/50 pb-2">
