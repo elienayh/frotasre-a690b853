@@ -78,35 +78,51 @@ export function OccupantsList({
               key={o.id}
               className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm"
             >
-              <span className="min-w-0">
-                <span
-                  className={cn(
-                    "font-medium",
-                    o.status === "RECUSADO" && "text-muted-foreground line-through",
-                  )}
-                >
-                  {occupantName(o)}
-                </span>
-                <span className="ml-2 inline-flex gap-1 align-middle">
-                  {o.is_external ? (
-                    <Badge variant="outline" className="text-[10px]">
-                      OCUPANTE EXTERNO
-                    </Badge>
-                  ) : null}
-                  {o.status === "RECUSADO" ? (
-                    <Badge variant="destructive" className="text-[10px]">
-                      Não participará
-                    </Badge>
-                  ) : null}
-                </span>
-                {o.profile?.sector || o.external_document ? (
-                  <span className="block text-xs text-muted-foreground">
-                    {o.is_external
-                      ? [o.external_document, o.external_phone].filter(Boolean).join(" · ")
-                      : o.profile?.sector}
+              <span className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "font-bold text-sm",
+                      o.status === "RECUSADO" && "text-muted-foreground/60 line-through",
+                    )}
+                  >
+                    {occupantName(o)}
                   </span>
-                ) : null}
+                  {o.is_external && (
+                    <Badge variant="outline" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 bg-muted/50 border-muted-foreground/20 uppercase">
+                      Externo
+                    </Badge>
+                  )}
+                  {o.status === "RECUSADO" && (
+                    <Badge variant="destructive" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 uppercase">
+                      Recusou participação
+                    </Badge>
+                  )}
+                </div>
+                {!o.is_external && o.profile && (
+                  <div className="flex gap-1.5 mt-0.5 text-[10px] font-medium text-muted-foreground">
+                    {o.profile.sector && <span>{o.profile.sector}</span>}
+                    {o.profile.registration && (
+                      <>
+                        <span className="opacity-30">·</span>
+                        <span>{o.profile.registration}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                {o.is_external && (o.external_document || o.external_phone) && (
+                  <div className="flex gap-1.5 mt-0.5 text-[10px] font-medium text-muted-foreground">
+                    {o.external_document && <span>{o.external_document}</span>}
+                    {o.external_phone && (
+                      <>
+                        <span className="opacity-30">·</span>
+                        <span>{o.external_phone}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </span>
+
               {canManage ? (
                 <Button
                   type="button"
