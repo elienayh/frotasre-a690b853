@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useServerFn } from "@tanstack/react-start";
 import { getUsersEmails } from "@/integrations/supabase/admin.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/usuarios")({
+export const Route = createFileRoute("/_authenticated/admin/usuarios/")({
   component: UsuariosLayout,
 });
 
