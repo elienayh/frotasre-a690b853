@@ -79,7 +79,7 @@ function UsuariosList() {
                 {!p.is_active && <Badge variant="destructive" className="rounded-lg font-bold uppercase tracking-widest text-[9px]">Inativo</Badge>}
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </AppShell>
