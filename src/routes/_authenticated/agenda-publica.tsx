@@ -372,12 +372,13 @@ function CalendarioViagens() {
                                 </span>
                                 <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
                               </div>
-                              <span className={cn("block font-extrabold truncate", color.text)}>
+                              <span className={cn("block font-black text-[11px] uppercase tracking-tight", color.text)}>
                                 {tripCity(t)}
                               </span>
-                              <span className="block truncate opacity-70 font-medium text-[9px] mt-0.5">
-                                {t.vehicles?.plate ?? "Sem veículo"}
+                              <span className="block truncate opacity-80 font-medium text-[9px] mt-0.5 leading-tight">
+                                {t.destination_text}
                               </span>
+
                             </button>
                           </li>
                         );
