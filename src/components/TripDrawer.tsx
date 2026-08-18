@@ -9,6 +9,7 @@ import { useAgendaTrip, tripCity, tripDriverName } from "@/hooks/useAgenda";
 import { AllocateDialog } from "@/components/AllocateDialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OccupantsList } from "@/components/OccupantsList";
+import { AuditTimeline } from "@/components/AuditTimeline";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -210,6 +211,13 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                     }
                   />
                 </dl>
+              </section>
+
+              <Separator />
+
+              <section className="space-y-2">
+                <h3 className="font-display text-sm font-semibold">Histórico de Alterações</h3>
+                <AuditTimeline entityId={trip.id} entityType="trip" />
               </section>
 
               <Separator />

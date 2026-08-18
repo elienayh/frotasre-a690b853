@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, TriangleAlert, Wrench, Fuel, Activity } from "lucide-react";
+import { ArrowLeft, Plus, TriangleAlert, Wrench, Fuel, Activity, History } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ import {
   calculateAutonomy,
 } from "@/lib/frota";
 import { cn } from "@/lib/utils";
+import { AuditTimeline } from "@/components/AuditTimeline";
 
 export const Route = createFileRoute("/_authenticated/admin/veiculos/$vehicleId")({
   component: FichaVeiculo,
@@ -536,7 +537,16 @@ function FichaVeiculo() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="historico" className="mt-4">
+        <TabsContent value="historico" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Histórico de Alterações</CardTitle>
+            </CardHeader>
+            <CardContent>
+               <AuditTimeline entityId={vehicleId} entityType="user" />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Histórico consolidado</CardTitle>
