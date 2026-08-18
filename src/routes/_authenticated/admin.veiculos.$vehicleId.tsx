@@ -583,8 +583,8 @@ function FichaVeiculo() {
                           <div 
                             className={cn(
                               "h-full transition-all",
-                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) ? "bg-destructive animate-pulse" :
-                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 ? "bg-warning" : "bg-success"
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "bg-destructive animate-pulse" :
+                              (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) - 500 && (item.nextKm ?? 0) > 0 ? "bg-warning" : "bg-success"
                             )}
                             style={{ 
                               width: `${Math.max(0, Math.min(100, 
