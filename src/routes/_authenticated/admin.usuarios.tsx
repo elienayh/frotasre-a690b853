@@ -7,12 +7,14 @@ import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { fmtDateTime } from "@/lib/frota";
 import { SECTORS } from "@/lib/setores";
 import { cnhStatus } from "@/lib/motoristas";
 import { useAuth } from "@/hooks/useAuth";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
