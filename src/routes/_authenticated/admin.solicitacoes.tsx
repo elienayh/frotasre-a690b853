@@ -9,6 +9,8 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AllocateDialog } from "@/components/AllocateDialog";
 import { RideDecisionDialog, type RideRow } from "@/components/RideDecisionDialog";
+import { notifyTripDecision } from "@/lib/email.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,6 +49,7 @@ function AdminSolicitacoes() {
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [decision, setDecision] = useState<Decision>(null);
   const [rideToDecide, setRideToDecide] = useState<RideRow | null>(null);
+  const notifyEmail = useServerFn(notifyTripDecision);
 
   // Sync with search params
   useEffect(() => {
@@ -112,6 +115,17 @@ function AdminSolicitacoes() {
     },
     onSuccess: () => {
       toast.success("Solicitação atualizada.");
+      // Envio de e-mail assíncrono para recusa ou correção
+      if (decision) {
+        void notifyEmail({
+          data: {
+            tripId: decision.trip.id,
+            userId: decision.trip.requester_id || "",
+            status: decision.kind,
+            rejectionReason: decide.variables?.reason
+          }
+        }).catch(err => console.error("Erro ao enviar e-mail de decisão:", err));
+      }
       setDecision(null);
       void queryClient.invalidateQueries();
     },
