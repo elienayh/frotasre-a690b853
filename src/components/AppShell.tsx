@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Gauge,
   LogOut,
+  Mail,
   MapPin,
   Menu,
   Route as RouteIcon,

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
+import { notifyNewTripRequest } from "@/lib/email.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,7 @@ export function TripForm({ trip }: TripFormProps) {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/solicitacoes/nova" }) as any;
   const { user, profile } = useAuth();
+  const notifyEmail = useServerFn(notifyNewTripRequest);
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
   const { data: people = [] } = usePeople();
