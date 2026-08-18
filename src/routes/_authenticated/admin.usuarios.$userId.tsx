@@ -96,7 +96,7 @@ function UsuarioEdicao() {
     mutationFn: async ({ role, grant }: { role: string; grant: boolean }) => {
       const { error } = await supabase.rpc("set_user_role", {
         _user_id: userId,
-        _role: role,
+        _role: role as any,
         _grant: grant,
       });
       if (error) throw error;
@@ -109,21 +109,18 @@ function UsuarioEdicao() {
   });
 
   const resetPassword = async () => {
-    const email = profile?.email || ""; // Assumindo que temos o email no profile ou auth
-    // O profile da tabela profiles pode não ter o email, mas o Supabase Auth tem.
-    // Vamos tentar pegar o email do auth se não estiver no profile.
+    // Na estrutura do Supabase Auth, o email está na auth.users, mas as tabelas públicas
+    // geralmente não têm acesso direto. Se o email não estiver no profile, precisaremos dele.
+    const { data: userData, error: userError } = await supabase.auth.getUser(); // Apenas para debug ou se for o próprio usuário
     
-    // Na verdade, precisamos do email do usuário. Se não estiver no profile, precisaremos buscar do Auth (que requer service role no servidor)
-    // Mas geralmente o email está no profile se sincronizado, ou podemos usar o que temos.
+    // O ideal é que o profile tenha uma coluna email. Se não tiver, vamos tentar pegar se disponível.
+    const targetEmail = (profile as any).email || "";
     
-    // Verificando se temos o email.
-    if (!profile?.email && !currentUser?.email) {
-       toast.error("Email do usuário não encontrado.");
+    if (!targetEmail) {
+       toast.error("Email do usuário não encontrado no perfil.");
        return;
     }
 
-    const targetEmail = profile?.email || ""; // Se não tiver email no profile, precisamos que o admin saiba qual é.
-    
     const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
       redirectTo: `${window.location.origin}/redefinir-senha`,
     });
@@ -135,7 +132,7 @@ function UsuarioEdicao() {
       // Registrar no histórico
       await supabase.from("permission_history").insert({
         target_user_id: userId,
-        actor_id: currentUser?.id,
+        actor_id: currentUser?.id ?? null,
         action: "Solicitação de redefinição de senha",
       });
     }
@@ -196,7 +193,7 @@ function UsuarioEdicao() {
                 </div>
                 <div className="space-y-2">
                   <Label>E-mail (Login)</Label>
-                  <Input defaultValue={profile.email || ""} disabled className="opacity-60" />
+                  <Input defaultValue={(profile as any).email || ""} disabled className="opacity-60" />
                 </div>
                 <div className="space-y-2">
                   <Label>Setor</Label>
@@ -323,8 +320,8 @@ function UsuarioEdicao() {
                   Ao solicitar a redefinição, o usuário receberá um e-mail com um link seguro para definir uma nova senha.
                   O sistema não armazena e nem exibe senhas.
                 </p>
-                <Button variant="warning" onClick={() => {
-                  if (confirm(`Enviar e-mail de redefinição para ${profile.email || "este usuário"}?`)) {
+                <Button variant="outline" onClick={() => {
+                  if (confirm(`Enviar e-mail de redefinição para ${(profile as any).email || "este usuário"}?`)) {
                     resetPassword();
                   }
                 }}>
