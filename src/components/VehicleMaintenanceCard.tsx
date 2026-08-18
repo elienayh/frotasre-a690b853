@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Wrench, Droplets, CircleSlash, Settings2, Target } from "lucide-react";
+import { Wrench, Droplets, CircleSlash, Settings2, Target, Filter, Wind } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MaintenanceItemProps {
@@ -172,6 +172,22 @@ export function VehicleMaintenanceCard({ vehicle, compact }: { vehicle: any; com
           lastKm={vehicle.last_tire_change_km}
           nextKm={vehicle.next_tire_change_km}
           icon={<CircleSlash className={cn(compact ? "h-3 w-3" : "h-3.5 w-3.5")} />}
+          compact={compact}
+        />
+        <MaintenanceItem
+          label="Filtro de Óleo"
+          currentKm={vehicle.odometer}
+          lastKm={vehicle.last_oil_filter_change_km}
+          nextKm={vehicle.next_oil_filter_change_km}
+          icon={<Filter className={cn(compact ? "h-3 w-3" : "h-3.5 w-3.5")} />}
+          compact={compact}
+        />
+        <MaintenanceItem
+          label="Filtro de Ar"
+          currentKm={vehicle.odometer}
+          lastKm={vehicle.last_air_filter_change_km}
+          nextKm={vehicle.next_air_filter_change_km}
+          icon={<Wind className={cn(compact ? "h-3 w-3" : "h-3.5 w-3.5")} />}
           compact={compact}
         />
         <MaintenanceItem

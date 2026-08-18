@@ -1365,6 +1365,8 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          air_filter_change_date: string | null
+          air_filter_change_notes: string | null
           alignment_date: string | null
           alignment_notes: string | null
           asset_number: string | null
@@ -1376,21 +1378,27 @@ export type Database = {
           fuel: string | null
           id: string
           is_active: boolean
+          last_air_filter_change_km: number | null
           last_alignment_km: number | null
           last_balancing_km: number | null
           last_oil_change_km: number | null
+          last_oil_filter_change_km: number | null
           last_tire_change_km: number | null
           manufacturer: string
           model: string
+          next_air_filter_change_km: number | null
           next_alignment_km: number | null
           next_balancing_km: number | null
           next_oil_change_km: number | null
+          next_oil_filter_change_km: number | null
           next_preventive_km: number | null
           next_tire_change_km: number | null
           notes: string | null
           odometer: number
           oil_change_date: string | null
           oil_change_notes: string | null
+          oil_filter_change_date: string | null
+          oil_filter_change_notes: string | null
           photo_url: string | null
           plate: string
           preventive_km_interval: number | null
@@ -1401,6 +1409,8 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          air_filter_change_date?: string | null
+          air_filter_change_notes?: string | null
           alignment_date?: string | null
           alignment_notes?: string | null
           asset_number?: string | null
@@ -1412,21 +1422,27 @@ export type Database = {
           fuel?: string | null
           id?: string
           is_active?: boolean
+          last_air_filter_change_km?: number | null
           last_alignment_km?: number | null
           last_balancing_km?: number | null
           last_oil_change_km?: number | null
+          last_oil_filter_change_km?: number | null
           last_tire_change_km?: number | null
           manufacturer: string
           model: string
+          next_air_filter_change_km?: number | null
           next_alignment_km?: number | null
           next_balancing_km?: number | null
           next_oil_change_km?: number | null
+          next_oil_filter_change_km?: number | null
           next_preventive_km?: number | null
           next_tire_change_km?: number | null
           notes?: string | null
           odometer?: number
           oil_change_date?: string | null
           oil_change_notes?: string | null
+          oil_filter_change_date?: string | null
+          oil_filter_change_notes?: string | null
           photo_url?: string | null
           plate: string
           preventive_km_interval?: number | null
@@ -1437,6 +1453,8 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          air_filter_change_date?: string | null
+          air_filter_change_notes?: string | null
           alignment_date?: string | null
           alignment_notes?: string | null
           asset_number?: string | null
@@ -1448,21 +1466,27 @@ export type Database = {
           fuel?: string | null
           id?: string
           is_active?: boolean
+          last_air_filter_change_km?: number | null
           last_alignment_km?: number | null
           last_balancing_km?: number | null
           last_oil_change_km?: number | null
+          last_oil_filter_change_km?: number | null
           last_tire_change_km?: number | null
           manufacturer?: string
           model?: string
+          next_air_filter_change_km?: number | null
           next_alignment_km?: number | null
           next_balancing_km?: number | null
           next_oil_change_km?: number | null
+          next_oil_filter_change_km?: number | null
           next_preventive_km?: number | null
           next_tire_change_km?: number | null
           notes?: string | null
           odometer?: number
           oil_change_date?: string | null
           oil_change_notes?: string | null
+          oil_filter_change_date?: string | null
+          oil_filter_change_notes?: string | null
           photo_url?: string | null
           plate?: string
           preventive_km_interval?: number | null

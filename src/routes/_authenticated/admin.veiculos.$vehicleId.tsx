@@ -94,6 +94,8 @@ function FichaVeiculo() {
           *,
           last_oil_change_km, next_oil_change_km, oil_change_date, oil_change_notes,
           last_tire_change_km, next_tire_change_km, tire_change_date, tire_change_notes,
+          last_oil_filter_change_km, next_oil_filter_change_km, oil_filter_change_date, oil_filter_change_notes,
+          last_air_filter_change_km, next_air_filter_change_km, air_filter_change_date, air_filter_change_notes,
           last_alignment_km, next_alignment_km, alignment_date, alignment_notes,
           last_balancing_km, next_balancing_km, balancing_date, balancing_notes
         `)
@@ -248,20 +250,26 @@ function FichaVeiculo() {
       if (error) throw error;
 
       // Add to history
-      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_km', '').replace('_change', '');
+      const nextChangeKey = Object.keys(payload).find(k => k.startsWith('next_') && k.endsWith('_km'));
+      const maintenanceType = nextChangeKey?.replace('next_', '').replace('_km', '').replace('_change', '');
+      
       if (maintenanceType) {
-        // Map back to correct keys if needed
-        const dbType = maintenanceType === 'oil' ? 'OIL' : 
-                      maintenanceType === 'tire' ? 'TIRE' :
-                      maintenanceType === 'alignment' ? 'ALIGNMENT' :
-                      maintenanceType === 'balancing' ? 'BALANCING' : maintenanceType.toUpperCase();
+        const dbTypeMap: Record<string, string> = {
+          oil: 'OIL',
+          tire: 'TIRE',
+          oil_filter: 'OIL_FILTER',
+          air_filter: 'AIR_FILTER',
+          alignment: 'ALIGNMENT',
+          balancing: 'BALANCING'
+        };
+        const dbType = dbTypeMap[maintenanceType] || maintenanceType.toUpperCase();
 
         await supabase.from("maintenance_history").insert({
           vehicle_id: vehicleId,
           maintenance_type: dbType,
           performed_at_km: vehicle?.odometer ?? 0,
           performed_date: todayInput(),
-          next_planned_km: payload[Object.keys(payload).find(k => k.startsWith('next_'))!],
+          next_planned_km: payload[nextChangeKey!],
           notes: payload[`${maintenanceType}_notes`] || 'Atualização manual da próxima manutenção',
         });
       }
@@ -537,6 +545,8 @@ function FichaVeiculo() {
                     {[
                       { id: 'oil', label: 'Óleo', lastKm: vehicle?.last_oil_change_km, nextKm: vehicle?.next_oil_change_km, date: vehicle?.oil_change_date, notes: vehicle?.oil_change_notes },
                       { id: 'tire', label: 'Pneus', lastKm: vehicle?.last_tire_change_km, nextKm: vehicle?.next_tire_change_km, date: vehicle?.tire_change_date, notes: vehicle?.tire_change_notes },
+                      { id: 'oil_filter', label: 'Filtro de Óleo', lastKm: vehicle?.last_oil_filter_change_km, nextKm: vehicle?.next_oil_filter_change_km, date: vehicle?.oil_filter_change_date, notes: vehicle?.oil_filter_change_notes },
+                      { id: 'air_filter', label: 'Filtro de Ar', lastKm: vehicle?.last_air_filter_change_km, nextKm: vehicle?.next_air_filter_change_km, date: vehicle?.air_filter_change_date, notes: vehicle?.air_filter_change_notes },
                       { id: 'alignment', label: 'Alinhamento', lastKm: vehicle?.last_alignment_km, nextKm: vehicle?.next_alignment_km, date: vehicle?.alignment_date, notes: vehicle?.alignment_notes },
                       { id: 'balancing', label: 'Balanceamento', lastKm: vehicle?.last_balancing_km, nextKm: vehicle?.next_balancing_km, date: vehicle?.balancing_date, notes: vehicle?.balancing_notes },
                     ].map((item) => (
