@@ -20,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
 import { occupantName, useOccupantMutations, useTripOccupants } from "@/hooks/useOccupants";
 import { cn } from "@/lib/utils";
+import { calculateTripOccupancy } from "@/lib/occupancy";
+import { useTripStops } from "@/hooks/useTripStops";
 
 export interface OccupantsListProps {
   tripId: string;
@@ -38,8 +40,9 @@ export function OccupantsList({
   className,
 }: OccupantsListProps) {
   const { user, profile, isAdmin, isSuperAdmin } = useAuth();
-  const { data: occupants = [], isLoading } = useTripOccupants(tripId);
+  const { data: occupants = [], isLoading: isLoadingOccupants } = useTripOccupants(tripId);
   const { data: people = [] } = usePeople();
+  const { data: stops = [], isLoading: isLoadingStops } = useTripStops(tripId);
   const { add, remove, decline } = useOccupantMutations(tripId);
 
   const [newUserId, setNewUserId] = useState<string | null>(null);
@@ -49,10 +52,18 @@ export function OccupantsList({
   const [externalPhone, setExternalPhone] = useState("");
   const [confirmDecline, setConfirmDecline] = useState<string | null>(null);
 
+  const isLoading = isLoadingOccupants || isLoadingStops;
+
   const canManage =
     !readOnly &&
     (isAdmin || isSuperAdmin || Boolean(profile?.is_sre_driver) || user?.id === requesterId);
   const canAddExternal = !readOnly && (isAdmin || isSuperAdmin);
+
+  const occupancy = calculateTripOccupancy(
+    stops,
+    occupants.filter(o => !o.is_external).map(o => o.user_id),
+    5
+  );
 
   const taken = new Set(occupants.map((o) => o.user_id).filter(Boolean) as string[]);
   const options = people
@@ -67,6 +78,19 @@ export function OccupantsList({
 
   return (
     <div className={cn("space-y-3", className)}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
+          Ocupação Total: {occupancy.totalPeople} de {occupancy.capacity}
+        </h3>
+        {!readOnly && occupancy.remaining > 0 && (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setExternalOpen(true)}>
+              <UserPlus className="mr-1 h-3 w-3" /> Externo
+            </Button>
+          </div>
+        )}
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando ocupantes…</p>
       ) : occupants.length === 0 ? (
@@ -100,182 +124,157 @@ export function OccupantsList({
                   )}
                   {o.status === "RECUSADO" && (
                     <Badge variant="destructive" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 uppercase">
-                      Recusou participação
+                      Recusou
                     </Badge>
                   )}
                 </div>
-                {!o.is_external && o.profile && (
-                  <div className="flex gap-1.5 mt-0.5 text-[10px] font-medium text-muted-foreground">
-                    {o.profile.sector && <span>{o.profile.sector}</span>}
-                    {o.profile.registration && (
-                      <>
-                        <span className="opacity-30">·</span>
-                        <span>{o.profile.registration}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                {o.is_external && (o.external_document || o.external_phone) && (
-                  <div className="flex gap-1.5 mt-0.5 text-[10px] font-medium text-muted-foreground">
-                    {o.external_document && <span>{o.external_document}</span>}
-                    {o.external_phone && (
-                      <>
-                        <span className="opacity-30">·</span>
-                        <span>{o.external_phone}</span>
-                      </>
-                    )}
-                  </div>
-                )}
               </span>
 
-              {canManage && !o.is_driver ? (
+              {canManage && o.status !== "RECUSADO" && (
                 <Button
-                  type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Remover ${occupantName(o)}`}
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
                   onClick={() => remove.mutate(o.id)}
                   disabled={remove.isPending}
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              ) : null}
+              )}
+
+              {!readOnly && o.user_id === user?.id && o.status === "CONFIRMADO" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[10px] font-bold text-destructive hover:bg-destructive/10"
+                  onClick={() => setConfirmDecline(o.id)}
+                >
+                  Recusar participação
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
 
-      {mine && !readOnly ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setConfirmDecline(mine.id)}
-        >
-          Não vou participar
-        </Button>
-      ) : null}
-
-      {canManage ? (
-        <div className="space-y-2 rounded-md border border-dashed border-border p-3">
-          <Label className="text-xs uppercase text-muted-foreground">Incluir ocupante</Label>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="min-w-[200px] flex-1">
-              <ComboBox
-                options={options}
-                value={newUserId}
-                onSelect={(option) => setNewUserId(option.value)}
-                placeholder="Selecionar usuário"
-                searchPlaceholder="Buscar por nome, matrícula ou setor…"
-                emptyText="Nenhum usuário disponível."
-              />
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              disabled={!newUserId || add.isPending}
-              onClick={() => {
-                if (!newUserId) return;
-                add.mutate(
-                  { tripId, userId: newUserId },
-                  { onSuccess: () => setNewUserId(null) },
-                );
-              }}
-            >
-              <UserPlus className="mr-1 h-4 w-4" /> Incluir
-            </Button>
+      {canManage && occupancy.remaining > 0 && (
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <ComboBox
+              options={options}
+              value={newUserId}
+              onSelect={(option) => setNewUserId(option.value)}
+              placeholder="Adicionar servidor…"
+              searchPlaceholder="Nome, matrícula ou setor…"
+            />
           </div>
-
-          {canAddExternal ? (
-            externalOpen ? (
-              <div className="grid gap-2 pt-2 sm:grid-cols-3">
-                <Input
-                  placeholder="Nome completo"
-                  value={externalName}
-                  onChange={(e) => setExternalName(e.target.value)}
-                />
-                <Input
-                  placeholder="Documento"
-                  value={externalDoc}
-                  onChange={(e) => setExternalDoc(e.target.value)}
-                />
-                <Input
-                  placeholder="Telefone"
-                  value={externalPhone}
-                  onChange={(e) => setExternalPhone(e.target.value)}
-                />
-                <div className="flex gap-2 sm:col-span-3">
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={externalName.trim().length < 3 || add.isPending}
-                    onClick={() =>
-                      add.mutate(
-                        {
-                          tripId,
-                          external: {
-                            name: externalName.trim(),
-                            document: externalDoc.trim() || null,
-                            phone: externalPhone.trim() || null,
-                          },
-                        },
-                        {
-                          onSuccess: () => {
-                            setExternalName("");
-                            setExternalDoc("");
-                            setExternalPhone("");
-                            setExternalOpen(false);
-                          },
-                        },
-                      )
-                    }
-                  >
-                    Adicionar externo
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setExternalOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setExternalOpen(true)}
-              >
-                + Adicionar ocupante externo
-              </Button>
-            )
-          ) : null}
+          <Button
+            size="sm"
+            onClick={() => {
+              if (newUserId) {
+                add.mutate({ tripId, userId: newUserId });
+                setNewUserId(null);
+              }
+            }}
+            disabled={!newUserId || add.isPending}
+          >
+            Adicionar
+          </Button>
         </div>
-      ) : null}
+      )}
 
-      <AlertDialog
-        open={Boolean(confirmDecline)}
-        onOpenChange={(open) => !open && setConfirmDecline(null)}
-      >
+      {/* Modal para Externo */}
+      <AlertDialog open={externalOpen} onOpenChange={setExternalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar ausência</AlertDialogTitle>
+            <AlertDialogTitle>Adicionar Ocupante Externo</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza de que não participará desta viagem?
+              Pessoas que não possuem cadastro no sistema (ex: convidados, palestrantes).
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="ext-name">Nome Completo</Label>
+              <Input
+                id="ext-name"
+                value={externalName}
+                onChange={(e) => setExternalName(e.target.value)}
+                placeholder="Nome do ocupante"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="ext-doc">Documento (CPF/RG)</Label>
+                <Input
+                  id="ext-doc"
+                  value={externalDoc}
+                  onChange={(e) => setExternalDoc(e.target.value)}
+                  placeholder="000.000.000-00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="ext-phone">Telefone</Label>
+                <Input
+                  id="ext-phone"
+                  value={externalPhone}
+                  onChange={(e) => setExternalPhone(e.target.value)}
+                  placeholder="(38) 99999-9999"
+                />
+              </div>
+            </div>
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (confirmDecline) decline.mutate(confirmDecline);
-                setConfirmDecline(null);
+                if (externalName) {
+                  add.mutate({
+                    tripId,
+                    external: {
+                      name: externalName,
+                      document: externalDoc,
+                      phone: externalPhone,
+                    }
+                  });
+                  setExternalName("");
+                  setExternalDoc("");
+                  setExternalPhone("");
+                  setExternalOpen(false);
+                }
               }}
+              disabled={!externalName || add.isPending}
             >
-              Confirmar
+              Adicionar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal para Recusar */}
+      <AlertDialog open={Boolean(confirmDecline)} onOpenChange={(o) => !o && setConfirmDecline(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Recusa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja recusar sua participação nesta viagem? Esta ação não pode ser
+              desfeita pelo próprio usuário.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDecline) {
+                  decline.mutate(confirmDecline);
+                  setConfirmDecline(null);
+                }
+              }}
+              disabled={decline.isPending}
+            >
+              Sim, Recusar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

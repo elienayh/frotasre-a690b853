@@ -16,6 +16,8 @@ import { OccupantsPicker } from "@/components/OccupantsPicker";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
+import { calculateTripOccupancy } from "@/lib/occupancy";
+import { cn } from "@/lib/utils";
 
 const schema = z
   .object({
@@ -144,6 +146,8 @@ export function TripForm({ trip }: TripFormProps) {
     return stops.filter((s) => (s.cityId || s.cityText) && (s.destinationId || s.placeText));
   }
 
+  const occupancy = calculateTripOccupancy(stops, occupantIds, 5);
+
   function selectedOccupants(count: number): string[] {
     return occupantIds.slice(0, count).filter(Boolean) as string[];
   }
@@ -166,15 +170,18 @@ export function TripForm({ trip }: TripFormProps) {
       toast.error(parsed.error.issues[0]?.message ?? "Verifique os dados informados");
       return;
     }
+    const occupancy = calculateTripOccupancy(validStops(), occupantIds, 5);
+
+    if (occupancy.isExceeded) {
+      toast.error(`A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros). Atualmente: ${occupancy.totalPeople} pessoas.`);
+      return;
+    }
+
     if (validStops().length === 0) {
       toast.error("Informe pelo menos um destino com cidade e local.");
       return;
     }
-    const driversCount = new Set(validStops().map((s) => s.driverUserId).filter(Boolean)).size || 1;
-    if (1 + parsed.data.passengers > 5) {
-      toast.error("A capacidade máxima é de 5 pessoas (1 motorista + 4 passageiros).");
-      return;
-    }
+
     if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
       toast.error("Selecione todos os passageiros da viagem.");
       return;
@@ -385,14 +392,55 @@ export function TripForm({ trip }: TripFormProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Para onde</CardTitle>
+            <CardTitle className="text-lg">Itinerário e Ocupação</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <TripStops value={stops} onChange={setStops} />
-            <p className="text-xs text-muted-foreground">
-              Cada parada tem cidade, local e motorista próprios. Selecione um motorista
-              credenciado ou deixe a DAFI definir.
-            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="passengers">Número de passageiros extras</Label>
+                <Input
+                  id="passengers"
+                  name="passengers"
+                  type="number"
+                  min={0}
+                  max={4}
+                  value={passengers}
+                  onChange={(e) => setPassengers(Math.max(0, Math.min(4, Number(e.target.value) || 0)))}
+                  required
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  O motorista já é contabilizado automaticamente.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Ocupação Total do Veículo</Label>
+                <div className={cn(
+                  "rounded-md border px-3 py-2 text-sm",
+                  occupancy.isExceeded ? "border-destructive/20 bg-destructive/5" : "border-info/20 bg-info/5"
+                )}>
+                  <div className="flex justify-between font-bold">
+                    <span>
+                      {occupancy.totalPeople} de {occupancy.capacity} pessoas
+                    </span>
+                    <span className={occupancy.isExceeded ? "text-destructive" : "text-success"}>
+                      {occupancy.isExceeded ? `${occupancy.totalPeople - occupancy.capacity} excedente(s)` : `${occupancy.remaining} vaga(s) restam`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    ({occupancy.driversCount} motorista{occupancy.driversCount > 1 ? 's' : ''} + {occupancy.passengersCount} passageiro{occupancy.passengersCount !== 1 ? 's' : ''})
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <OccupantsPicker
+              count={passengers}
+              value={occupantIds}
+              onChange={setOccupantIds}
+              exclude={occupancy.uniqueDriverIds}
+            />
           </CardContent>
         </Card>
 
@@ -416,50 +464,12 @@ export function TripForm({ trip }: TripFormProps) {
           </CardContent>
         </Card>
 
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Quem vai</CardTitle>
+            <CardTitle className="text-base">Informações Adicionais</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="passengers">Número de passageiros</Label>
-                <Input
-                  id="passengers"
-                  name="passengers"
-                  type="number"
-                  min={0}
-                  max={4}
-                  value={passengers}
-                  onChange={(e) => setPassengers(Math.max(0, Math.min(4, Number(e.target.value) || 0)))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Ocupação Total</Label>
-                <div className="rounded-md border border-info/20 bg-info/5 px-3 py-2 text-sm">
-                  <div className="flex justify-between font-bold">
-                    <span>
-                      {1 + passengers} de 5
-                    </span>
-                    <span className={1 + passengers > 5 ? "text-destructive" : "text-success"}>
-                      {5 - (1 + passengers)} vagas restam
-                    </span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Regra: 1 motorista + até 4 passageiros.
-                </p>
-              </div>
-            </div>
-
-            <OccupantsPicker
-              count={passengers}
-              value={occupantIds}
-              onChange={setOccupantIds}
-              exclude={stops.map((s) => s.driverUserId).filter(Boolean) as string[]}
-            />
-
             <div className="space-y-2">
               <Label htmlFor="requester_notes">Observações</Label>
               <Textarea
