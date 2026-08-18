@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Outlet } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,12 +17,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { getUsersEmails } from "@/integrations/supabase/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios/")({
-  component: UsuariosLayout,
+  component: UsuariosList,
 });
 
-function UsuariosLayout() {
-  return <Outlet />;
-}
 
 
 interface Profile {
