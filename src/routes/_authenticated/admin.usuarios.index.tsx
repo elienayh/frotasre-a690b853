@@ -149,7 +149,7 @@ function UsuariosList() {
           <div className="relative flex-1 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
             <Input
-              placeholder="Buscar por nome, matrícula, e-mail ou setor..."
+              placeholder="Buscar por nome, matrícula, e-mail institucional ou setor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-11 bg-background/50 border-border/40 rounded-2xl focus-visible:ring-primary/20"
@@ -181,7 +181,7 @@ function UsuariosList() {
               </PopoverTrigger>
               <PopoverContent className="w-64 p-4 rounded-2xl border-border/40" align="end">
                 <div className="space-y-4">
-                  <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground px-1">Filtrar por Status</h4>
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground px-1">Status da Conta</h4>
                   <div className="grid gap-2">
                     <div className="flex items-center space-x-2 p-2 hover:bg-accent/50 rounded-xl transition-colors">
                       <Checkbox 
