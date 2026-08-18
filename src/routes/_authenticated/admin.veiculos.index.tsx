@@ -332,7 +332,7 @@ function Veiculos() {
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {vehicles.map((v) => {
+          {filteredVehicles.map((v) => {
             const status = statusByVehicle.get(v.id);
             const block = blockByVehicle.get(v.id);
             return (
