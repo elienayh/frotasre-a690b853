@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ArrowRight, Bus, CalendarCheck, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/useAuth";
+
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
