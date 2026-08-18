@@ -305,44 +305,51 @@ function FichaVeiculo() {
 
   return (
     <AppShell
-      title={vehicle ? `${vehicle.manufacturer} ${vehicle.model}` : "Veículo"}
-      description={vehicle ? `Placa ${vehicle.plate}` : "Ficha do veículo"}
+      title={vehicle ? `${vehicle.manufacturer} ${vehicle.model}` : "Ficha do Veículo"}
+      description={vehicle ? `Identificação: ${vehicle.plate}` : "Detalhes operacionais"}
       actions={
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="ghost" size="sm" className="rounded-xl">
             <Link to="/admin/veiculos">
-              <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
           <Button
             variant="outline"
             size="sm"
+            className="rounded-xl border-border/40"
             onClick={() => {
               setNextStatus((vehicle?.base_status as FleetStatus) ?? "DISPONIVEL");
               setStatusOpen(true);
             }}
           >
-            Alterar status
+            Alterar Status
           </Button>
           {openBlock ? (
-            <Button size="sm" onClick={() => setFinishing(openBlock)}>
-              <Wrench className="mr-1 h-4 w-4" /> Finalizar manutenção
+            <Button size="sm" className="rounded-xl shadow-lg shadow-primary/20" onClick={() => setFinishing(openBlock)}>
+              <Wrench className="mr-1.5 h-4 w-4" /> Finalizar Manutenção
             </Button>
           ) : (
-            <Button size="sm" onClick={() => setMaintOpen(true)}>
-              <Wrench className="mr-1 h-4 w-4" /> Colocar em manutenção
+            <Button size="sm" className="rounded-xl shadow-lg shadow-primary/20" onClick={() => setMaintOpen(true)}>
+              <Wrench className="mr-1.5 h-4 w-4" /> Abrir Manutenção
             </Button>
           )}
         </div>
       }
     >
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <StatusBadge status={vehicle?.base_status ?? "DISPONIVEL"} kind="fleet" />
-        <span className="text-sm text-muted-foreground">
-          {vehicle?.capacity ?? "—"} lugares · {vehicle?.fuel ?? "—"} ·{" "}
-          {vehicle?.is_active ? "Ativo" : "Inativo"}
-        </span>
+      <div className="mb-8 flex flex-wrap items-center gap-4">
+        <StatusBadge status={vehicle?.base_status ?? "DISPONIVEL"} kind="fleet" className="px-4 py-1.5" />
+        <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+           <span>{vehicle?.capacity ?? "—"} lugares</span>
+           <div className="h-1 w-1 rounded-full bg-border" />
+           <span>{vehicle?.fuel ?? "—"}</span>
+           <div className="h-1 w-1 rounded-full bg-border" />
+           <span className={cn(vehicle?.is_active ? "text-success" : "text-destructive")}>
+             {vehicle?.is_active ? "Veículo Ativo" : "Veículo Inativo"}
+           </span>
+        </div>
       </div>
+
 
       <Tabs defaultValue="geral">
         <TabsList className="flex-wrap">

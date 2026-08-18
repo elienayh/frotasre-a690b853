@@ -13,8 +13,14 @@ import {
   Route as RouteIcon,
   Users,
   UserCog,
+  ChevronLeft,
+  ChevronRight,
+  Sun,
+  Moon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +51,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/destinos", label: "Locais de Destino", icon: MapPin },
 ];
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigate?: () => void }) {
   const { isAdmin, isCoordinator, profile } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -58,20 +64,26 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           to={item.to}
           onClick={onNavigate}
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
             active
-              ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-              : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+              ? "bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20"
+              : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
+            isCollapsed && "justify-center px-0"
           )}
         >
-          <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{item.label}</span>
+          <item.icon className={cn("h-5 w-5 shrink-0", active ? "text-white" : "group-hover:scale-110 transition-transform")} aria-hidden="true" />
+          {!isCollapsed && <span className="truncate">{item.label}</span>}
+          {isCollapsed && (
+             <div className="absolute left-full ml-4 hidden group-hover:block z-50 rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md border whitespace-nowrap">
+               {item.label}
+             </div>
+          )}
         </Link>
       );
     });
 
   return (
-    <nav className="flex flex-col gap-1 px-3" aria-label="Navegação principal">
+    <nav className={cn("flex flex-col gap-1.5 px-3", isCollapsed && "px-2")} aria-label="Navegação principal">
       {render(SERVER_ITEMS)}
       {isAdmin || profile?.is_sre_driver
         ? render([{ to: "/organizacao", label: "Organização do Dia", icon: CalendarRange }])
@@ -81,9 +93,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         : null}
       {isAdmin ? (
         <>
-          <p className="mt-5 px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-            DAFI
-          </p>
+          <div className={cn("mt-6 mb-2 flex items-center px-3", isCollapsed && "justify-center px-0")}>
+            <div className="h-[1px] flex-1 bg-border/50" />
+            {!isCollapsed && <span className="mx-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">DAFI</span>}
+            <div className="h-[1px] flex-1 bg-border/50" />
+          </div>
           {render(ADMIN_ITEMS)}
         </>
       ) : null}
@@ -91,19 +105,66 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function SidebarBrand() {
+function SidebarBrand({ isCollapsed }: { isCollapsed?: boolean }) {
   return (
-    <div className="flex items-center gap-3 px-6 py-5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-        <Bus className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <span>
-        <span className="block font-display text-base font-bold leading-tight text-sidebar-foreground">
-          Frota SRE
-        </span>
-        <span className="block text-xs text-sidebar-foreground/60">Gestão de viagens</span>
-      </span>
+    <div className={cn("flex items-center gap-3 px-6 py-8", isCollapsed && "px-0 justify-center")}>
+      <motion.div 
+        whileHover={{ rotate: 5, scale: 1.05 }}
+        className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30"
+      >
+        <Bus className="h-6 w-6" aria-hidden="true" />
+      </motion.div>
+      {!isCollapsed && (
+        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+          <span className="block font-display text-lg font-bold leading-none text-foreground tracking-tight">
+            Frota SRE
+          </span>
+          <span className="block text-[10px] uppercase font-bold tracking-[0.2em] text-primary/70 mt-1">
+            Minas Gerais
+          </span>
+        </motion.div>
+      )}
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="w-9 h-9" />;
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="rounded-full hover:bg-accent/80 transition-all duration-300"
+    >
+      <AnimatePresence mode="wait">
+        {theme === "dark" ? (
+          <motion.div
+            key="moon"
+            initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0.5, opacity: 0, rotate: 90 }}
+          >
+            <Moon className="h-5 w-5 text-primary" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="sun"
+            initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0.5, opacity: 0, rotate: 90 }}
+          >
+            <Sun className="h-5 w-5 text-primary" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Button>
   );
 }
 
@@ -119,6 +180,7 @@ export function AppShell({ title, description, actions, children }: AppShellProp
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -128,66 +190,133 @@ export function AppShell({ title, description, actions, children }: AppShellProp
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
-        <SidebarBrand />
-        <div className="flex-1 overflow-y-auto pb-6">
-          <NavList />
+    <div className="flex min-h-screen w-full bg-background/95 transition-colors duration-500">
+      {/* Desktop Sidebar */}
+      <aside 
+        className={cn(
+          "hidden lg:flex flex-col border-r border-border/40 bg-card/50 backdrop-blur-xl transition-all duration-300 sticky top-0 h-screen z-30",
+          isCollapsed ? "w-20" : "w-72"
+        )}
+      >
+        <SidebarBrand isCollapsed={isCollapsed} />
+        
+        <div className="flex-1 overflow-y-auto pb-6 scrollbar-hide">
+          <NavList isCollapsed={isCollapsed} />
         </div>
-        <div className="border-t border-sidebar-border p-4">
-          <p className="truncate text-sm font-medium text-sidebar-foreground">
-            {profile?.full_name || user?.email}
-          </p>
-          <p className="text-xs text-sidebar-foreground/60">
-            {isAdmin ? "Administrador da DAFI" : "Servidor"}
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="mt-3 w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <LogOut className="mr-2 h-4 w-4" aria-hidden="true" /> Sair
-          </Button>
+
+        <div className={cn("p-4 space-y-4 border-t border-border/40", isCollapsed && "items-center px-2")}>
+          {!isCollapsed && (
+            <div className="px-2">
+              <p className="truncate text-sm font-bold text-foreground">
+                {profile?.full_name || user?.email}
+              </p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                {isAdmin ? "Administrador" : "Servidor"}
+              </p>
+            </div>
+          )}
+          
+          <div className={cn("flex gap-1", isCollapsed ? "flex-col items-center" : "justify-between")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+              className="rounded-full hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-all duration-200"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="rounded-full hidden lg:flex hover:bg-accent/80 transition-all duration-200"
+            >
+              {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       </aside>
 
+      {/* Main Content Area */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur md:px-6">
+        {/* Modern Header */}
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border/40 bg-background/60 px-4 backdrop-blur-xl md:px-8">
+          {/* Mobile Menu Trigger */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="lg:hidden" aria-label="Abrir menu">
-                <Menu className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="lg:hidden rounded-full hover:bg-accent/80" aria-label="Abrir menu">
+                <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-0">
-              <SheetTitle className="sr-only">Menu</SheetTitle>
+            <SheetContent side="left" className="w-80 border-r border-border/40 bg-card p-0">
+              <SheetTitle className="sr-only">Menu principal</SheetTitle>
               <SidebarBrand />
-              <NavList onNavigate={() => setOpen(false)} />
-              <div className="mt-6 border-t border-sidebar-border p-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="w-full justify-start text-sidebar-foreground/80"
-                >
-                  <LogOut className="mr-2 h-4 w-4" /> Sair
+              <div className="flex-1 overflow-y-auto py-2">
+                <NavList onNavigate={() => setOpen(false)} />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/40 bg-card/80 backdrop-blur-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-bold text-sm">{profile?.full_name || user?.email}</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground">{isAdmin ? "Admin" : "Servidor"}</p>
+                  </div>
+                  <ThemeToggle />
+                </div>
+                <Button variant="destructive" className="w-full rounded-xl gap-2 shadow-lg shadow-destructive/20" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" /> Sair do Sistema
                 </Button>
               </div>
             </SheetContent>
           </Sheet>
 
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate font-display text-lg font-semibold text-foreground">{title}</h1>
-            {description ? (
-              <p className="truncate text-sm text-muted-foreground">{description}</p>
-            ) : null}
+          <div className="flex flex-1 items-center justify-between min-w-0">
+            <div className="min-w-0">
+              <motion.h1 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="truncate font-display text-xl font-extrabold tracking-tight text-foreground"
+              >
+                {title}
+              </motion.h1>
+              {description ? (
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.7 }}
+                  className="truncate text-xs font-medium text-muted-foreground"
+                >
+                  {description}
+                </motion.p>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-4">
+              <div className="hidden lg:block">
+                <ThemeToggle />
+              </div>
+              <div className="h-8 w-[1px] bg-border/40 hidden md:block" />
+              <NotificationsBell />
+              {actions && (
+                <div className="hidden sm:flex items-center gap-2">
+                  {actions}
+                </div>
+              )}
+            </div>
           </div>
-          <NotificationsBell />
-          {actions}
         </header>
 
-        <main className="flex-1 px-4 py-6 md:px-6">{children}</main>
+        {/* Page Content */}
+        <main className="flex-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="px-4 py-8 md:px-8 max-w-7xl mx-auto"
+          >
+            {children}
+          </motion.div>
+        </main>
       </div>
     </div>
   );

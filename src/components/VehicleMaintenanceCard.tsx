@@ -12,12 +12,12 @@ interface MaintenanceItemProps {
 function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemProps) {
   if (!nextKm) {
     return (
-      <div className="space-y-1.5 opacity-60">
-        <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="space-y-3 opacity-40 grayscale">
+        <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
           <span>{label}</span>
-          <span>Não configurado</span>
+          <span>NÃO CONFIGURADO</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-muted" />
+        <div className="h-3 w-full rounded-full bg-muted/20" />
       </div>
     );
   }
@@ -52,7 +52,7 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
     normal: "text-success",
     warning: "text-warning",
     urgent: "text-destructive",
-    expired: "text-destructive font-bold",
+    expired: "text-destructive font-black",
   };
 
   const icons = {
@@ -63,23 +63,30 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm }: MaintenanceItemPr
   };
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-xs font-medium uppercase tracking-wider">
-        <span className="text-muted-foreground">{label}</span>
-        <div className={cn("flex items-center gap-1", textColors[status])}>
+    <div className="space-y-3 group/item">
+      <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em]">
+        <span className="text-muted-foreground/60 group-hover/item:text-primary transition-colors">{label}</span>
+        <div className={cn("flex items-center gap-1.5 transition-transform group-hover/item:scale-105", textColors[status])}>
           {icons[status]}
           <span>
             {currentKm >= nextKm 
-              ? `VENCIDA (${(currentKm - nextKm).toLocaleString()} km acima)` 
-              : `${remaining.toLocaleString()} km resta(m)`}
+              ? `VENCIDA (${(currentKm - nextKm).toLocaleString()} KM ACIMA)` 
+              : `${remaining.toLocaleString()} KM RESTA(M)`}
           </span>
         </div>
       </div>
-      <div className="relative">
-        <Progress value={progress} className="h-2" indicatorClassName={statusColors[status]} />
+      <div className="relative group/bar">
+        <Progress 
+          value={progress} 
+          className="h-3 rounded-full bg-muted/30 overflow-hidden" 
+          indicatorClassName={cn(
+            "transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,0,0,0.1)]",
+            statusColors[status]
+          )} 
+        />
         {!hasHistory && (
-          <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold uppercase tracking-tighter text-muted-foreground/50">
-            Sem histórico anterior
+          <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/30 pointer-events-none">
+            SEM HISTÓRICO
           </span>
         )}
       </div>
@@ -91,14 +98,19 @@ export function VehicleMaintenanceCard({ vehicle }: { vehicle: any }) {
   if (!vehicle) return null;
   
   return (
-    <div className="space-y-4 rounded-md border border-border/50 bg-muted/30 p-4">
-      <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-        <Wrench className="h-4 w-4 text-muted-foreground" />
-        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          Manutenção Preventiva
-        </h4>
+    <div className="space-y-6 rounded-[2rem] border border-border/40 bg-card/40 p-6 backdrop-blur-md shadow-sm transition-all hover:shadow-xl hover:border-primary/20">
+      <div className="flex items-center gap-3 border-b border-border/40 pb-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Wrench className="h-4 w-4" />
+        </div>
+        <div>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+            Manutenção Preventiva
+          </h4>
+          <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest">Acompanhamento por Odômetro</p>
+        </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2">
         <MaintenanceItem
           label="Troca de Óleo"
           currentKm={vehicle.odometer}

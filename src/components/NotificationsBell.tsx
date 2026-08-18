@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -86,16 +88,21 @@ export function NotificationsBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="relative" aria-label="Notificações">
-          <Bell className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-accent/80 transition-all duration-300" aria-label="Notificações">
+          <Bell className="h-5 w-5 text-muted-foreground" />
           {unread > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
+            <motion.span 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-extrabold text-destructive-foreground ring-2 ring-background shadow-lg shadow-destructive/20"
+            >
               {unread}
-            </span>
+            </motion.span>
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0">
+
+      <PopoverContent align="end" className="w-96 p-0 overflow-hidden rounded-2xl border-border/40 shadow-2xl backdrop-blur-2xl">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <p className="text-sm font-semibold">
             Notificações {unread > 0 ? `(${unread} novas)` : ""}
