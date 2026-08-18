@@ -385,19 +385,6 @@ function AdminSolicitacoes() {
                           "{trip.purpose || "Sem motivo informado"}"
                         </p>
                         <div className="flex gap-2">
-                          {trip.status === "PENDENTE" && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDecision({ trip, kind: "REJEITADA" });
-                              }}
-                            >
-                              <XCircle className="mr-1 h-3 w-3" /> Rejeitar
-                            </Button>
-                          )}
                           <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
                             Analisar
                           </Button>
