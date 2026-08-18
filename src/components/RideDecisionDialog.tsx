@@ -44,7 +44,7 @@ export function RideDecisionDialog({ ride, onClose }: RideDecisionDialogProps) {
     },
     onSuccess: () => {
       toast.success("Solicitação de carona atualizada.");
-      void queryClient.invalidateQueries({ queryKey: ["admin-ride-requests"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-ride-requests-all"] });
       void queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
       onClose();
     },
