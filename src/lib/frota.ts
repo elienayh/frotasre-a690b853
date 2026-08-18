@@ -58,12 +58,14 @@ export const FLEET_STATUS_LABEL: Record<string, string> = {
 /** Mapeamento de status de viagem para labels amigáveis. */
 export const TRIP_STATUS_LABEL: Record<string, string> = {
   PENDENTE: "Pendente",
+  CORRECAO: "Ajuste",
   APROVADA: "Aprovada",
   PROGRAMADA: "Programada",
   EM_ANDAMENTO: "Em andamento",
   CONCLUIDA: "Concluída",
   CANCELADA: "Cancelada",
   REJEITADA: "Rejeitada",
+
 };
 
 /** Estilo de cor para o status. */
@@ -71,7 +73,8 @@ export function statusTone(status: string): string {
   const s = String(status).toUpperCase();
   if (["APROVADA", "PROGRAMADA", "DISPONIVEL", "CONCLUIDA", "ATENDIDA"].includes(s))
     return "border-success/30 bg-success/10 text-success";
-  if (["PENDENTE", "RESERVADO", "EM_ANDAMENTO", "ATRASADA", "PARCIAL"].includes(s))
+  if (["PENDENTE", "CORRECAO", "RESERVADO", "EM_ANDAMENTO", "ATRASADA", "PARCIAL"].includes(s))
+
     return "border-warning/30 bg-warning/10 text-warning";
   if (["REJEITADA", "CANCELADA", "INDISPONIVEL", "INATIVO", "EM_MANUTENCAO", "INCIDENTE"].includes(s))
     return "border-destructive/30 bg-destructive/10 text-destructive";
