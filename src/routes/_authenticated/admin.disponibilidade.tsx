@@ -44,75 +44,83 @@ function Disponibilidade() {
       title="Disponibilidade da Frota"
       description="Consulte a disponibilidade por período e a agenda operacional da frota."
     >
-      <Tabs defaultValue="disponibilidade">
-        <TabsList>
-          <TabsTrigger value="disponibilidade">Disponibilidade</TabsTrigger>
-          <TabsTrigger value="agenda">Agenda da Frota</TabsTrigger>
-        </TabsList>
-        <TabsContent value="disponibilidade" className="mt-4">
-      <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-4">
-        <div className="space-y-2">
-          <Label htmlFor="d-date">Data</Label>
-          <Input id="d-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="d-start">Saída</Label>
-          <Input id="d-start" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="d-end">Retorno</Label>
-          <Input id="d-end" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="d-pax">Ocupantes</Label>
-          <Input
-            id="d-pax"
-            type="number"
-            min={1}
-            max={60}
-            value={passengers}
-            onChange={(e) => setPassengers(Number(e.target.value) || 1)}
-          />
+      <div className="space-y-12">
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-bold tracking-tight">DISPONIBILIDADE</h2>
+          </div>
+          
+          <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-4">
+            <div className="space-y-2">
+              <Label htmlFor="d-date">Data</Label>
+              <Input id="d-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="d-start">Saída</Label>
+              <Input id="d-start" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="d-end">Retorno</Label>
+              <Input id="d-end" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="d-pax">Ocupantes</Label>
+              <Input
+                id="d-pax"
+                type="number"
+                min={1}
+                max={60}
+                value={passengers}
+                onChange={(e) => setPassengers(Number(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+
+          {!validRange ? (
+            <p className="text-sm text-destructive">O retorno deve ser posterior à saída.</p>
+          ) : isLoading ? (
+            <p className="text-sm text-muted-foreground">Calculando…</p>
+          ) : (
+            <ul className="grid gap-3 md:grid-cols-2">
+              {data.map((v) => (
+                <li
+                  key={v.vehicle_id}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-4"
+                >
+                  <div>
+                    <p className="font-display font-semibold">
+                      {v.manufacturer} {v.model}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {v.plate} · {v.capacity} lugares{v.fuel ? ` · ${v.fuel}` : ""}
+                    </p>
+                    {v.detail ? <p className="mt-1 text-sm">{v.detail}</p> : null}
+                    {v.conflict_start ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Conflito: {fmtDateTime(v.conflict_start)} – {fmtDateTime(v.conflict_end)}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Badge variant={v.is_available ? "default" : "destructive"}>
+                    {v.is_available ? "Disponível" : v.reason}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <div className="border-t border-border pt-8">
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl font-bold tracking-tight">AGENDA DA FROTA</h2>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-1">
+              <FleetTimeline />
+            </div>
+          </section>
         </div>
       </div>
-
-      {!validRange ? (
-        <p className="mt-6 text-sm text-destructive">O retorno deve ser posterior à saída.</p>
-      ) : isLoading ? (
-        <p className="mt-6 text-sm text-muted-foreground">Calculando…</p>
-      ) : (
-        <ul className="mt-6 grid gap-3 md:grid-cols-2">
-          {data.map((v) => (
-            <li
-              key={v.vehicle_id}
-              className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-4"
-            >
-              <div>
-                <p className="font-display font-semibold">
-                  {v.manufacturer} {v.model}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {v.plate} · {v.capacity} lugares{v.fuel ? ` · ${v.fuel}` : ""}
-                </p>
-                {v.detail ? <p className="mt-1 text-sm">{v.detail}</p> : null}
-                {v.conflict_start ? (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Conflito: {fmtDateTime(v.conflict_start)} – {fmtDateTime(v.conflict_end)}
-                  </p>
-                ) : null}
-              </div>
-              <Badge variant={v.is_available ? "default" : "destructive"}>
-                {v.is_available ? "Disponível" : v.reason}
-              </Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-        </TabsContent>
-        <TabsContent value="agenda" className="mt-4">
-          <FleetTimeline />
-        </TabsContent>
-      </Tabs>
     </AppShell>
   );
 }
