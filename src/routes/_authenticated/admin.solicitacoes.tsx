@@ -453,7 +453,14 @@ function AdminSolicitacoes() {
 
       </div>
 
-      <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
+      <AllocateDialog 
+        trip={allocating} 
+        onClose={() => setAllocating(null)} 
+        onReject={(trip) => {
+          setDecision({ trip, kind: "REJEITADA" });
+          setAllocating(null);
+        }}
+      />
       
       <RideDecisionDialog ride={rideToDecide} onClose={() => setRideToDecide(null)} />
 
