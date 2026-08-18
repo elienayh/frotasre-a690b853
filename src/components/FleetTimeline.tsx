@@ -1,8 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Wrench } from "lucide-react";
 
-import { AppShell } from "@/components/AppShell";
 import { TripDrawer } from "@/components/TripDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +11,6 @@ import { useVehicles } from "@/hooks/useFleet";
 import { sectorColor } from "@/lib/setores";
 import { fmtDate, fmtTime, todayInput } from "@/lib/frota";
 import { cn } from "@/lib/utils";
-
-export const Route = createFileRoute("/_authenticated/admin/agenda")({
-  component: AgendaFrota,
-});
 
 const START_HOUR = 6;
 const END_HOUR = 20;
@@ -29,7 +23,8 @@ function minutesFromStart(iso: string, day: Date): number {
   return (d.getTime() - base.getTime()) / 60000;
 }
 
-function AgendaFrota() {
+/** Agenda operacional: ocupação de cada veículo ao longo do dia. */
+export function FleetTimeline() {
   const [day, setDay] = useState(todayInput());
   const [tripId, setTripId] = useState<string | null>(null);
 
@@ -53,10 +48,11 @@ function AgendaFrota() {
   const unassigned = trips.filter((t) => !t.vehicle_id);
 
   return (
-    <AppShell
-      title="Agenda da Frota"
-      description="Ocupação de cada veículo ao longo do dia."
-      actions={
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Ocupação de cada veículo ao longo do dia, com viagens, horários livres e manutenções.
+        </p>
         <div className="flex items-center gap-1">
           <Button variant="outline" size="icon" aria-label="Dia anterior" onClick={() => shift(-1)}>
             <ChevronLeft className="h-4 w-4" />
@@ -68,8 +64,7 @@ function AgendaFrota() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-      }
-    >
+      </div>
       <div className="mb-4 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
         <div className="space-y-2">
           <Label htmlFor="ag-day">Data</Label>
@@ -196,6 +191,6 @@ function AgendaFrota() {
       ) : null}
 
       <TripDrawer tripId={tripId} onClose={() => setTripId(null)} />
-    </AppShell>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AllocateDialog } from "@/components/AllocateDialog";
+import { RideRequestsPanel } from "@/components/RideRequestsPanel";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -83,55 +85,81 @@ function AdminSolicitacoes() {
     ) : (
       <ul className="grid gap-4">
         {list.map((t) => (
-          <li key={t.id} className="rounded-lg border border-border bg-card p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="font-display text-base font-semibold">
-                  #{t.code} · {t.destination_text}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {fmtDate(t.departure_at)} · {fmtTime(t.departure_at)} — {fmtTime(t.return_at)} ·{" "}
-                  {t.passengers} ocupante(s)
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Solicitante: {t.requester_name ?? "—"}
-                </p>
+          <li key={t.id}>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setAllocating(t)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setAllocating(t);
+                }
+              }}
+              className="w-full cursor-pointer rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-primary hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-display text-base font-semibold">
+                    #{t.code} · {t.destination_text}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Ida {fmtDate(t.departure_at)} às {fmtTime(t.departure_at)} · Retorno{" "}
+                    {fmtDate(t.return_at)} às {fmtTime(t.return_at)} · {t.passengers} ocupante(s)
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Solicitante: {t.requester_name ?? "—"}
+                  </p>
+                </div>
+                <StatusBadge status={t.status} />
               </div>
-              <StatusBadge status={t.status} />
-            </div>
-            <p className="mt-3 text-sm">{t.purpose}</p>
-            {t.requester_notes ? (
-              <p className="mt-1 text-sm text-muted-foreground">Obs.: {t.requester_notes}</p>
-            ) : null}
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => setAllocating(t)}>
-                {allowActions ? "Definir transporte" : "Reajustar transporte"}
-              </Button>
-              {allowActions ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setDecision({ trip: t, kind: "CORRECAO" })}
-                  >
-                    Solicitar correção
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive"
-                    onClick={() => setDecision({ trip: t, kind: "REJEITADA" })}
-                  >
-                    Recusar
-                  </Button>
-                </>
+              <p className="mt-3 text-sm">{t.purpose}</p>
+              {t.requester_notes ? (
+                <p className="mt-1 text-sm text-muted-foreground">Obs.: {t.requester_notes}</p>
               ) : null}
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAllocating(t);
+                  }}
+                >
+                  {allowActions ? "Definir transporte" : "Reajustar transporte"}
+                </Button>
+                {allowActions ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDecision({ trip: t, kind: "CORRECAO" });
+                      }}
+                    >
+                      Solicitar correção
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDecision({ trip: t, kind: "REJEITADA" });
+                      }}
+                    >
+                      Recusar
+                    </Button>
+                  </>
+                ) : null}
+              </div>
             </div>
           </li>
         ))}
       </ul>
     );
+
 
   return (
     <AppShell
@@ -146,6 +174,7 @@ function AdminSolicitacoes() {
             <TabsTrigger value="pendentes">Pendentes ({pending.length})</TabsTrigger>
             <TabsTrigger value="programadas">Programadas ({scheduled.length})</TabsTrigger>
             <TabsTrigger value="encerradas">Encerradas ({closed.length})</TabsTrigger>
+            <TabsTrigger value="caronas">Solicitações de Carona</TabsTrigger>
           </TabsList>
           <TabsContent value="pendentes" className="mt-4">
             {renderList(pending, true)}
@@ -156,8 +185,12 @@ function AdminSolicitacoes() {
           <TabsContent value="encerradas" className="mt-4">
             {renderList(closed, false)}
           </TabsContent>
+          <TabsContent value="caronas" className="mt-4">
+            <RideRequestsPanel />
+          </TabsContent>
         </Tabs>
       )}
+
 
       <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
 

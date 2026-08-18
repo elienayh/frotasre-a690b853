@@ -49,7 +49,7 @@ function Index() {
 
   useEffect(() => {
     if (!loading && session) {
-      void navigate({ to: "/painel", replace: true });
+      void navigate({ to: "/agenda-publica", replace: true });
     }
   }, [loading, session, navigate]);
 
