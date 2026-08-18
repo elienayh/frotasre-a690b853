@@ -258,9 +258,17 @@ function UsuariosList() {
         {/* List Content */}
         <div className="grid gap-2">
           {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-[72px] w-full rounded-2xl" />
-            ))
+            <div className="space-y-4 py-10">
+              <div className="flex items-center justify-center gap-3 text-muted-foreground animate-pulse">
+                <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                <span className="text-sm font-medium tracking-wide uppercase">Carregando usuários...</span>
+              </div>
+              <div className="grid gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[72px] w-full rounded-2xl" />
+                ))}
+              </div>
+            </div>
           ) : filteredProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center bg-card/20 rounded-[2rem] border border-dashed border-border/60">
               <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
@@ -268,26 +276,30 @@ function UsuariosList() {
               </div>
               <h3 className="font-display text-lg font-bold text-foreground">Nenhum usuário encontrado</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-[250px]">
-                Não encontramos resultados para "{searchTerm}" com os filtros aplicados.
+                {searchTerm || activeFilterCount > 0 
+                  ? `Não encontramos resultados para "${searchTerm}" com os filtros aplicados.`
+                  : "Não há usuários cadastrados no sistema."}
               </p>
-              <Button 
-                variant="outline" 
-                className="mt-6 rounded-xl"
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilters({
-                    admin: false,
-                    superAdmin: false,
-                    coordinator: false,
-                    driver: false,
-                    certified: false,
-                    active: true,
-                    inactive: false,
-                  });
-                }}
-              >
-                Limpar busca e filtros
-              </Button>
+              {(searchTerm || activeFilterCount > 0) && (
+                <Button 
+                  variant="outline" 
+                  className="mt-6 rounded-xl"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilters({
+                      admin: false,
+                      superAdmin: false,
+                      coordinator: false,
+                      driver: false,
+                      certified: false,
+                      active: true,
+                      inactive: false,
+                    });
+                  }}
+                >
+                  Limpar busca e filtros
+                </Button>
+              )}
             </div>
           ) : (
             filteredProfiles.map((p) => (
