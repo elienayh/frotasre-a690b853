@@ -62,7 +62,7 @@ export function TripForm({ trip }: TripFormProps) {
       const { data, error } = await supabase
         .from("trip_stops")
         .select("city_id, city_text, destination_id, place_text, position, driver_user_id")
-        .eq("trip_id", trip!.id)
+        .eq("trip_id", trip!.id || "")
         .order("position");
       if (error) throw error;
       return data ?? [];
@@ -77,7 +77,7 @@ export function TripForm({ trip }: TripFormProps) {
       const { data, error } = await supabase
         .from("trip_occupants")
         .select("id, user_id, is_external")
-        .eq("trip_id", trip!.id)
+        .eq("trip_id", trip!.id || "")
         .order("created_at");
       if (error) throw error;
       return data ?? [];
@@ -115,8 +115,8 @@ export function TripForm({ trip }: TripFormProps) {
     }
   }, [savedStops, trip]);
 
-  const initialDate = trip ? new Date(trip.departure_at) : null;
-  const initialReturn = trip ? new Date(trip.return_at) : null;
+  const initialDate = trip ? new Date(trip.departure_at || "") : null;
+  const initialReturn = trip ? new Date(trip.return_at || "") : null;
   const pad = (n: number) => String(n).padStart(2, "0");
   const asDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const defaults = {
@@ -206,7 +206,7 @@ export function TripForm({ trip }: TripFormProps) {
     try {
       let tripId = trip?.id ?? null;
       if (trip) {
-        const { error } = await supabase.from("trip_requests").update(payload).eq("id", trip.id);
+        const { error } = await supabase.from("trip_requests").update(payload).eq("id", trip.id || "");
         if (error) throw new Error(error.message);
       } else {
         const { data, error } = await supabase

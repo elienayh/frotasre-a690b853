@@ -58,8 +58,8 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
     if (!trip) return;
     setVehicleId(trip.vehicle_id ?? "");
     setDriverUserId(trip.assigned_driver_user_id ?? trip.requested_driver_id ?? null);
-    const dep = new Date(trip.departure_at);
-    const back = new Date(trip.return_at);
+    const dep = new Date(trip.departure_at || "");
+    const back = new Date(trip.return_at || "");
     setDate(asDate(dep));
     setReturnDate(asDate(back));
     setStart(asTime(dep));
@@ -86,7 +86,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
       const { data, error } = await supabase.rpc("fleet_availability", {
         p_start: startIso,
         p_end: endIso,
-        p_passengers: trip!.passengers,
+        p_passengers: trip!.passengers || 0,
       });
       if (error) throw error;
       return data;
@@ -143,7 +143,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
           rejection_reason: null,
           status: "APROVADA",
         })
-        .eq("id", trip!.id);
+        .eq("id", trip!.id || "");
       if (error) throw new Error(friendlyDbError(error.message));
     },
     onSuccess: () => {
@@ -171,7 +171,7 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
             <h3 className="mb-2 font-display text-sm font-semibold">Ficha da solicitação</h3>
             <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
               <Field label="Solicitante" value={trip.requester_name ?? "—"} />
-              <Field label="Situação" value={TRIP_STATUS_LABEL[trip.status] ?? trip.status} />
+              <Field label="Situação" value={TRIP_STATUS_LABEL[trip.status || "PENDENTE"] ?? trip.status} />
               <Field label="Data da viagem" value={fmtDate(trip.departure_at)} />
               <Field label="Data de retorno" value={fmtDate(trip.return_at)} />
               <Field
@@ -202,14 +202,14 @@ export function AllocateDialog({ trip, onClose }: AllocateDialogProps) {
         {trip ? (
           <div className="space-y-2">
             <Label>Destinos e motorista de cada trecho</Label>
-            <StopDriverEditor tripId={trip.id} onlySreDrivers={Boolean(trip.needs_sre_driver)} />
+            <StopDriverEditor tripId={trip.id || ""} onlySreDrivers={Boolean(trip.needs_sre_driver)} />
           </div>
         ) : null}
 
         {trip ? (
           <div className="space-y-2">
             <Label>Ocupantes</Label>
-            <OccupantsList tripId={trip.id} requesterId={trip.requester_id} />
+            <OccupantsList tripId={trip.id || ""} requesterId={trip.requester_id || ""} />
           </div>
         ) : null}
 
