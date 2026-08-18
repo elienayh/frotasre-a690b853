@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Wrench, Droplets, CircleSlash, Settings2, Target } from "lucide-react";
+import { Wrench, Droplets, CircleSlash, Settings2, Target, Filter, Wind } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MaintenanceItemProps {
@@ -38,10 +38,10 @@ function MaintenanceItem({ label, currentKm, lastKm, nextKm, icon, compact }: Ma
 
   const totalInterval = nextKm && lastKm ? Math.max(1, nextKm - lastKm) : 0;
   const elapsed = nextKm && lastKm ? currentKm - lastKm : 0;
-  const hasHistory = lastKm !== null;
+  const hasHistory = lastKm !== null && lastKm > 0;
   
-  // Progress is only real if we have a starting point (lastKm)
-  // Otherwise, we just show a neutral bar or no progress
+  // Progress calculation
+  // Normal: 0-70% | Warning: 70-90% | Urgent: 90-100% | Expired: >100%
   const progress = hasHistory && totalInterval > 0
     ? Math.min(Math.max((elapsed / totalInterval) * 100, 0), 100)
     : 0;
@@ -172,6 +172,22 @@ export function VehicleMaintenanceCard({ vehicle, compact }: { vehicle: any; com
           lastKm={vehicle.last_tire_change_km}
           nextKm={vehicle.next_tire_change_km}
           icon={<CircleSlash className={cn(compact ? "h-3 w-3" : "h-3.5 w-3.5")} />}
+          compact={compact}
+        />
+        <MaintenanceItem
+          label="Filtro de Óleo"
+          currentKm={vehicle.odometer}
+          lastKm={vehicle.last_oil_filter_change_km}
+          nextKm={vehicle.next_oil_filter_change_km}
+          icon={<Filter className={cn(compact ? "h-3 w-3" : "h-3.5 w-3.5")} />}
+          compact={compact}
+        />
+        <MaintenanceItem
+          label="Filtro de Ar"
+          currentKm={vehicle.odometer}
+          lastKm={vehicle.last_air_filter_change_km}
+          nextKm={vehicle.next_air_filter_change_km}
+          icon={<Wind className={cn(compact ? "h-3 w-3" : "h-3.5 w-3.5")} />}
           compact={compact}
         />
         <MaintenanceItem

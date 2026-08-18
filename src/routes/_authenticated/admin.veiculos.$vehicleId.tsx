@@ -9,7 +9,9 @@ import {
   AlertTriangle, 
   TriangleAlert,
   Calendar,
-  Plus
+  Plus,
+  Filter,
+  Wind
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from "@/integrations/supabase/client"
@@ -79,6 +81,8 @@ function FichaVeiculo() {
   const queryClient = useQueryClient();
 
   const [maintOpen, setMaintOpen] = useState(false);
+  const [preventiveOpen, setPreventiveOpen] = useState(false);
+  const [selectedMaintType, setSelectedMaintType] = useState<string>('OIL');
   const [finishing, setFinishing] = useState<BlockRow | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
   const [nextStatus, setNextStatus] = useState<FleetStatus>("DISPONIVEL");
@@ -94,6 +98,8 @@ function FichaVeiculo() {
           *,
           last_oil_change_km, next_oil_change_km, oil_change_date, oil_change_notes,
           last_tire_change_km, next_tire_change_km, tire_change_date, tire_change_notes,
+          last_oil_filter_change_km, next_oil_filter_change_km, oil_filter_change_date, oil_filter_change_notes,
+          last_air_filter_change_km, next_air_filter_change_km, air_filter_change_date, air_filter_change_notes,
           last_alignment_km, next_alignment_km, alignment_date, alignment_notes,
           last_balancing_km, next_balancing_km, balancing_date, balancing_notes
         `)
@@ -248,20 +254,26 @@ function FichaVeiculo() {
       if (error) throw error;
 
       // Add to history
-      const maintenanceType = Object.keys(payload).find(k => k.startsWith('next_'))?.replace('next_', '').replace('_km', '').replace('_change', '');
+      const nextChangeKey = Object.keys(payload).find(k => k.startsWith('next_') && k.endsWith('_km'));
+      const maintenanceType = nextChangeKey?.replace('next_', '').replace('_km', '').replace('_change', '');
+      
       if (maintenanceType) {
-        // Map back to correct keys if needed
-        const dbType = maintenanceType === 'oil' ? 'OIL' : 
-                      maintenanceType === 'tire' ? 'TIRE' :
-                      maintenanceType === 'alignment' ? 'ALIGNMENT' :
-                      maintenanceType === 'balancing' ? 'BALANCING' : maintenanceType.toUpperCase();
+        const dbTypeMap: Record<string, string> = {
+          oil: 'OIL',
+          tire: 'TIRE',
+          oil_filter: 'OIL_FILTER',
+          air_filter: 'AIR_FILTER',
+          alignment: 'ALIGNMENT',
+          balancing: 'BALANCING'
+        };
+        const dbType = dbTypeMap[maintenanceType] || maintenanceType.toUpperCase();
 
         await supabase.from("maintenance_history").insert({
           vehicle_id: vehicleId,
           maintenance_type: dbType,
           performed_at_km: vehicle?.odometer ?? 0,
           performed_date: todayInput(),
-          next_planned_km: payload[Object.keys(payload).find(k => k.startsWith('next_'))!],
+          next_planned_km: payload[nextChangeKey!],
           notes: payload[`${maintenanceType}_notes`] || 'Atualização manual da próxima manutenção',
         });
       }
@@ -273,8 +285,52 @@ function FichaVeiculo() {
     onError: (e: Error) => toast.error(friendlyDbError(e.message)),
   });
 
-  const changeStatus = useMutation({
+  const registerMaintenance = useMutation({
+    mutationFn: async (form: FormData) => {
+      const type = String(form.get("type"));
+      const performedKm = Number(form.get("performed_km"));
+      const performedDate = String(form.get("performed_date"));
+      const nextKm = Number(form.get("next_km"));
+      const notes = String(form.get("notes") || "");
 
+      if (nextKm <= performedKm) {
+        throw new Error("A próxima manutenção deve ser maior que a KM da realização.");
+      }
+
+      const { error: histError } = await supabase.from("maintenance_history").insert({
+        vehicle_id: vehicleId,
+        maintenance_type: type,
+        performed_at_km: performedKm,
+        performed_date: performedDate,
+        next_planned_km: nextKm,
+        notes: notes
+      });
+      if (histError) throw histError;
+
+      const typeMap: Record<string, any> = {
+        OIL: { last_oil_change_km: performedKm, next_oil_change_km: nextKm, oil_change_date: performedDate, oil_change_notes: notes },
+        TIRE: { last_tire_change_km: performedKm, next_tire_change_km: nextKm, tire_change_date: performedDate, tire_change_notes: notes },
+        OIL_FILTER: { last_oil_filter_change_km: performedKm, next_oil_filter_change_km: nextKm, oil_filter_change_date: performedDate, oil_filter_change_notes: notes },
+        AIR_FILTER: { last_air_filter_change_km: performedKm, next_air_filter_change_km: nextKm, air_filter_change_date: performedDate, air_filter_change_notes: notes },
+        ALIGNMENT: { last_alignment_km: performedKm, next_alignment_km: nextKm, alignment_date: performedDate, alignment_notes: notes },
+        BALANCING: { last_balancing_km: performedKm, next_balancing_km: nextKm, balancing_date: performedDate, balancing_notes: notes },
+      };
+
+      const { error: vehError } = await supabase
+        .from("vehicles")
+        .update(typeMap[type] || {})
+        .eq("id", vehicleId);
+      if (vehError) throw vehError;
+    },
+    onSuccess: () => {
+      toast.success("Manutenção registrada com sucesso!");
+      setPreventiveOpen(false);
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const changeStatus = useMutation({
     mutationFn: async (status: FleetStatus) => {
       const { error } = await supabase
         .from("vehicles")
@@ -537,6 +593,8 @@ function FichaVeiculo() {
                     {[
                       { id: 'oil', label: 'Óleo', lastKm: vehicle?.last_oil_change_km, nextKm: vehicle?.next_oil_change_km, date: vehicle?.oil_change_date, notes: vehicle?.oil_change_notes },
                       { id: 'tire', label: 'Pneus', lastKm: vehicle?.last_tire_change_km, nextKm: vehicle?.next_tire_change_km, date: vehicle?.tire_change_date, notes: vehicle?.tire_change_notes },
+                      { id: 'oil_filter', label: 'Filtro de Óleo', lastKm: vehicle?.last_oil_filter_change_km, nextKm: vehicle?.next_oil_filter_change_km, date: vehicle?.oil_filter_change_date, notes: vehicle?.oil_filter_change_notes },
+                      { id: 'air_filter', label: 'Filtro de Ar', lastKm: vehicle?.last_air_filter_change_km, nextKm: vehicle?.next_air_filter_change_km, date: vehicle?.air_filter_change_date, notes: vehicle?.air_filter_change_notes },
                       { id: 'alignment', label: 'Alinhamento', lastKm: vehicle?.last_alignment_km, nextKm: vehicle?.next_alignment_km, date: vehicle?.alignment_date, notes: vehicle?.alignment_notes },
                       { id: 'balancing', label: 'Balanceamento', lastKm: vehicle?.last_balancing_km, nextKm: vehicle?.next_balancing_km, date: vehicle?.balancing_date, notes: vehicle?.balancing_notes },
                     ].map((item) => (
@@ -552,14 +610,34 @@ function FichaVeiculo() {
                             <span>Última: <strong>{fmtKm(item.lastKm)}</strong></span>
                             <span>Data: <strong>{fmtDate(item.date)}</strong></span>
                           </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            <span>Próxima: <strong>{fmtKm(item.nextKm)}</strong></span>
+                            {item.nextKm && item.lastKm && (
+                              <span>Intervalo: <strong>{fmtKm(item.nextKm - item.lastKm)}</strong></span>
+                            )}
+                          </div>
                         </div>
                         
-                        <div className="flex flex-col gap-2 min-w-[200px]">
-                           <Label htmlFor={`next-${item.id}`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                             Próxima Troca (KM)
-                           </Label>
-                           <div className="flex gap-2">
-                             <Input 
+                        <div className="flex gap-2 self-end sm:self-auto">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="rounded-xl border-border/40"
+                            onClick={() => {
+                              setSelectedMaintType(
+                                item.id === 'oil' ? 'OIL' :
+                                item.id === 'tire' ? 'TIRE' :
+                                item.id === 'oil_filter' ? 'OIL_FILTER' :
+                                item.id === 'air_filter' ? 'AIR_FILTER' :
+                                item.id === 'alignment' ? 'ALIGNMENT' : 'BALANCING'
+                              );
+                              setPreventiveOpen(true);
+                            }}
+                          >
+                            <Plus className="mr-1 h-3 w-3" /> Registrar Realizada
+                          </Button>
+                          <div className="flex flex-col gap-1 min-w-[120px]">
+                            <Input 
                                 id={`next-${item.id}`}
                                 type="number"
                                 className="h-9 font-mono font-bold"
@@ -567,15 +645,17 @@ function FichaVeiculo() {
                                 onBlur={(e) => {
                                   const val = Number(e.target.value);
                                   if (val !== item.nextKm) {
-                                    const key = item.id === 'oil' || item.id === 'tire' ? `next_${item.id}_change_km` : `next_${item.id}_km`;
+                                    const key = 
+                                      item.id === 'oil' || item.id === 'tire' || 
+                                      item.id === 'oil_filter' || item.id === 'air_filter' 
+                                        ? `next_${item.id}_change_km` 
+                                        : `next_${item.id}_km`;
                                     updateMaintenance.mutate({ [key]: val });
                                   }
                                 }}
-                             />
-                             <Button size="sm" variant="secondary" className="h-9 px-3">
-                               Salvar
-                             </Button>
-                           </div>
+                            />
+                            <span className="text-[8px] font-bold uppercase text-center text-muted-foreground">Limiar Próxima (KM)</span>
+                          </div>
                         </div>
                       </div>
 
@@ -593,13 +673,13 @@ function FichaVeiculo() {
                               : `${((item.nextKm ?? 0) - (vehicle?.odometer ?? 0)).toLocaleString()} km restantes`}
                           </span>
                         </div>
-                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted/40 border border-border/10">
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted/40 border border-border/10 relative">
                           <div 
                             className={cn(
                               "h-full transition-all duration-1000",
                               (vehicle?.odometer ?? 0) >= (item.nextKm ?? 0) && (item.nextKm ?? 0) > 0 ? "bg-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]" :
-                              (item.nextKm && item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.9) ? "bg-destructive" :
-                              (item.nextKm && item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.7) ? "bg-warning" : "bg-success"
+                              (item.nextKm && item.lastKm && item.nextKm > item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.9) ? "bg-destructive" :
+                              (item.nextKm && item.lastKm && item.nextKm > item.lastKm && ((vehicle.odometer - item.lastKm) / (item.nextKm - item.lastKm)) >= 0.7) ? "bg-warning" : "bg-success"
                             )}
                             style={{ 
                               width: `${Math.max(0, Math.min(100, 
@@ -610,6 +690,11 @@ function FichaVeiculo() {
                               ))}%` 
                             }}
                           />
+                          {(!item.lastKm || item.lastKm === 0) && item.nextKm && (
+                            <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black uppercase tracking-[0.2em] text-muted-foreground/30 pointer-events-none">
+                              SEM HISTÓRICO
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -969,6 +1054,78 @@ function FichaVeiculo() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={preventiveOpen} onOpenChange={setPreventiveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Manutenção Realizada</DialogTitle>
+          </DialogHeader>
+          <form
+            id="preventive-form"
+            className="grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              registerMaintenance.mutate(new FormData(e.currentTarget));
+            }}
+          >
+            <input type="hidden" name="type" value={selectedMaintType} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tipo de Manutenção</Label>
+                <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm font-bold text-primary">
+                  {selectedMaintType === 'OIL' ? 'Óleo' :
+                   selectedMaintType === 'TIRE' ? 'Pneus' :
+                   selectedMaintType === 'OIL_FILTER' ? 'Filtro de Óleo' :
+                   selectedMaintType === 'AIR_FILTER' ? 'Filtro de Ar' :
+                   selectedMaintType === 'ALIGNMENT' ? 'Alinhamento' : 'Balanceamento'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-date">Data da Realização</Label>
+                <Input id="p-date" name="performed_date" type="date" required defaultValue={todayInput()} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="p-performed-km">KM da Realização</Label>
+                <Input 
+                  id="p-performed-km" 
+                  name="performed_km" 
+                  type="number" 
+                  required 
+                  defaultValue={vehicle?.odometer ?? 0}
+                  placeholder="Ex: 158000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-next-km">KM da Próxima Manutenção</Label>
+                <Input 
+                  id="p-next-km" 
+                  name="next_km" 
+                  type="number" 
+                  required 
+                  placeholder="Ex: 164000"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="p-notes">Observações</Label>
+              <Textarea id="p-notes" name="notes" placeholder="Descreva os detalhes da manutenção..." rows={3} />
+            </div>
+
+            <div className="rounded-lg bg-muted/50 p-3 text-[10px] text-muted-foreground uppercase leading-relaxed">
+              Ao confirmar, o sistema atualizará a "Última Manutenção" e a "Próxima Manutenção" do veículo, recalculando o progresso automaticamente.
+            </div>
+          </form>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPreventiveOpen(false)}>Cancelar</Button>
+            <Button type="submit" form="preventive-form" disabled={registerMaintenance.isPending}>
+              {registerMaintenance.isPending ? "Salvando..." : "Confirmar Registro"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={statusOpen} onOpenChange={setStatusOpen}>
         <DialogContent>
           <DialogHeader>
