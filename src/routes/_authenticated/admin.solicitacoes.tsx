@@ -286,12 +286,13 @@ function AdminSolicitacoes() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {filteredData.map((item) => {
-              if ('destination_text' in item) {
+              if ("destination_text" in item) {
+                const trip = item as TripRow;
                 // Render Trip Card
                 return (
                   <div
-                    key={item.id}
-                    onClick={() => setAllocating(item)}
+                    key={trip.id}
+                    onClick={() => setAllocating(trip)}
                     className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card p-5 transition-all hover:border-success/50 hover:shadow-md"
                   >
                     <div className="absolute left-0 top-0 h-full w-1 bg-success" />
@@ -302,34 +303,34 @@ function AdminSolicitacoes() {
                             <Info className="h-3 w-3" /> VIAGEM
                           </span>
                           <h3 className="mt-1 font-display text-base font-bold leading-tight group-hover:text-primary">
-                            #{item.code} · {item.destination_text}
+                            #{trip.code} · {trip.destination_text}
                           </h3>
                         </div>
-                        <StatusBadge status={item.status || "PENDENTE"} />
+                        <StatusBadge status={trip.status || "PENDENTE"} />
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Saída</span>
-                          <span>{fmtDate(item.departure_at)} · {fmtTime(item.departure_at)}</span>
+                          <span>{fmtDate(trip.departure_at)} · {fmtTime(trip.departure_at)}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Retorno</span>
-                          <span>{fmtDate(item.return_at)} · {fmtTime(item.return_at)}</span>
+                          <span>{fmtDate(trip.return_at)} · {fmtTime(trip.return_at)}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Solicitante</span>
-                          <span className="truncate">{item.requester_name || "—"}</span>
+                          <span className="truncate">{trip.requester_name || "—"}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Ocupantes</span>
-                          <span>{item.passengers} pessoa(s)</span>
+                          <span>{trip.passengers} pessoa(s)</span>
                         </div>
                       </div>
 
                       <div className="mt-1 flex items-center justify-between border-t border-border/50 pt-3">
                         <p className="line-clamp-1 text-xs italic text-muted-foreground">
-                          "{item.purpose || "Sem motivo informado"}"
+                          "{trip.purpose || "Sem motivo informado"}"
                         </p>
                         <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
                           Analisar
@@ -339,11 +340,12 @@ function AdminSolicitacoes() {
                   </div>
                 );
               } else {
+                const ride = item as RideRow;
                 // Render Ride Card
                 return (
                   <div
-                    key={item.id}
-                    onClick={() => setRideToDecide(item)}
+                    key={ride.id}
+                    onClick={() => setRideToDecide(ride)}
                     className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card p-5 transition-all hover:border-warning/50 hover:shadow-md"
                   >
                     <div className="absolute left-0 top-0 h-full w-1 bg-warning" />
@@ -354,34 +356,34 @@ function AdminSolicitacoes() {
                             <AlertCircle className="h-3 w-3" /> CARONA
                           </span>
                           <h3 className="mt-1 font-display text-base font-bold leading-tight group-hover:text-primary">
-                            #{item.trip?.code || "—"} · {item.trip?.destination_text || "Viagem removida"}
+                            #{ride.trip?.code || "—"} · {ride.trip?.destination_text || "Viagem removida"}
                           </h3>
                         </div>
-                        <StatusBadge status={item.status} />
+                        <StatusBadge status={ride.status} />
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Viagem em</span>
-                          <span>{fmtDate(item.trip?.departure_at)}</span>
+                          <span>{fmtDate(ride.trip?.departure_at)}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Horário</span>
-                          <span>{fmtTime(item.trip?.departure_at)} — {fmtTime(item.trip?.return_at)}</span>
+                          <span>{fmtTime(ride.trip?.departure_at)} — {fmtTime(ride.trip?.return_at)}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Solicitante</span>
-                          <span className="truncate">{item.requester?.full_name || "—"}</span>
+                          <span className="truncate">{ride.requester?.full_name || "—"}</span>
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase tracking-wide opacity-70">Ocupantes</span>
-                          <span>{item.seats} pessoa(s)</span>
+                          <span>{ride.seats} pessoa(s)</span>
                         </div>
                       </div>
 
                       <div className="mt-1 flex items-center justify-between border-t border-border/50 pt-3">
                         <p className="line-clamp-1 text-xs italic text-muted-foreground">
-                          "{item.reason || "Sem motivo informado"}"
+                          "{ride.reason || "Sem motivo informado"}"
                         </p>
                         <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
                           Analisar
@@ -394,6 +396,7 @@ function AdminSolicitacoes() {
             })}
           </div>
         )}
+
       </div>
 
       <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
