@@ -103,6 +103,7 @@ const vehicleSchema = z.object({
 function Veiculos() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const search = Route.useSearch() as { filter?: string };
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<VehicleRow | null>(null);
@@ -112,6 +113,7 @@ function Veiculos() {
   const [formFuel, setFormFuel] = useState<string>("Flex");
   const [statusFor, setStatusFor] = useState<VehicleRow | null>(null);
   const [nextStatus, setNextStatus] = useState<string>("DISPONIVEL");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles-all"],
