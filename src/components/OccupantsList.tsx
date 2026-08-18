@@ -172,7 +172,7 @@ export function OccupantsList({
             size="sm"
             onClick={() => {
               if (newUserId) {
-                add.mutate({ userId: newUserId });
+                add.mutate({ tripId, userId: newUserId });
                 setNewUserId(null);
               }
             }}
@@ -231,10 +231,12 @@ export function OccupantsList({
               onClick={() => {
                 if (externalName) {
                   add.mutate({
-                    fullName: externalName,
-                    document: externalDoc,
-                    phone: externalPhone,
-                    isExternal: true,
+                    tripId,
+                    external: {
+                      name: externalName,
+                      document: externalDoc,
+                      phone: externalPhone,
+                    }
                   });
                   setExternalName("");
                   setExternalDoc("");
