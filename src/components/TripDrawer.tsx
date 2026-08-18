@@ -301,8 +301,6 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
               </section>
 
 
-              <Separator />
-
               <section className="space-y-3">
                 <h3 className="font-display text-sm font-semibold">Pedidos de carona</h3>
                 {rides.length === 0 ? (
