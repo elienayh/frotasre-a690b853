@@ -350,11 +350,19 @@ function UsuarioEdicao() {
                   <p className="font-bold text-sm">Zona de Perigo</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  A exclusão de um usuário deve ser evitada para preservar a integridade do histórico.
-                  Recomendamos apenas desativar o login no menu de permissões.
+                  A exclusão de um usuário remove permanentemente seus dados do sistema.
+                  Esta ação deve ser realizada com cautela e apenas em casos de erro de cadastro.
                 </p>
-                <Button variant="destructive" onClick={() => {
-                   toast.error("A exclusão física deve ser realizada via Painel de Controle para segurança histórica.");
+                <Button variant="destructive" onClick={async () => {
+                   if (confirm(`Tem certeza que deseja excluir o usuário ${profile.full_name}? Esta ação não pode ser desfeita e pode afetar registros históricos.`)) {
+                     const { error } = await supabase.from("profiles").delete().eq("id", userId);
+                     if (error) {
+                       toast.error("Erro ao excluir: " + error.message);
+                     } else {
+                       toast.success("Usuário excluído.");
+                       navigate({ to: "/admin/usuarios" });
+                     }
+                   }
                 }}>
                   Excluir Usuário
                 </Button>
