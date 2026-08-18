@@ -1,4 +1,6 @@
 import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { getUserEmail, deleteUserAccount } from "@/integrations/supabase/admin.functions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +46,8 @@ function UsuarioEdicao() {
   const queryClient = useQueryClient();
   const { isSuperAdmin, user: currentUser } = useAuth();
   const [sectorDraft, setSectorDraft] = useState<string>("");
+  const fetchEmail = useServerFn(getUserEmail);
+  const deleteAccount = useServerFn(deleteUserAccount);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile-detail", userId],
@@ -351,22 +355,28 @@ function UsuarioEdicao() {
                   <p className="font-bold text-sm">Zona de Perigo</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  A exclusão de um usuário remove permanentemente seus dados do sistema.
-                  Esta ação deve ser realizada com cautela e apenas em casos de erro de cadastro.
+                  A exclusão de um usuário remove permanentemente seus dados do sistema e seu acesso ao Auth.
+                  Esta ação deve ser realizada com cautela.
                 </p>
-                <Button variant="destructive" onClick={async () => {
-                   if (confirm(`Tem certeza que deseja excluir o usuário ${profile.full_name}? Esta ação não pode ser desfeita e pode afetar registros históricos.`)) {
-                     const { error } = await supabase.from("profiles").delete().eq("id", userId);
-                     if (error) {
-                       toast.error("Erro ao excluir: " + error.message);
-                     } else {
-                       toast.success("Usuário excluído.");
+                <Button 
+                  variant="destructive" 
+                  disabled={!isSuperAdmin}
+                  onClick={async () => {
+                   if (confirm(`TEM CERTEZA ABSOLUTA? Isso excluirá o acesso de ${profile.full_name} permanentemente.`)) {
+                     try {
+                       await deleteAccount({ userId });
+                       toast.success("Usuário excluído do sistema e do Auth.");
                        navigate({ to: "/admin/usuarios" });
+                     } catch (err: any) {
+                       toast.error("Erro ao excluir: " + err.message);
                      }
                    }
                 }}>
-                  Excluir Usuário
+                  Excluir Usuário (Auth + Dados)
                 </Button>
+                {!isSuperAdmin && (
+                  <p className="text-[10px] text-destructive italic">Apenas Super Admins podem realizar a exclusão física.</p>
+                )}
               </div>
             </CardContent>
           </Card>
