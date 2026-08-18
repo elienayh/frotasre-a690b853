@@ -3,7 +3,8 @@ import { ArrowDown, ArrowUp, MapPin, Plus, Trash2 } from "lucide-react";
 import { ComboBox, type ComboOption } from "@/components/ComboBox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useCities, usePlaces } from "@/hooks/useFrotaOptions";
+import { useCities, usePlaces, usePeople } from "@/hooks/useFrotaOptions";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface StopValue {
   key: string;
@@ -11,6 +12,7 @@ export interface StopValue {
   cityText: string | null;
   destinationId: string | null;
   placeText: string | null;
+  driverUserId: string | null;
 }
 
 export function newStop(): StopValue {
@@ -20,6 +22,7 @@ export function newStop(): StopValue {
     cityText: null,
     destinationId: null,
     placeText: null,
+    driverUserId: null,
   };
 }
 
@@ -32,6 +35,8 @@ export interface TripStopsProps {
 export function TripStops({ value, onChange }: TripStopsProps) {
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
+  const { data: people = [] } = usePeople();
+  const { user, profile } = useAuth();
 
   const cityOptions: ComboOption[] = cities.map((c) => ({ value: c.id, label: c.name }));
 
