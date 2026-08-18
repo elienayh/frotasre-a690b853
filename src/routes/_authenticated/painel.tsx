@@ -9,11 +9,16 @@ import {
   UserCheck,
   Users,
   Wrench,
+  MapPin,
+  ChevronRight,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFleetNow } from "@/hooks/useFleet";
+
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -276,7 +281,6 @@ function PainelPage() {
   );
 }
 
-import { MapPin, ChevronRight } from "lucide-react";
 
 function Indicator({
   icon,
