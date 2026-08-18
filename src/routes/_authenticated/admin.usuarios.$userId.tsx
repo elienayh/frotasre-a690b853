@@ -129,15 +129,11 @@ function UsuarioEdicao() {
   });
 
   const resetPassword = async () => {
-    // Na estrutura do Supabase Auth, o email está na auth.users, mas as tabelas públicas
-    // geralmente não têm acesso direto. Se o email não estiver no profile, precisaremos dele.
-    const { data: userData, error: userError } = await supabase.auth.getUser(); // Apenas para debug ou se for o próprio usuário
-    
-    // O ideal é que o profile tenha uma coluna email. Se não tiver, vamos tentar pegar se disponível.
-    const targetEmail = (profile as any).email || "";
+    // Usamos o server function para pegar o email real do Auth
+    const { email: targetEmail } = await fetchEmail({ data: { userId } });
     
     if (!targetEmail) {
-       toast.error("Email do usuário não encontrado no perfil.");
+       toast.error("E-mail do usuário não localizado no sistema de autenticação.");
        return;
     }
 
@@ -212,8 +208,8 @@ function UsuarioEdicao() {
                   <Input name="registration" defaultValue={profile.registration || ""} />
                 </div>
                 <div className="space-y-2">
-                  <Label>E-mail (Login)</Label>
-                  <Input defaultValue={(profile as any).email || ""} disabled className="opacity-60" />
+                  <Label>ID do Usuário (UUID)</Label>
+                  <Input defaultValue={profile.id} disabled className="opacity-60 font-mono text-[10px]" />
                 </div>
                 <div className="space-y-2">
                   <Label>Setor</Label>
@@ -340,8 +336,9 @@ function UsuarioEdicao() {
                   Ao solicitar a redefinição, o usuário receberá um e-mail com um link seguro para definir uma nova senha.
                   O sistema não armazena e nem exibe senhas.
                 </p>
-                <Button variant="outline" onClick={() => {
-                  if (confirm(`Enviar e-mail de redefinição para ${(profile as any).email || "este usuário"}?`)) {
+                <Button variant="outline" onClick={async () => {
+                  const { email } = await fetchEmail({ data: { userId } });
+                  if (confirm(`Enviar e-mail de redefinição para ${email || "este usuário"}?`)) {
                     resetPassword();
                   }
                 }}>
