@@ -130,108 +130,128 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sidebar px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <Bus className="h-6 w-6" aria-hidden="true" />
-          </span>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 selection:bg-primary selection:text-primary-foreground">
+      {/* Background decorative elements */}
+      <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-success/5 rounded-full blur-[120px] -z-10" />
+
+      <div className="w-full max-w-lg space-y-8">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30"
+          >
+            <Bus className="h-8 w-8" aria-hidden="true" />
+          </motion.div>
           <div>
-            <p className="font-display text-xl font-bold text-sidebar-foreground">Frota SRE</p>
-            <p className="text-sm text-sidebar-foreground/60">
-              Solicitação e gestão de viagens oficiais
+            <h1 className="font-display text-3xl font-black tracking-tight text-foreground uppercase">Frota SRE</h1>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/70 mt-1">
+              Regional de Ensino
             </p>
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Acesso ao sistema</CardTitle>
-            <CardDescription>
-              Use seu e-mail institucional. O registro oficial no PW/Prodemge continua sendo feito
-              pela DAFI.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="entrar">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="entrar">Entrar</TabsTrigger>
-                <TabsTrigger value="cadastrar">Criar conta</TabsTrigger>
-              </TabsList>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-[2rem] overflow-hidden">
+            <CardHeader className="text-center pb-2 pt-8">
+              <CardTitle className="text-xl font-bold tracking-tight">Portal de Acesso</CardTitle>
+              <CardDescription className="text-xs font-medium max-w-xs mx-auto">
+                Utilize suas credenciais institucionais para gerir solicitações e frota.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-8 pb-10">
+              <Tabs defaultValue="entrar" className="space-y-8">
+                <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted/30 p-1.5 h-12">
+                  <TabsTrigger value="entrar" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:shadow-lg">Entrar</TabsTrigger>
+                  <TabsTrigger value="cadastrar" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:shadow-lg">Criar Conta</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="entrar">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">E-mail</Label>
-                    <Input id="login-email" name="email" type="email" autoComplete="email" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Senha</Label>
-                    <Input
-                      id="login-password"
-                      name="password"
-                      type="password"
-                      autoComplete="current-password"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
-                    {busy ? "Entrando…" : "Entrar"}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="cadastrar">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="su-name">Nome completo</Label>
-                    <Input id="su-name" name="full_name" required maxLength={120} />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                <TabsContent value="entrar" className="mt-0 focus-visible:outline-none">
+                  <form onSubmit={handleSignIn} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="su-reg">Matrícula</Label>
-                      <Input id="su-reg" name="registration" maxLength={30} />
+                      <Label htmlFor="login-email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail Institucional</Label>
+                      <Input id="login-email" name="email" type="email" autoComplete="email" required className="h-12 rounded-xl bg-background/50 border-border/40 focus:ring-primary/20" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="su-sector">Setor</Label>
-                      <Select value={sector} onValueChange={setSector}>
-                        <SelectTrigger id="su-sector">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SECTORS.map((s) => (
-                            <SelectItem key={s} value={s}>
-                              {s}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="login-password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Senha de Acesso</Label>
+                      <Input
+                        id="login-password"
+                        name="password"
+                        type="password"
+                        autoComplete="current-password"
+                        required
+                        className="h-12 rounded-xl bg-background/50 border-border/40 focus:ring-primary/20"
+                      />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="su-email">E-mail</Label>
-                    <Input id="su-email" name="email" type="email" autoComplete="email" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="su-password">Senha</Label>
-                    <Input
-                      id="su-password"
-                      name="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
-                    {busy ? "Criando…" : "Criar conta"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                    <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20" disabled={busy}>
+                      {busy ? "Autenticando..." : "Entrar no Sistema"}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                <TabsContent value="cadastrar" className="mt-0 focus-visible:outline-none">
+                  <form onSubmit={handleSignUp} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="su-name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nome Completo</Label>
+                      <Input id="su-name" name="full_name" required maxLength={120} className="h-12 rounded-xl bg-background/50 border-border/40" />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="su-reg" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Matrícula</Label>
+                        <Input id="su-reg" name="registration" maxLength={30} className="h-12 rounded-xl bg-background/50 border-border/40" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="su-sector" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Setor</Label>
+                        <Select value={sector} onValueChange={setSector}>
+                          <SelectTrigger id="su-sector" className="h-12 rounded-xl bg-background/50 border-border/40">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border-border/40 backdrop-blur-xl">
+                            {SECTORS.map((s) => (
+                              <SelectItem key={s} value={s} className="rounded-xl font-medium">
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="su-email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail</Label>
+                      <Input id="su-email" name="email" type="email" autoComplete="email" required className="h-12 rounded-xl bg-background/50 border-border/40" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="su-password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nova Senha</Label>
+                      <Input
+                        id="su-password"
+                        name="password"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        minLength={6}
+                        className="h-12 rounded-xl bg-background/50 border-border/40"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/20" disabled={busy}>
+                      {busy ? "Processando..." : "Criar Minha Conta"}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <p className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">
+          Superintendência Regional de Ensino
+        </p>
       </div>
     </div>
   );
 }
+
