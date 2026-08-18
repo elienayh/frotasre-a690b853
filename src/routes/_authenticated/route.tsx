@@ -13,10 +13,7 @@ export const Route = createFileRoute("/_authenticated")({
     if (!data.user.email?.endsWith("@educacao.mg.gov.br")) {
       await supabase.auth.signOut();
       throw redirect({ 
-        to: "/auth",
-        search: { 
-          message: "Acesso restrito ao domínio institucional." 
-        } 
+        to: "/auth"
       });
     }
 
