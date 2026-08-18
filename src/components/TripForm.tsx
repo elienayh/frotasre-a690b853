@@ -462,6 +462,11 @@ export function TripForm({ trip }: TripFormProps) {
         </Card>
 
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Informações Adicionais</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="requester_notes">Observações</Label>
               <Textarea
@@ -482,6 +487,8 @@ export function TripForm({ trip }: TripFormProps) {
                 Aceito caronas de outros servidores nesta viagem, se houver lugares livres.
               </Label>
             </div>
+          </CardContent>
+        </Card>
           </CardContent>
         </Card>
       </div>

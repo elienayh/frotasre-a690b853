@@ -191,44 +191,56 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
               </div>
 
               {/* 13. Capacidade detalhada */}
-              {trip.vehicles && (
-                <div className="space-y-3 rounded-2xl border border-border/40 p-4 bg-muted/20">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-display text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground/70">Ocupação da Viagem</h3>
-                    <Badge variant="outline" className="font-mono font-bold text-[10px] border-primary/20 text-primary px-2">
-                      {trip.passengers + 1} / {trip.vehicles.capacity} lugares
-                    </Badge>
+              {/* 13. Capacidade detalhada */}
+              <div className="space-y-3 rounded-2xl border border-border/40 p-4 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground/70">Ocupação da Viagem</h3>
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "font-mono font-bold text-[10px] px-2",
+                      occupancy.isExceeded ? "border-destructive/20 text-destructive bg-destructive/5" : "border-primary/20 text-primary"
+                    )}
+                  >
+                    {occupancy.totalPeople} / {occupancy.capacity} lugares
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center p-2 rounded-lg bg-background/40 border border-border/20">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Capacidade</p>
+                    <p className="text-lg font-black">{occupancy.capacity}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="text-center p-2 rounded-lg bg-background/40 border border-border/20">
-                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Veículo</p>
-                      <p className="text-lg font-black">{trip.vehicles.capacity}</p>
-                    </div>
-                    <div className="text-center p-2 rounded-lg bg-background/40 border border-border/20">
-                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Motorista</p>
-                      <p className="text-lg font-black text-primary">1</p>
-                    </div>
-                    <div className="text-center p-2 rounded-lg bg-background/40 border border-border/20">
-                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Ocupantes</p>
-                      <p className="text-lg font-black text-primary">{trip.passengers}</p>
-                    </div>
+                  <div className="text-center p-2 rounded-lg bg-background/40 border border-border/20">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Motoristas</p>
+                    <p className="text-lg font-black text-primary">{occupancy.driversCount}</p>
                   </div>
-                  
-                  <div className="pt-1">
-                    <div className="flex justify-between text-[10px] font-bold mb-1 px-1">
-                      <span className="text-muted-foreground">Ocupação Total</span>
-                      <span>{Math.round(((trip.passengers + 1) / trip.vehicles.capacity) * 100)}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all duration-500" 
-                        style={{ width: `${((trip.passengers + 1) / trip.vehicles.capacity) * 100}%` }}
-                      />
-                    </div>
+                  <div className="text-center p-2 rounded-lg bg-background/40 border border-border/20">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Passageiros</p>
+                    <p className="text-lg font-black text-primary">{occupancy.passengersCount}</p>
                   </div>
                 </div>
-              )}
+                
+                <div className="pt-1">
+                  <div className="flex justify-between text-[10px] font-bold mb-1 px-1">
+                    <span className="text-muted-foreground">Ocupação Total</span>
+                    {occupancy.isExceeded ? (
+                      <span className="text-destructive font-black tracking-tight">{occupancy.totalPeople - occupancy.capacity} EXCEDENTE(S)</span>
+                    ) : (
+                      <span className="text-success font-black tracking-tight">{occupancy.remaining} VAGA(S) LIVRE(S)</span>
+                    )}
+                  </div>
+                  <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full transition-all duration-500",
+                        occupancy.isExceeded ? "bg-destructive" : occupancy.totalPeople === occupancy.capacity ? "bg-warning" : "bg-success"
+                      )} 
+                      style={{ width: `${Math.min(100, (occupancy.totalPeople / occupancy.capacity) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
 
               {/* 7. Ocupantes */}
               <section className="space-y-4">
