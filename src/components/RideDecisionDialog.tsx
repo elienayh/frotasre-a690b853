@@ -47,14 +47,15 @@ export function RideDecisionDialog({ ride, onClose }: RideDecisionDialogProps) {
     },
     onSuccess: () => {
       toast.success("Solicitação de carona atualizada.");
-      // Envio de e-mail assíncrono
-      void notifyEmail({
-        data: {
-          rideId: ride.id,
-          userId: ride.requester_id,
-          status: decide.variables?.status === "APROVADA" ? "APROVADA" : "REJEITADA"
-        }
-      }).catch(err => console.error("Erro ao enviar e-mail de carona:", err));
+      if (ride) {
+        void notifyEmail({
+          data: {
+            rideId: ride.id,
+            userId: ride.requester_id,
+            status: decide.variables?.status === "APROVADA" ? "APROVADA" : "REJEITADA"
+          }
+        }).catch(err => console.error("Erro ao enviar e-mail de carona:", err));
+      }
       void queryClient.invalidateQueries({ queryKey: ["admin-ride-requests-all"] });
       void queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
       onClose();
