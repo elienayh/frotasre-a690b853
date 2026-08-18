@@ -1259,10 +1259,12 @@ export type Database = {
           is_active: boolean
           manufacturer: string
           model: string
+          next_preventive_km: number | null
           notes: string | null
           odometer: number
           photo_url: string | null
           plate: string
+          preventive_km_interval: number | null
           updated_at: string
           vehicle_type: string | null
           year: number | null
@@ -1277,10 +1279,12 @@ export type Database = {
           is_active?: boolean
           manufacturer: string
           model: string
+          next_preventive_km?: number | null
           notes?: string | null
           odometer?: number
           photo_url?: string | null
           plate: string
+          preventive_km_interval?: number | null
           updated_at?: string
           vehicle_type?: string | null
           year?: number | null
@@ -1295,10 +1299,12 @@ export type Database = {
           is_active?: boolean
           manufacturer?: string
           model?: string
+          next_preventive_km?: number | null
           notes?: string | null
           odometer?: number
           photo_url?: string | null
           plate?: string
+          preventive_km_interval?: number | null
           updated_at?: string
           vehicle_type?: string | null
           year?: number | null
@@ -1404,6 +1410,10 @@ export type Database = {
           _type: string
           _user_id: string
         }
+        Returns: undefined
+      }
+      reset_preventive_km: {
+        Args: { p_current_km: number; p_vehicle_id: string }
         Returns: undefined
       }
       schedule_conflicts: {
