@@ -7,6 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FleetTimeline } from "@/components/FleetTimeline";
 import { dateTimeToIso, fmtDateTime, todayInput } from "@/lib/frota";
 
 export const Route = createFileRoute("/_authenticated/admin/disponibilidade")({
@@ -40,8 +42,14 @@ function Disponibilidade() {
   return (
     <AppShell
       title="Disponibilidade da Frota"
-      description="Consulte quais veículos estão livres em um período específico."
+      description="Consulte a disponibilidade por período e a agenda operacional da frota."
     >
+      <Tabs defaultValue="disponibilidade">
+        <TabsList>
+          <TabsTrigger value="disponibilidade">Disponibilidade</TabsTrigger>
+          <TabsTrigger value="agenda">Agenda da Frota</TabsTrigger>
+        </TabsList>
+        <TabsContent value="disponibilidade" className="mt-4">
       <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="d-date">Data</Label>
@@ -100,6 +108,11 @@ function Disponibilidade() {
           ))}
         </ul>
       )}
+        </TabsContent>
+        <TabsContent value="agenda" className="mt-4">
+          <FleetTimeline />
+        </TabsContent>
+      </Tabs>
     </AppShell>
   );
 }

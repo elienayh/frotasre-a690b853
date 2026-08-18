@@ -30,16 +30,15 @@ interface NavItem {
 }
 
 const SERVER_ITEMS: NavItem[] = [
-  { to: "/painel", label: "Início", icon: Gauge },
+  { to: "/agenda-publica", label: "Calendário de Viagens", icon: CalendarRange },
+  { to: "/painel", label: "Painel", icon: Gauge },
   { to: "/solicitacoes", label: "Minhas Solicitações", icon: ClipboardList },
   { to: "/viagens", label: "Minhas Viagens", icon: RouteIcon },
-  { to: "/agenda-publica", label: "Viagens Programadas", icon: CalendarRange },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/solicitacoes", label: "Aprovações", icon: ClipboardList },
   { to: "/admin/disponibilidade", label: "Disponibilidade da Frota", icon: Bus },
-  { to: "/admin/agenda", label: "Agenda da Frota", icon: CalendarRange },
   { to: "/admin/veiculos", label: "Veículos", icon: CarFront },
   { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
   { to: "/admin/cidades", label: "Cidades", icon: Building2 },
