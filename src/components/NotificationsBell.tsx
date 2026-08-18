@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -100,7 +102,7 @@ export function NotificationsBell() {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-96 p-0">
+      <PopoverContent align="end" className="w-96 p-0 overflow-hidden rounded-2xl border-border/40 shadow-2xl backdrop-blur-2xl">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <p className="text-sm font-semibold">
             Notificações {unread > 0 ? `(${unread} novas)` : ""}
