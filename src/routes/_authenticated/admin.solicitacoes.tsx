@@ -1,18 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Search, Filter, CheckCircle2, AlertCircle, Info } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AllocateDialog } from "@/components/AllocateDialog";
-import { RideRequestsPanel } from "@/components/RideRequestsPanel";
+import { RideDecisionDialog, type RideRow } from "@/components/RideDecisionDialog";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { fmtDate, fmtTime, friendlyDbError, type TripRow } from "@/lib/frota";
+import { cn } from "@/lib/utils";
+
+type FilterType = "pendentes" | "programadas" | "aprovadas" | "carona" | "encerradas";
 
 export const Route = createFileRoute("/_authenticated/admin/solicitacoes")({
   component: AdminSolicitacoes,
@@ -30,27 +40,57 @@ type Decision = { trip: TripRow; kind: "REJEITADA" | "CORRECAO" } | null;
 
 function AdminSolicitacoes() {
   const queryClient = useQueryClient();
-  const search = Route.useSearch() as { tab?: string };
+  const searchParams = Route.useSearch() as { tab?: string; filter?: string };
+  
+  const [activeFilter, setActiveFilter] = useState<FilterType>((searchParams?.filter as FilterType) || "pendentes");
+  const [searchTerm, setSearchTerm] = useState("");
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [decision, setDecision] = useState<Decision>(null);
-  const [activeTab, setActiveTab] = useState(search?.tab || "pendentes");
+  const [rideToDecide, setRideToDecide] = useState<RideRow | null>(null);
 
-  // Sync tab with URL search parameter
+  // Sync with search params
   useEffect(() => {
-    if (search?.tab && search.tab !== activeTab) {
-      setActiveTab(search.tab);
+    if (searchParams?.filter) {
+      setActiveFilter(searchParams.filter as FilterType);
+    } else if (searchParams?.tab) {
+      // Compatibility with old tab param
+      const tabToFilter: Record<string, FilterType> = {
+        pendentes: "pendentes",
+        programadas: "programadas",
+        encerradas: "encerradas",
+        caronas: "carona"
+      };
+      setActiveFilter(tabToFilter[searchParams.tab] || "pendentes");
     }
-  }, [search?.tab]);
+  }, [searchParams?.filter, searchParams?.tab]);
 
-  const { data: trips = [], isLoading } = useQuery({
-    queryKey: ["admin-trips"],
+  // Fetch Trips
+  const { data: trips = [], isLoading: loadingTrips } = useQuery({
+    queryKey: ["admin-trips-all"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_requests")
         .select("*")
-        .order("departure_at");
+        .order("departure_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as TripRow[];
+    },
+  });
+
+  // Fetch Ride Requests
+  const { data: rides = [], isLoading: loadingRides } = useQuery({
+    queryKey: ["admin-ride-requests-all"],
+    queryFn: async (): Promise<RideRow[]> => {
+      const { data, error } = await supabase
+        .from("ride_requests")
+        .select(
+          `id, seats, reason, status, created_at, requester_id,
+           requester:profiles!ride_requests_requester_id_fkey(full_name, sector),
+           trip:trip_requests!ride_requests_trip_id_fkey(id, code, destination_text, departure_at, return_at)`,
+        )
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as RideRow[];
     },
   });
 
@@ -78,130 +118,282 @@ function AdminSolicitacoes() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const pending = trips.filter((t) => ["PENDENTE", "CORRECAO"].includes(t.status));
-  const scheduled = trips.filter((t) =>
-    ["APROVADA", "PROGRAMADA", "EM_ANDAMENTO"].includes(t.status),
-  );
-  const closed = trips.filter((t) =>
-    ["CONCLUIDA", "REJEITADA", "CANCELADA"].includes(t.status),
-  );
+  // Filter Logic
+  const filteredData = useMemo(() => {
+    let combined: (TripRow | RideRow)[] = [];
 
-  const renderList = (list: TripRow[], allowActions: boolean) =>
-    list.length === 0 ? (
-      <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-        Nada por aqui.
-      </p>
-    ) : (
-      <ul className="grid gap-4">
-        {list.map((t) => (
-          <li key={t.id}>
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => setAllocating(t)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setAllocating(t);
-                }
-              }}
-              className="w-full cursor-pointer rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-primary hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="font-display text-base font-semibold">
-                    #{t.code} · {t.destination_text}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Ida {fmtDate(t.departure_at)} às {fmtTime(t.departure_at)} · Retorno{" "}
-                    {fmtDate(t.return_at)} às {fmtTime(t.return_at)} · {t.passengers} ocupante(s)
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Solicitante: {t.requester_name ?? "—"}
-                  </p>
-                </div>
-                <StatusBadge status={t.status as string} />
-              </div>
-              <p className="mt-3 text-sm">{t.purpose}</p>
-              {t.requester_notes ? (
-                <p className="mt-1 text-sm text-muted-foreground">Obs.: {t.requester_notes}</p>
-              ) : null}
+    const tripStatusMap: Record<FilterType, string[]> = {
+      pendentes: ["PENDENTE", "CORRECAO"],
+      programadas: ["PROGRAMADA", "EM_ANDAMENTO"],
+      aprovadas: ["APROVADA"],
+      carona: ["PENDENTE", "APROVADA", "REJEITADA"], // Specific case for carona filter
+      encerradas: ["CONCLUIDA", "REJEITADA", "CANCELADA"]
+    };
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAllocating(t);
-                  }}
-                >
-                  {allowActions ? "Definir transporte" : "Reajustar transporte"}
-                </Button>
-                {allowActions ? (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDecision({ trip: t, kind: "CORRECAO" });
-                      }}
-                    >
-                      Solicitar correção
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDecision({ trip: t, kind: "REJEITADA" });
-                      }}
-                    >
-                      Recusar
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    );
+    if (activeFilter === "carona") {
+      combined = rides;
+    } else if (activeFilter === "pendentes") {
+      // Pendentes combines trips AND rides that are pending
+      const pTrips = trips.filter(t => tripStatusMap.pendentes.includes(t.status || ""));
+      const pRides = rides.filter(r => r.status === "PENDENTE");
+      combined = [...pTrips, ...pRides].sort((a, b) => {
+        const dateA = 'departure_at' in a ? a.departure_at : a.trip?.departure_at;
+        const dateB = 'departure_at' in b ? b.departure_at : b.trip?.departure_at;
+        return new Date(dateA || 0).getTime() - new Date(dateB || 0).getTime();
+      });
+    } else {
+      combined = trips.filter(t => tripStatusMap[activeFilter].includes(t.status || ""));
+    }
 
+    // Apply search
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      combined = combined.filter(item => {
+        if ('destination_text' in item) { // TripRow
+          return (
+            item.code?.toString().includes(term) ||
+            item.destination_text?.toLowerCase().includes(term) ||
+            item.requester_name?.toLowerCase().includes(term) ||
+            item.purpose?.toLowerCase().includes(term)
+          );
+        } else { // RideRow
+          return (
+            item.trip?.code?.toString().includes(term) ||
+            item.trip?.destination_text?.toLowerCase().includes(term) ||
+            item.requester?.full_name?.toLowerCase().includes(term) ||
+            item.reason?.toLowerCase().includes(term)
+          );
+        }
+      });
+    }
+
+    return combined;
+  }, [activeFilter, trips, rides, searchTerm]);
+
+  // Counts for chips
+  const counts = useMemo(() => {
+    return {
+      pendentes: trips.filter(t => ["PENDENTE", "CORRECAO"].includes(t.status || "")).length + rides.filter(r => r.status === "PENDENTE").length,
+      programadas: trips.filter(t => ["PROGRAMADA", "EM_ANDAMENTO"].includes(t.status || "")).length,
+      aprovadas: trips.filter(t => t.status === "APROVADA").length,
+      carona: rides.length,
+      encerradas: trips.filter(t => ["CONCLUIDA", "REJEITADA", "CANCELADA"].includes(t.status || "")).length
+    };
+  }, [trips, rides]);
+
+  const pendingSummary = useMemo(() => {
+    const tCount = trips.filter(t => ["PENDENTE", "CORRECAO"].includes(t.status || "")).length;
+    const rCount = rides.filter(r => r.status === "PENDENTE").length;
+    return { trips: tCount, rides: rCount, total: tCount + rCount };
+  }, [trips, rides]);
+
+  const isLoading = loadingTrips || loadingRides;
 
   return (
     <AppShell
-      title="Aprovações de Viagem"
-      description="Analise os pedidos, defina veículo, motorista e horário definitivo."
+      title="Aprovações"
+      description="Central de análise de solicitações de viagem e pedidos de carona."
     >
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
-      ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="pendentes">Pendentes ({pending.length})</TabsTrigger>
-            <TabsTrigger value="programadas">Programadas ({scheduled.length})</TabsTrigger>
-            <TabsTrigger value="encerradas">Encerradas ({closed.length})</TabsTrigger>
-            <TabsTrigger value="caronas">Solicitações de Carona</TabsTrigger>
-          </TabsList>
-          <TabsContent value="pendentes" className="mt-4">
-            {renderList(pending, true)}
-          </TabsContent>
-          <TabsContent value="programadas" className="mt-4">
-            {renderList(scheduled, false)}
-          </TabsContent>
-          <TabsContent value="encerradas" className="mt-4">
-            {renderList(closed, false)}
-          </TabsContent>
-          <TabsContent value="caronas" className="mt-4">
-            <RideRequestsPanel />
-          </TabsContent>
-        </Tabs>
-      )}
+      <div className="flex flex-col gap-6">
+        {/* Resumo no topo */}
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {pendingSummary.total > 0 
+              ? `Você possui ${pendingSummary.total} ${pendingSummary.total === 1 ? 'item' : 'itens'} aguardando análise.`
+              : "Tudo em dia!"}
+          </h2>
+          {pendingSummary.total > 0 && (
+            <div className="flex gap-2">
+              <Badge variant="outline" className="bg-success/5 text-success border-success/20">
+                {pendingSummary.trips} {pendingSummary.trips === 1 ? 'viagem' : 'viagens'}
+              </Badge>
+              <Badge variant="outline" className="bg-warning/5 text-warning border-warning/20">
+                {pendingSummary.rides} {pendingSummary.rides === 1 ? 'carona' : 'caronas'}
+              </Badge>
+            </div>
+          )}
+        </div>
 
+        {/* Barra de Filtros e Busca */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            {(["pendentes", "programadas", "aprovadas", "carona", "encerradas"] as FilterType[]).map((f) => (
+              <Button
+                key={f}
+                variant={activeFilter === f ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveFilter(f)}
+                className="rounded-full px-4"
+              >
+                <span className="capitalize">{f}</span>
+                {counts[f] > 0 && (
+                  <span className={cn(
+                    "ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                    activeFilter === f ? "bg-primary-foreground text-primary" : "bg-muted text-muted-foreground"
+                  )}>
+                    {counts[f]}
+                  </span>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por cidade, solicitante, destino ou número..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <h4 className="font-medium leading-none">Filtros Complementares</h4>
+                  <p className="text-sm text-muted-foreground">Em breve: filtros por período, setor e condutor.</p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Lista de Resultados */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="mt-4 text-sm">Carregando dados...</p>
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="mt-4 text-base font-medium">Nenhuma pendência no momento.</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Tudo em dia! Nenhuma solicitação aguardando análise para este filtro.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {filteredData.map((item) => {
+              if ('destination_text' in item) {
+                // Render Trip Card
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setAllocating(item)}
+                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card p-5 transition-all hover:border-success/50 hover:shadow-md"
+                  >
+                    <div className="absolute left-0 top-0 h-full w-1 bg-success" />
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                            <Info className="h-3 w-3" /> VIAGEM
+                          </span>
+                          <h3 className="mt-1 font-display text-base font-bold leading-tight group-hover:text-primary">
+                            #{item.code} · {item.destination_text}
+                          </h3>
+                        </div>
+                        <StatusBadge status={item.status || "PENDENTE"} />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Saída</span>
+                          <span>{fmtDate(item.departure_at)} · {fmtTime(item.departure_at)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Retorno</span>
+                          <span>{fmtDate(item.return_at)} · {fmtTime(item.return_at)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Solicitante</span>
+                          <span className="truncate">{item.requester_name || "—"}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Ocupantes</span>
+                          <span>{item.passengers} pessoa(s)</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-1 flex items-center justify-between border-t border-border/50 pt-3">
+                        <p className="line-clamp-1 text-xs italic text-muted-foreground">
+                          "{item.purpose || "Sem motivo informado"}"
+                        </p>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
+                          Analisar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else {
+                // Render Ride Card
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setRideToDecide(item)}
+                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card p-5 transition-all hover:border-warning/50 hover:shadow-md"
+                  >
+                    <div className="absolute left-0 top-0 h-full w-1 bg-warning" />
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-warning">
+                            <AlertCircle className="h-3 w-3" /> CARONA
+                          </span>
+                          <h3 className="mt-1 font-display text-base font-bold leading-tight group-hover:text-primary">
+                            #{item.trip?.code || "—"} · {item.trip?.destination_text || "Viagem removida"}
+                          </h3>
+                        </div>
+                        <StatusBadge status={item.status} />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-y-2 text-sm text-muted-foreground">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Viagem em</span>
+                          <span>{fmtDate(item.trip?.departure_at)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Horário</span>
+                          <span>{fmtTime(item.trip?.departure_at)} — {fmtTime(item.trip?.return_at)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Solicitante</span>
+                          <span className="truncate">{item.requester?.full_name || "—"}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-wide opacity-70">Ocupantes</span>
+                          <span>{item.seats} pessoa(s)</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-1 flex items-center justify-between border-t border-border/50 pt-3">
+                        <p className="line-clamp-1 text-xs italic text-muted-foreground">
+                          "{item.reason || "Sem motivo informado"}"
+                        </p>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
+                          Analisar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+            })}
+          </div>
+        )}
+      </div>
 
       <AllocateDialog trip={allocating} onClose={() => setAllocating(null)} />
+      
+      <RideDecisionDialog ride={rideToDecide} onClose={() => setRideToDecide(null)} />
 
       <Dialog open={Boolean(decision)} onOpenChange={(open) => !open && setDecision(null)}>
         <DialogContent>
