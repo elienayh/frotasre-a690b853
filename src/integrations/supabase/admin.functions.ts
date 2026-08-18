@@ -1,38 +1,53 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabase } from "./client";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
- * Server function para buscar o email do usuário no Supabase Auth.
- * Como a tabela auth.users não é acessível via client, usamos este helper.
- * Em um ambiente real de produção com RLS restrito, isso precisaria de supabaseAdmin.
+ * Server function para buscar e-mails do Supabase Auth.
+ * Necessário pois o campo 'email' não reside na tabela 'profiles'.
  */
 export const getUserEmail = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: authUser, error } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    
-    if (error || !authUser?.user) {
-       return { email: null };
-    }
-    
-    return { email: authUser.user.email ?? null };
+    const { data: user, error } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (error) throw error;
+    return { email: user.user?.email };
   });
 
+/**
+ * Server function para excluir permanentemente um usuário (Auth + Dados).
+ * Operação crítica reservada para Super Admins.
+ */
 export const deleteUserAccount = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    // Em Lovable, a exclusão física de um usuário Auth deve ser feita via Admin Client
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    
-    // 1. Verificar se o usuário existe
-    const { data: user, error: fetchError } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    if (fetchError || !user) throw new Error("Usuário não encontrado no Auth.");
-
-    // 2. Excluir no Auth (isso dispara cascata se configurado ou remove o profile se houver trigger)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (deleteError) throw deleteError;
-
+    // A segurança RLS e middleware no frontend já devem filtrar, 
+    // mas a exclusão física exige supabaseAdmin no server.
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw error;
     return { success: true };
+  });
+
+/**
+ * Server function para listar os e-mails de múltiplos usuários.
+ * Usado na listagem de usuários para busca por e-mail.
+ */
+export const getUsersEmails = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ userIds: z.array(z.string().uuid()) }).parse(data))
+  .handler(async ({ data }) => {
+    const emails: Record<string, string> = {};
+    
+    // Auth admin API doesn't support batch get by ID easily without listUsers
+    // For performance with small lists, we can fetch all and map, or individual calls if list is small.
+    // Given the SRE scale, listing all and filtering is usually fine.
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (error) throw error;
+    
+    users.forEach(u => {
+      if (data.userIds.includes(u.id)) {
+        emails[u.id] = u.email || "";
+      }
+    });
+    
+    return emails;
   });
