@@ -15,8 +15,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OccupantsPicker } from "@/components/OccupantsPicker";
-import { notifyNewTripRequest } from "@/lib/email.functions";
-import { useServerFn } from "@tanstack/react-start";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
@@ -54,7 +52,6 @@ export function TripForm({ trip }: TripFormProps) {
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
   const { data: people = [] } = usePeople();
-  const notifyEmail = useServerFn(notifyNewTripRequest);
 
   const [busy, setBusy] = useState(false);
   const [stops, setStops] = useState<StopValue[]>([newStop()]);
