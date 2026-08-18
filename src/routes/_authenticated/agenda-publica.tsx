@@ -55,6 +55,7 @@ function CalendarioViagens() {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [tripId, setTripId] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [fDestino, setFDestino] = useState("");
   const [fCidade, setFCidade] = useState(ALL);
@@ -106,6 +107,17 @@ function CalendarioViagens() {
     [trips, fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista],
   );
 
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (fCidade !== ALL) count++;
+    if (fSetor !== ALL) count++;
+    if (fVeiculo !== ALL) count++;
+    if (fStatus !== ALL) count++;
+    if (fDestino.trim()) count++;
+    if (fMotorista.trim()) count++;
+    return count;
+  }, [fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista]);
+
   const byDay = useMemo(() => {
     const map = new Map<string, AgendaTrip[]>();
     for (const t of filtered) {
@@ -143,35 +155,56 @@ function CalendarioViagens() {
       title="Calendário de Viagens"
       description="Agenda institucional da frota, por dia e por setor."
       actions={
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
-            size="icon"
-            aria-label="Mês anterior"
-            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
+            variant={activeFiltersCount > 0 ? "default" : "outline"}
             size="sm"
-            onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "rounded-xl font-bold transition-all",
+              activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
+            )}
           >
-            Hoje
+            <Filter className="mr-2 h-4 w-4" />
+            Filtros
+            {activeFiltersCount > 0 && (
+              <span className="ml-2 rounded-full bg-primary-foreground text-primary px-1.5 py-0.5 text-[10px] font-black">
+                {activeFiltersCount}
+              </span>
+            )}
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Próximo mês"
-            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+
+          <div className="flex items-center gap-1 ml-2">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Mês anterior"
+              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+            >
+              Hoje
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Próximo mês"
+              onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       }
     >
-      <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
-        <aside className="space-y-6">
+      <div className={cn("grid gap-8 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
+        {showFilters && (
+          <aside className="space-y-6 animate-in slide-in-from-left duration-300">
           <Card className="p-6 border-none shadow-xl bg-card/60 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-6">
               <p className="flex items-center gap-2 font-display text-base font-bold text-foreground">
@@ -253,6 +286,7 @@ function CalendarioViagens() {
             </div>
           </Card>
         </aside>
+        )}
 
         <section className="min-w-0 space-y-6">
           <div className="flex items-center justify-between">

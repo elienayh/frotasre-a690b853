@@ -384,7 +384,7 @@ function Veiculos() {
                   </div>
 
                   <div className="mt-6 space-y-4">
-                    <VehicleMaintenanceCard vehicle={v} />
+                    <VehicleMaintenanceCard vehicle={v} compact />
                     
                     <div className="space-y-1 rounded-md border border-border/40 bg-muted/20 p-2.5 text-xs text-muted-foreground">
                       <p className="flex justify-between">
