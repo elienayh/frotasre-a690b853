@@ -137,10 +137,11 @@ function AdminSolicitacoes() {
       const pTrips = trips.filter(t => tripStatusMap.pendentes.includes(t.status || ""));
       const pRides = rides.filter(r => r.status === "PENDENTE");
       combined = [...pTrips, ...pRides].sort((a, b) => {
-        const dateA = ("departure_at" in a ? a.departure_at : a.trip?.departure_at) || 0;
-        const dateB = ("departure_at" in b ? b.departure_at : b.trip?.departure_at) || 0;
+        const dateA = ("departure_at" in a ? a.departure_at : (a as RideRow).trip?.departure_at) || 0;
+        const dateB = ("departure_at" in b ? b.departure_at : (b as RideRow).trip?.departure_at) || 0;
         return new Date(dateA).getTime() - new Date(dateB).getTime();
       });
+
 
     } else {
       combined = trips.filter(t => tripStatusMap[activeFilter].includes(t.status || ""));
