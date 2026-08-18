@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, Filter, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { Search, Filter, CheckCircle2, AlertCircle, Info, XCircle } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -11,6 +11,7 @@ import { AllocateDialog } from "@/components/AllocateDialog";
 import { RideDecisionDialog, type RideRow } from "@/components/RideDecisionDialog";
 import { notifyTripDecision } from "@/lib/email.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/useAuth";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -42,12 +44,14 @@ type Decision = { trip: TripRow; kind: "REJEITADA" | "CORRECAO" } | null;
 
 function AdminSolicitacoes() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const searchParams = Route.useSearch() as { tab?: string; filter?: string };
   
   const [activeFilter, setActiveFilter] = useState<FilterType>((searchParams?.filter as FilterType) || "pendentes");
   const [searchTerm, setSearchTerm] = useState("");
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [decision, setDecision] = useState<Decision>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [rideToDecide, setRideToDecide] = useState<RideRow | null>(null);
   const notifyEmail = useServerFn(notifyTripDecision);
 
@@ -107,14 +111,43 @@ function AdminSolicitacoes() {
       kind: "REJEITADA" | "CORRECAO";
       reason: string;
     }) => {
+      const now = new Date().toISOString();
+      const updates: any = { 
+        status: kind, 
+        rejection_reason: reason 
+      };
+
+      if (kind === "REJEITADA") {
+        updates.rejected_at = now;
+        updates.rejected_by = user?.id;
+      }
+
       const { error } = await supabase
         .from("trip_requests")
-        .update({ status: kind, rejection_reason: reason })
+        .update(updates)
         .eq("id", id);
+      
       if (error) throw new Error(friendlyDbError(error.message));
+
+      // Registrar no histórico
+      await supabase.from("trip_history").insert({
+        trip_id: id,
+        user_id: user?.id,
+        action: kind === "REJEITADA" ? "Solicitação rejeitada" : "Solicitação enviada para correção",
+        details: reason
+      });
+
+      // Notificação interna
+      await supabase.from("notifications").insert({
+        user_id: decision?.trip.requester_id || "00000000-0000-0000-0000-000000000000",
+        title: `Solicitação #${decision?.trip.code} ${kind === "REJEITADA" ? "rejeitada" : "precisa de correção"}`,
+        body: `Motivo: ${reason}`,
+        type: "system",
+        trip_id: id
+      });
     },
     onSuccess: () => {
-      toast.success("Solicitação atualizada.");
+      toast.success(decision?.kind === "REJEITADA" ? "Solicitação rejeitada." : "Solicitação enviada para correção.");
       // Envio de e-mail assíncrono para recusa ou correção
       if (decision) {
         void notifyEmail({
@@ -122,11 +155,12 @@ function AdminSolicitacoes() {
             tripId: decision.trip.id,
             userId: decision.trip.requester_id || "",
             status: decision.kind,
-            rejectionReason: decide.variables?.reason
+            rejectionReason: rejectionReason
           }
         }).catch(err => console.error("Erro ao enviar e-mail de decisão:", err));
       }
       setDecision(null);
+      setRejectionReason("");
       void queryClient.invalidateQueries();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -350,9 +384,24 @@ function AdminSolicitacoes() {
                         <p className="line-clamp-1 text-xs italic text-muted-foreground">
                           "{trip.purpose || "Sem motivo informado"}"
                         </p>
-                        <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
-                          Analisar
-                        </Button>
+                        <div className="flex gap-2">
+                          {trip.status === "PENDENTE" && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDecision({ trip, kind: "REJEITADA" });
+                              }}
+                            >
+                              <XCircle className="mr-1 h-3 w-3" /> Rejeitar
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold">
+                            Analisar
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
