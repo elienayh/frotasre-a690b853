@@ -304,8 +304,8 @@ function Veiculos() {
         v.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.model.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const isOverdue = (km: number | null | undefined, next: number | null | undefined) => {
-        return next && next > 0 && km >= next;
+      const isOverdue = (km: number, next: number | null | undefined) => {
+        return !!(next && next > 0 && km >= next);
       };
 
       const hasCriticalMaintenance = 
