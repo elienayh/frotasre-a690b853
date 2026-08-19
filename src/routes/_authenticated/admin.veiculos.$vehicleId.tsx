@@ -364,15 +364,28 @@ function FichaVeiculo() {
 
   const addFuel = useMutation({
     mutationFn: async (form: FormData) => {
+      const odometerValue = Number(form.get("odometer"));
       const { error } = await supabase.from("fuel_records").insert({
         vehicle_id: vehicleId,
         filled_at: new Date(String(form.get("filled_at") || todayInput())).toISOString(),
         liters: Number(form.get("liters")) || null,
         total_cost: Number(form.get("total_cost")) || null,
-        odometer: Number(form.get("odometer")) || null,
+        odometer: odometerValue || null,
         station: String(form.get("station") || "") || null,
       });
       if (error) throw new Error(error.message);
+
+      // Atualiza odômetro oficial via RPC se informado e for maior
+      if (odometerValue && odometerValue > (vehicle?.odometer || 0)) {
+        const { error: odoError } = await supabase.rpc("update_vehicle_odometer", {
+          _vehicle_id: vehicleId,
+          _new_value: odometerValue,
+          _recorded_by: (await supabase.auth.getUser()).data.user?.id || "",
+          _origin: "fueling",
+          _reason: "Abastecimento registrado em " + (String(form.get("station") || "") || "Posto")
+        });
+        if (odoError) throw odoError;
+      }
     },
     onSuccess: () => {
       toast.success("Abastecimento registrado.");
