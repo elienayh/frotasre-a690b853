@@ -34,7 +34,8 @@ export function TripMileageDialog({
   mode,
   onSuccess,
 }: TripMileageDialogProps) {
-  const { user, isAdmin, isSuperAdmin, isSreDriver } = useAuth();
+  const { user, isAdmin, isSuperAdmin, profile } = useAuth();
+  const isSreDriver = profile?.is_sre_driver || false;
   const [km, setKm] = useState<number>(vehicle?.odometer || 0);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
