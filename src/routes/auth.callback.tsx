@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth/callback")({
+  ssr: false,
   component: AuthCallbackPage,
 });
 
@@ -11,12 +12,16 @@ function AuthCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // O Supabase Auth trata o fragmento (#) automaticamente se estiver usando a sessão client-side.
-    // O onAuthStateChange ou getSession deve capturar a nova sessão.
-    
+    let mounted = true;
+
     const handleAuthCallback = async () => {
+      // Pequeno delay para garantir que o hash (#) seja processado pelo cliente Supabase
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const { data, error } = await supabase.auth.getSession();
       
+      if (!mounted) return;
+
       if (error) {
         console.error("Erro no callback de autenticação:", error);
         toast.error("Erro ao processar login institucional.");
@@ -25,10 +30,9 @@ function AuthCallbackPage() {
       }
 
       if (data.session) {
-        // Sessão recuperada com sucesso
         const user = data.session.user;
         
-        // Verificação adicional de domínio (já existe no backend, mas reforçamos aqui)
+        // Validação de domínio institucional (Segurança)
         if (!user.email?.endsWith("@educacao.mg.gov.br")) {
           toast.error("Acesso permitido apenas para contas @educacao.mg.gov.br");
           await supabase.auth.signOut();
@@ -37,48 +41,57 @@ function AuthCallbackPage() {
         }
 
         // Verificar se o perfil está completo
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("registration, sector, cpf")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (!profile || !profile.registration || !profile.sector || !profile.cpf) {
-          // Se o cadastro estiver incompleto, direciona para completar (usando a rota de usuário existente ou uma nova)
-          // Por enquanto, direcionamos para a página do perfil dele se for admin ou agenda se for comum
-          // Mas o requisito pede uma tela de "Completar Cadastro".
-          // Como ainda não temos uma rota /completar-cadastro, vamos usar a de detalhes do usuário
-          // ou simplesmente permitir que ele complete depois, mas redirecionando para onde possa editar.
-          
-          toast.info("Por favor, complete seus dados cadastrais.");
-          navigate({ to: "/agenda-publica", replace: true });
+        if (profileError) {
+          console.error("Erro ao carregar perfil no callback:", profileError);
+        }
+
+        const isProfileIncomplete = !profile || !profile.registration || !profile.sector || !profile.cpf;
+
+        if (isProfileIncomplete) {
+          toast.info("Identificamos seu acesso institucional. Por favor, complete seu cadastro.");
+          // Direciona para a página de edição do próprio perfil
+          navigate({ to: `/admin/usuarios/${user.id}`, replace: true });
         } else {
+          toast.success(`Bem-vindo, ${user.user_metadata.full_name || 'Servidor'}!`);
           navigate({ to: "/agenda-publica", replace: true });
         }
       } else {
-        // Se não tem sessão, talvez o hash ainda não tenha sido processado ou houve falha
-        // Vamos dar um pequeno delay para garantir
-        setTimeout(async () => {
-          const { data: retryData } = await supabase.auth.getSession();
-          if (retryData.session) {
-            navigate({ to: "/agenda-publica", replace: true });
-          } else {
-            navigate({ to: "/auth", replace: true });
-          }
-        }, 1000);
+        // Sem sessão após o tempo de espera
+        navigate({ to: "/auth", replace: true });
       }
     };
 
     handleAuthCallback();
+
+    return () => {
+      mounted = false;
+    };
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
-          Autenticando...
-        </p>
+    <div className="flex min-h-screen items-center justify-center bg-background selection:bg-primary selection:text-primary-foreground">
+      <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative">
+          <div className="h-16 w-16 animate-spin rounded-2xl border-4 border-primary border-t-transparent shadow-2xl shadow-primary/20" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
+          </div>
+        </div>
+        <div className="text-center space-y-2">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-primary animate-pulse">
+            Autenticando Identidade
+          </p>
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest opacity-60">
+            Frota SRE carangola
+          </p>
+        </div>
       </div>
     </div>
   );
