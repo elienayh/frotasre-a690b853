@@ -318,7 +318,10 @@ function FichaVeiculo() {
 
       const { error: vehError } = await supabase
         .from("vehicles")
-        .update(typeMap[type] || {})
+        .update({
+          ...(typeMap[type] || {}),
+          ...(performedKm > (vehicle?.odometer ?? 0) ? { odometer: performedKm } : {})
+        })
         .eq("id", vehicleId);
       if (vehError) throw vehError;
     },
@@ -1115,7 +1118,7 @@ function FichaVeiculo() {
             </div>
 
             <div className="rounded-lg bg-muted/50 p-3 text-[10px] text-muted-foreground uppercase leading-relaxed">
-              Ao confirmar, o sistema atualizará a "Última Manutenção" e a "Próxima Manutenção" do veículo, recalculando o progresso automaticamente.
+              Ao confirmar, o sistema atualizará a "Última Manutenção" e a "Próxima Manutenção" do veículo, além de atualizar o hodômetro atual se o valor informado for superior.
             </div>
           </form>
           <DialogFooter>

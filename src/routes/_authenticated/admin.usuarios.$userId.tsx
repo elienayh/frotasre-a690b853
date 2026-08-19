@@ -184,6 +184,9 @@ function UsuarioEdicao() {
                   phone: formData.get("phone"),
                   sector: sectorDraft,
                   cpf: formData.get("cpf"),
+                  mobile: formData.get("mobile"),
+                  address: formData.get("address"),
+                  cnh_number: formData.get("cnh_number"),
                 };
                 patch.mutate(values);
               }} className="grid gap-4 sm:grid-cols-2">
@@ -218,8 +221,20 @@ function UsuarioEdicao() {
                   <Label>CPF</Label>
                   <Input name="cpf" defaultValue={profile.cpf || ""} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Celular / WhatsApp</Label>
+                  <Input name="mobile" defaultValue={profile.mobile || ""} />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Endereço Completo</Label>
+                  <Input name="address" defaultValue={profile.address || ""} placeholder="Rua, Número, Bairro, Cidade - UF" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Número da CNH</Label>
+                  <Input name="cnh_number" defaultValue={profile.cnh_number || ""} />
+                </div>
                 <div className="sm:col-span-2 pt-4">
-                   <Button type="submit" disabled={patch.isPending}>Salvar Alterações</Button>
+                   <Button type="submit" disabled={patch.isPending} className="w-full sm:w-auto rounded-xl">Salvar Alterações</Button>
                 </div>
               </form>
             </CardContent>

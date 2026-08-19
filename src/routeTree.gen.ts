@@ -17,6 +17,7 @@ import { Route as AuthenticatedOrganizacaoRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSetorRouteImport } from './routes/_authenticated/setor'
 import { Route as AuthenticatedViagensRouteImport } from './routes/_authenticated/viagens'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedAdminCidadesRouteImport } from './routes/_authenticated/admin.cidades'
 import { Route as AuthenticatedAdminDestinosRouteImport } from './routes/_authenticated/admin.destinos'
 import { Route as AuthenticatedAdminDisponibilidadeRouteImport } from './routes/_authenticated/admin.disponibilidade'
@@ -72,6 +73,11 @@ const AuthenticatedViagensRoute = AuthenticatedViagensRouteImport.update({
   id: '/viagens',
   path: '/viagens',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedAdminCidadesRoute =
   AuthenticatedAdminCidadesRouteImport.update({
@@ -160,12 +166,13 @@ const AuthenticatedSolicitacoesTripIdEditarRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/setor': typeof AuthenticatedSetorRoute
   '/viagens': typeof AuthenticatedViagensRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
@@ -183,12 +190,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/setor': typeof AuthenticatedSetorRoute
   '/viagens': typeof AuthenticatedViagensRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
@@ -207,12 +215,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
   '/_authenticated/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/setor': typeof AuthenticatedSetorRoute
   '/_authenticated/viagens': typeof AuthenticatedViagensRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/admin/cidades': typeof AuthenticatedAdminCidadesRoute
   '/_authenticated/admin/destinos': typeof AuthenticatedAdminDestinosRoute
   '/_authenticated/admin/disponibilidade': typeof AuthenticatedAdminDisponibilidadeRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/setor'
     | '/viagens'
+    | '/auth/callback'
     | '/admin/cidades'
     | '/admin/destinos'
     | '/admin/disponibilidade'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/setor'
     | '/viagens'
+    | '/auth/callback'
     | '/admin/cidades'
     | '/admin/destinos'
     | '/admin/disponibilidade'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/setor'
     | '/_authenticated/viagens'
+    | '/auth/callback'
     | '/_authenticated/admin/cidades'
     | '/_authenticated/admin/destinos'
     | '/_authenticated/admin/disponibilidade'
@@ -303,7 +315,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -363,6 +375,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/viagens'
       preLoaderRoute: typeof AuthenticatedViagensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/admin/cidades': {
       id: '/_authenticated/admin/cidades'
@@ -530,10 +549,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

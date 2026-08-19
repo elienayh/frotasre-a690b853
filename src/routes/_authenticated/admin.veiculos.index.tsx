@@ -72,6 +72,7 @@ interface VehicleRow {
   odometer: number;
   notes: string | null;
   is_active: boolean;
+  base_status: string;
   last_oil_change_km?: number | null;
   next_oil_change_km?: number | null;
   last_tire_change_km?: number | null;
@@ -122,7 +123,7 @@ function Veiculos() {
       const { data, error } = await supabase
         .from("vehicles")
         .select(
-          "id, plate, manufacturer, model, year, vehicle_type, fuel, capacity, asset_number, odometer, notes, is_active, last_oil_change_km, next_oil_change_km, last_tire_change_km, next_tire_change_km, last_alignment_km, next_alignment_km, last_balancing_km, next_balancing_km",
+          "id, plate, manufacturer, model, year, vehicle_type, fuel, capacity, asset_number, odometer, notes, is_active, base_status, last_oil_change_km, next_oil_change_km, last_tire_change_km, next_tire_change_km, last_alignment_km, next_alignment_km, last_balancing_km, next_balancing_km",
         )
         .order("plate");
       if (error) throw error;
@@ -303,12 +304,21 @@ function Veiculos() {
         v.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.model.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const maintenanceStatus = (v as any).maintenance_status;
+      const isOverdue = (km: number, next: number | null | undefined) => {
+        return !!(next && next > 0 && km >= next);
+      };
+
+      const hasCriticalMaintenance = 
+        isOverdue(v.odometer, v.next_oil_change_km) ||
+        isOverdue(v.odometer, v.next_tire_change_km) ||
+        isOverdue(v.odometer, v.next_alignment_km) ||
+        isOverdue(v.odometer, v.next_balancing_km);
+
       // Explicitly check for 'pending' or 'true' to support both types of URL params
       const isPendingRequested = search?.filter === 'pending' || search?.pending === 'true';
       
       const matchesFilter = isPendingRequested
-        ? (maintenanceStatus === 'VENCIDA' || maintenanceStatus === 'CRÍTICO')
+        ? hasCriticalMaintenance
         : true;
 
       return matchesSearch && matchesFilter;
@@ -349,7 +359,7 @@ function Veiculos() {
             return (
               <li 
                 key={v.id} 
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/40 bg-card/60 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-1 cursor-pointer"
+                className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-border/40 bg-card/60 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-1 cursor-pointer"
                 onClick={() => navigate({ to: "/admin/veiculos/$vehicleId", params: { vehicleId: v.id } })}
               >
 
@@ -446,7 +456,7 @@ function Veiculos() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="rounded-none h-10 text-xs hover:bg-muted"
+                    className="rounded-none h-10 text-[10px] font-bold uppercase tracking-widest hover:bg-muted"
                     onClick={(e) => {
                       e.stopPropagation();
                       openForm(v);
@@ -457,7 +467,7 @@ function Veiculos() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="rounded-none h-10 text-xs hover:bg-muted"
+                    className="rounded-none h-10 text-[10px] font-bold uppercase tracking-widest hover:bg-muted"
                     onClick={(e) => {
                       e.stopPropagation();
                       setNextStatus(status?.status ?? "DISPONIVEL");
