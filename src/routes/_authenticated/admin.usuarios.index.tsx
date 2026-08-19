@@ -127,6 +127,7 @@ function UsuariosList() {
         p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.registration?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.sector?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p as any).mobile?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         email.includes(searchTerm.toLowerCase());
 
       const matchesFilters = 
