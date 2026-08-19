@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Lock, Steering } from "lucide-react";
+import { Lock, CarFront } from "lucide-react";
 
 import { ComboBox, type ComboOption } from "@/components/ComboBox";
 import { Badge } from "@/components/ui/badge";
@@ -85,7 +85,7 @@ export function OccupantsPicker({
             <span className="w-5 shrink-0 text-sm text-muted-foreground">{index + 1}.</span>
             <div className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
               <div className="flex min-w-0 items-center gap-2">
-                <Steering className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                <CarFront className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                 <span className="truncate text-sm font-semibold">{driver.name}</span>
                 <Badge
                   variant="secondary"
