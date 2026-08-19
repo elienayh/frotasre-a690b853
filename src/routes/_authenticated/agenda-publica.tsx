@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 
@@ -51,6 +52,7 @@ function dayKey(value: string | Date): string {
 }
 
 function CalendarioViagens() {
+  const { isAdmin, isSuperAdmin, isCoordinator } = useAuth();
   const today = new Date();
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -186,12 +188,14 @@ function CalendarioViagens() {
       fullWidth
       actions={
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-6 mr-6 bg-card/50 px-6 py-2 rounded-2xl border border-border/40">
-            <Stat label="Total" value={stats.total} color="text-foreground" />
-            <Stat label="Aprovadas" value={stats.aprovadas} color="text-emerald-500" />
-            <Stat label="Aguardando" value={stats.aguardando} color="text-amber-500" />
-            <Stat label="Em andamento" value={stats.emAndamento} color="text-blue-500" />
-          </div>
+          {(isAdmin || isSuperAdmin || isCoordinator) && (
+            <div className="hidden md:flex items-center gap-6 mr-6 bg-card/50 px-6 py-2 rounded-2xl border border-border/40">
+              <Stat label="Total" value={stats.total} color="text-foreground" />
+              <Stat label="Aprovadas" value={stats.aprovadas} color="text-emerald-500" />
+              <Stat label="Aguardando" value={stats.aguardando} color="text-amber-500" />
+              <Stat label="Em andamento" value={stats.emAndamento} color="text-blue-500" />
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <Button
@@ -274,10 +278,12 @@ function CalendarioViagens() {
           </div>
         </div>
         
-        <div className="md:hidden flex items-center gap-4 bg-card/50 px-4 py-2 rounded-2xl border border-border/40">
-            <Stat label="Viagens" value={stats.total} color="text-foreground" />
-            <Stat label="OK" value={stats.aprovadas} color="text-emerald-500" />
-        </div>
+        {(isAdmin || isSuperAdmin || isCoordinator) && (
+          <div className="md:hidden flex items-center gap-4 bg-card/50 px-4 py-2 rounded-2xl border border-border/40">
+              <Stat label="Viagens" value={stats.total} color="text-foreground" />
+              <Stat label="OK" value={stats.aprovadas} color="text-emerald-500" />
+          </div>
+        )}
       </div>
 
       <div className={cn("grid gap-8 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
