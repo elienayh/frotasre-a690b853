@@ -318,7 +318,10 @@ function FichaVeiculo() {
 
       const { error: vehError } = await supabase
         .from("vehicles")
-        .update(typeMap[type] || {})
+        .update({
+          ...(typeMap[type] || {}),
+          ...(performedKm > (vehicle?.odometer ?? 0) ? { odometer: performedKm } : {})
+        })
         .eq("id", vehicleId);
       if (vehError) throw vehError;
     },
