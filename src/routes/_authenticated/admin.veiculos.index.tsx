@@ -72,6 +72,7 @@ interface VehicleRow {
   odometer: number;
   notes: string | null;
   is_active: boolean;
+  base_status: string;
   last_oil_change_km?: number | null;
   next_oil_change_km?: number | null;
   last_tire_change_km?: number | null;
