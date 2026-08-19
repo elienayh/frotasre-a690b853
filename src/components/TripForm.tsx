@@ -28,7 +28,7 @@ const schema = z
     departure: z.string().min(1, { message: "Informe o horário de saída" }),
     ret: z.string().min(1, { message: "Informe o horário previsto de retorno" }),
     purpose: z.string().trim().min(5, { message: "Descreva o motivo da viagem" }).max(600),
-    passengers: z.coerce.number().int().min(1).max(60),
+    passengers: z.coerce.number().int().min(0).max(4),
     requester_notes: z.string().trim().max(600).optional(),
     allows_rides: z.boolean(),
   })
