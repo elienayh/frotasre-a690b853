@@ -23,7 +23,11 @@ import { OccupantsList } from "@/components/OccupantsList";
 import { StopDriverEditor } from "@/components/StopDriverEditor";
 import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
+import { useTripOccupants } from "@/hooks/useOccupants";
+import { useTripStops } from "@/hooks/useTripStops";
+import { calculateTripOccupancy } from "@/lib/occupancy";
 import { cn } from "@/lib/utils";
+
 import {
   dateTimeToIso,
   friendlyDbError,
