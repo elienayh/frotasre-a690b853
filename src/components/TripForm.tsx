@@ -152,6 +152,14 @@ export function TripForm({ trip }: TripFormProps) {
 
   const occupancy = calculateTripOccupancy(stops, occupantIds, 5);
 
+  // Um motorista definido em um trecho nunca pode ocupar também um campo de passageiro adicional.
+  useEffect(() => {
+    const driverIds = new Set(occupancy.uniqueDriverIds);
+    if (!occupantIds.some((id) => id && driverIds.has(id))) return;
+    setOccupantIds((prev) => prev.map((id) => (id && driverIds.has(id) ? null : id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [occupancy.uniqueDriverIds.join(",")]);
+
   function selectedOccupants(count: number): string[] {
     return occupantIds.slice(0, count).filter(Boolean) as string[];
   }
