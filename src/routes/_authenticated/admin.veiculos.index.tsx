@@ -359,7 +359,7 @@ function Veiculos() {
             return (
               <li 
                 key={v.id} 
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/40 bg-card/60 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-1 cursor-pointer"
+                className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-border/40 bg-card/60 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-1 cursor-pointer"
                 onClick={() => navigate({ to: "/admin/veiculos/$vehicleId", params: { vehicleId: v.id } })}
               >
 
