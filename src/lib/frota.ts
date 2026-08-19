@@ -101,10 +101,15 @@ export function dateTimeToIso(date: string, time: string): string {
 
 /** Tradução amigável de erros comuns do banco. */
 export function friendlyDbError(msg: string): string {
-  if (msg.includes("duplicate") || msg.includes("unique")) return "Já existe um registro com estes dados.";
+  // Apenas violações reais de chave única viram a mensagem de duplicidade.
+  // Mensagens como "no unique or exclusion constraint matching the ON CONFLICT
+  // specification" não são duplicidade e não devem ser mascaradas.
+  if (/duplicate key value|already exists/i.test(msg))
+    return "Já existe um registro com estes dados.";
   if (msg.includes("foreign key")) return "Não é possível realizar a ação: existem registros vinculados.";
   return msg;
 }
+
 
 /** Tipos de viagem comuns. */
 export interface TripRow {
