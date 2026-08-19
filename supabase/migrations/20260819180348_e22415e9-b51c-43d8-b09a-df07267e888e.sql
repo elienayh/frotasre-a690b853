@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.sync_trip_drivers_to_occupants() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.sync_assigned_driver_to_occupants() FROM PUBLIC, anon, authenticated;
