@@ -54,6 +54,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
+          // Explicitamente apontando para a nossa rota de callback
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             hd: "educacao.mg.gov.br",
