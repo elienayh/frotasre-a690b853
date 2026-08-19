@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AuditTimeline } from "@/components/AuditTimeline";
 import { VehicleMaintenanceCard } from "@/components/VehicleMaintenanceCard";
+import { TripMileageDialog } from "@/components/TripMileageDialog";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -384,6 +385,14 @@ function FichaVeiculo() {
             variant="outline"
             size="sm"
             className="rounded-xl border-border/40"
+            onClick={() => setOdometerOpen(true)}
+          >
+            <Gauge className="mr-1.5 h-4 w-4" /> Atualizar Odômetro
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl border-border/40"
             onClick={() => {
               setNextStatus((vehicle?.base_status as FleetStatus) ?? "DISPONIVEL");
               setStatusOpen(true);
@@ -403,6 +412,13 @@ function FichaVeiculo() {
         </div>
       }
     >
+      <TripMileageDialog 
+        vehicle={vehicle}
+        isOpen={odometerOpen}
+        onOpenChange={setOdometerOpen}
+        mode="manual"
+        onSuccess={invalidate}
+      />
       <div className="mb-8 flex flex-wrap items-center gap-4">
         <StatusBadge status={vehicle?.base_status ?? "DISPONIVEL"} kind="fleet" className="px-4 py-1.5" />
         <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
