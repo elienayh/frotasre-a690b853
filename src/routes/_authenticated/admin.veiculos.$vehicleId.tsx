@@ -322,10 +322,21 @@ function FichaVeiculo() {
         .from("vehicles")
         .update({
           ...(typeMap[type] || {}),
-          ...(performedKm > (vehicle?.odometer ?? 0) ? { odometer: performedKm } : {})
         })
         .eq("id", vehicleId);
       if (vehError) throw vehError;
+
+      // Chama RPC para atualizar odômetro central se o realizado for maior
+      if (performedKm > (vehicle?.odometer ?? 0)) {
+        const { error: odoError } = await supabase.rpc("update_vehicle_odometer", {
+          _vehicle_id: vehicleId,
+          _new_value: performedKm,
+          _recorded_by: (await supabase.auth.getUser()).data.user?.id || "",
+          _origin: "maintenance_preventive",
+          _reason: "Manutenção preventiva realizada: " + type
+        });
+        if (odoError) throw odoError;
+      }
     },
     onSuccess: () => {
       toast.success("Manutenção registrada com sucesso!");
