@@ -122,7 +122,7 @@ function Veiculos() {
       const { data, error } = await supabase
         .from("vehicles")
         .select(
-          "id, plate, manufacturer, model, year, vehicle_type, fuel, capacity, asset_number, odometer, notes, is_active, base_status, maintenance_status, last_oil_change_km, next_oil_change_km, last_tire_change_km, next_tire_change_km, last_alignment_km, next_alignment_km, last_balancing_km, next_balancing_km",
+          "id, plate, manufacturer, model, year, vehicle_type, fuel, capacity, asset_number, odometer, notes, is_active, base_status, last_oil_change_km, next_oil_change_km, last_tire_change_km, next_tire_change_km, last_alignment_km, next_alignment_km, last_balancing_km, next_balancing_km",
         )
         .order("plate");
       if (error) throw error;
