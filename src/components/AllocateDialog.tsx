@@ -23,7 +23,11 @@ import { OccupantsList } from "@/components/OccupantsList";
 import { StopDriverEditor } from "@/components/StopDriverEditor";
 import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
+import { useTripOccupants } from "@/hooks/useOccupants";
+import { useTripStops } from "@/hooks/useTripStops";
+import { calculateTripOccupancy } from "@/lib/occupancy";
 import { cn } from "@/lib/utils";
+
 import {
   dateTimeToIso,
   friendlyDbError,
@@ -118,14 +122,26 @@ export function AllocateDialog({ trip, onClose, onReject }: AllocateDialogProps)
     },
   });
 
-  // Lotação: o motorista ocupa um lugar e é contado à parte dos ocupantes.
+  const { data: tripStops = [] } = useTripStops(trip?.id ?? null);
+  const { data: tripOccupants = [] } = useTripOccupants(trip?.id ?? null);
+
+  // Lotação: fonte única (ocupantes persistidos + motoristas dos trechos + condutor definido).
   const selectedVehicle = availability.find((v) => v.vehicle_id === vehicleId) ?? null;
-  const occupants = trip?.passengers ?? 0;
-  const driverSeats = driverUserId ? 1 : 0;
-  const totalSeats = occupants + driverSeats;
-  const capacity = selectedVehicle?.capacity ?? null;
-  const overCapacity = capacity != null && totalSeats > capacity;
+  const capacity = selectedVehicle?.capacity ?? 5;
+  const occupancy = calculateTripOccupancy(
+    [
+      ...tripStops.map((s) => ({ driver_user_id: s.driver_user_id })),
+      { driver_user_id: driverUserId },
+    ],
+    tripOccupants.filter((o) => !o.is_external && !o.is_driver).map((o) => o.user_id),
+    capacity,
+  );
+  const occupants = occupancy.passengersCount;
+  const driverSeats = occupancy.driversCount;
+  const totalSeats = occupancy.totalPeople;
+  const overCapacity = occupancy.isExceeded;
   const capacityBlocked = overCapacity && !isSuperAdmin;
+
 
   const approve = useMutation({
     mutationFn: async (notes: string) => {

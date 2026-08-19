@@ -130,7 +130,7 @@ export function OccupantsList({
                 </div>
               </span>
 
-              {canManage && o.status !== "RECUSADO" && (
+              {canManage && !o.is_driver && o.status !== "RECUSADO" && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -141,6 +141,13 @@ export function OccupantsList({
                   <X className="h-4 w-4" />
                 </Button>
               )}
+
+              {o.is_driver && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  Definido no condutor
+                </span>
+              )}
+
 
               {!readOnly && o.user_id === user?.id && o.status === "CONFIRMADO" && (
                 <Button

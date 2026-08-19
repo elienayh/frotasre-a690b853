@@ -82,7 +82,7 @@ export function TripForm({ trip }: TripFormProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_occupants")
-        .select("id, user_id, is_external")
+        .select("id, user_id, is_external, is_driver")
         .eq("trip_id", trip!.id || "")
         .order("created_at");
       if (error) throw error;
@@ -92,9 +92,13 @@ export function TripForm({ trip }: TripFormProps) {
 
   useEffect(() => {
     if (!savedOccupants) return;
-    const ids = savedOccupants.filter((o) => !o.is_external).map((o) => o.user_id);
+    // Motoristas são controlados pelo campo do trecho, nunca pela lista de passageiros.
+    const ids = savedOccupants
+      .filter((o) => !o.is_external && !o.is_driver)
+      .map((o) => o.user_id);
     if (ids.length > 0) setOccupantIds(ids);
   }, [savedOccupants]);
+
 
   useEffect(() => {
     if (!trip) return;
@@ -275,11 +279,25 @@ export function TripForm({ trip }: TripFormProps) {
         );
         if (stopsError) throw new Error(stopsError.message);
 
-        // Ocupantes: só as diferenças, para não gerar avisos repetidos a quem já estava.
-        const current = (savedOccupants ?? []).filter((o) => !o.is_external);
+        // Ocupantes: relemos o estado real do banco (os motoristas dos trechos são
+        // inseridos automaticamente por gatilho) e aplicamos apenas as diferenças.
+        const driverIds = new Set(
+          list.map((s) => s.driverUserId).filter(Boolean) as string[],
+        );
+        const passengerIds = chosen.filter((id) => !driverIds.has(id));
+
+        const { data: existing } = await supabase
+          .from("trip_occupants")
+          .select("id, user_id, is_external, is_driver")
+          .eq("trip_id", tripId);
+
+        const current = (existing ?? []).filter((o) => !o.is_external);
         const currentIds = current.map((o) => o.user_id).filter(Boolean) as string[];
-        const toRemove = current.filter((o) => o.user_id && !chosen.includes(o.user_id));
-        const toAdd = chosen.filter((id) => !currentIds.includes(id));
+        const toRemove = current.filter(
+          (o) => o.user_id && !o.is_driver && !passengerIds.includes(o.user_id),
+        );
+        const toAdd = passengerIds.filter((id) => !currentIds.includes(id));
+
         if (toRemove.length > 0) {
           await supabase
             .from("trip_occupants")
@@ -298,8 +316,12 @@ export function TripForm({ trip }: TripFormProps) {
               added_by: user?.id ?? null,
             })),
           );
-          if (occError) throw new Error(occError.message);
+          // Duplicidade aqui significa que o ocupante já existe: não é erro para o usuário.
+          if (occError && !/duplicate key value/i.test(occError.message)) {
+            throw new Error(occError.message);
+          }
         }
+
 
         // Envio de e-mail assíncrono para o setor de transportes
         void notifyEmail({
