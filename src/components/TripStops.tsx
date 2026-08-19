@@ -41,7 +41,13 @@ export function TripStops({ value, onChange }: TripStopsProps) {
   const cityOptions: ComboOption[] = cities.map((c) => ({ value: c.id, label: c.name }));
 
   function update(index: number, patch: Partial<StopValue>) {
-    onChange(value.map((stop, i) => (i === index ? { ...stop, ...patch } : stop)));
+    const nextValue = value.map((stop, i) => (i === index ? { ...stop, ...patch } : stop));
+    onChange(nextValue);
+  }
+
+  function handleAddStop() {
+    const lastStop = value[value.length - 1];
+    onChange([...value, { ...newStop(), driverUserId: lastStop?.driverUserId || null }]);
   }
 
   function move(index: number, delta: number) {
@@ -196,7 +202,7 @@ export function TripStops({ value, onChange }: TripStopsProps) {
         );
       })}
 
-      <Button type="button" variant="outline" onClick={() => onChange([...value, newStop()])}>
+      <Button type="button" variant="outline" onClick={handleAddStop}>
         <Plus className="mr-1 h-4 w-4" /> Adicionar outro destino
       </Button>
     </div>

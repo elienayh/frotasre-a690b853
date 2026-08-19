@@ -28,7 +28,7 @@ const schema = z
     departure: z.string().min(1, { message: "Informe o horário de saída" }),
     ret: z.string().min(1, { message: "Informe o horário previsto de retorno" }),
     purpose: z.string().trim().min(5, { message: "Descreva o motivo da viagem" }).max(600),
-    passengers: z.coerce.number().int().min(1).max(60),
+    passengers: z.coerce.number().int().min(0).max(4),
     requester_notes: z.string().trim().max(600).optional(),
     allows_rides: z.boolean(),
   })
@@ -203,7 +203,7 @@ export function TripForm({ trip }: TripFormProps) {
       return;
     }
 
-    if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
+    if (parsed.data.passengers > 0 && selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
       toast.error("Selecione todos os passageiros da viagem.");
       return;
     }
@@ -352,12 +352,16 @@ export function TripForm({ trip }: TripFormProps) {
             </div>
             <Row label="Motivo" value={review.purpose} />
             <div>
-              <p className="text-muted-foreground">Ocupantes ({review.passengers})</p>
-              <ol className="mt-1 list-decimal space-y-1 pl-5">
-                {names.map((name, index) => (
-                  <li key={index}>{name}</li>
-                ))}
-              </ol>
+              <p className="text-muted-foreground">Passageiros ({review.passengers})</p>
+              {names.length > 0 ? (
+                <ol className="mt-1 list-decimal space-y-1 pl-5">
+                  {names.map((name, index) => (
+                    <li key={index}>{name}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-1 italic">Nenhum passageiro extra</p>
+              )}
             </div>
             <Row
               label="Motorista(s)"
@@ -453,9 +457,10 @@ export function TripForm({ trip }: TripFormProps) {
                     required
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    O motorista já é contabilizado automaticamente.
+                    O motorista já é contabilizado automaticamente como 1 pessoa. Capacidade: 1 + 4 passageiros.
                   </p>
                 </div>
+
                 <div className="space-y-2">
                   <Label>Ocupação Total do Veículo</Label>
                   <div
@@ -477,9 +482,7 @@ export function TripForm({ trip }: TripFormProps) {
                       </span>
                     </div>
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      ({occupancy.driversCount} motorista{occupancy.driversCount > 1 ? "s" : ""} +{" "}
-                      {occupancy.passengersCount} passageiro{occupancy.passengersCount !== 1 ? "s" : ""}
-                      )
+                      (1 motorista + {occupancy.passengersCount} passageiros)
                     </p>
                   </div>
                 </div>
