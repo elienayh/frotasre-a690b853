@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useServerFn } from "@tanstack/react-start";
-import { getUsersEmails } from "@/integrations/supabase/admin.functions";
+import { getUsersEmails, syncAuthProfiles } from "@/integrations/supabase/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios/")({
   component: UsuariosList,
