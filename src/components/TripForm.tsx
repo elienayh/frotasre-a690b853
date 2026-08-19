@@ -352,12 +352,16 @@ export function TripForm({ trip }: TripFormProps) {
             </div>
             <Row label="Motivo" value={review.purpose} />
             <div>
-              <p className="text-muted-foreground">Ocupantes ({review.passengers})</p>
-              <ol className="mt-1 list-decimal space-y-1 pl-5">
-                {names.map((name, index) => (
-                  <li key={index}>{name}</li>
-                ))}
-              </ol>
+              <p className="text-muted-foreground">Passageiros ({review.passengers})</p>
+              {names.length > 0 ? (
+                <ol className="mt-1 list-decimal space-y-1 pl-5">
+                  {names.map((name, index) => (
+                    <li key={index}>{name}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-1 italic">Nenhum passageiro extra</p>
+              )}
             </div>
             <Row
               label="Motorista(s)"
