@@ -239,7 +239,7 @@ function CalendarioViagens() {
     viewMode === "Dia"
       ? LONG_DATE.format(cursor)
       : viewMode === "Semana"
-        ? `${weekDays[0].getDate()} – ${weekDays[6].getDate()} de ${MONTHS[weekDays[6].getMonth()]}`
+        ? `${startOfWeek(cursor).getDate()} – ${addDays(startOfWeek(cursor), 6).getDate()} de ${MONTHS[addDays(startOfWeek(cursor), 6).getMonth()]}`
         : `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`;
 
   return (
