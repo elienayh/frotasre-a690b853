@@ -467,7 +467,7 @@ function Veiculos() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="rounded-none h-10 text-xs hover:bg-muted"
+                    className="rounded-none h-10 text-[10px] font-bold uppercase tracking-widest hover:bg-muted"
                     onClick={(e) => {
                       e.stopPropagation();
                       setNextStatus(status?.status ?? "DISPONIVEL");
