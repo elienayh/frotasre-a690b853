@@ -122,6 +122,9 @@ export function AllocateDialog({ trip, onClose, onReject }: AllocateDialogProps)
     },
   });
 
+  const { data: tripStops = [] } = useTripStops(trip?.id ?? null);
+  const { data: tripOccupants = [] } = useTripOccupants(trip?.id ?? null);
+
   // Lotação: fonte única (ocupantes persistidos + motoristas dos trechos + condutor definido).
   const selectedVehicle = availability.find((v) => v.vehicle_id === vehicleId) ?? null;
   const capacity = selectedVehicle?.capacity ?? 5;
