@@ -184,6 +184,9 @@ function UsuarioEdicao() {
                   phone: formData.get("phone"),
                   sector: sectorDraft,
                   cpf: formData.get("cpf"),
+                  mobile: formData.get("mobile"),
+                  address: formData.get("address"),
+                  cnh_number: formData.get("cnh_number"),
                 };
                 patch.mutate(values);
               }} className="grid gap-4 sm:grid-cols-2">
