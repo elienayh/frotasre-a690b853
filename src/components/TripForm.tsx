@@ -203,7 +203,7 @@ export function TripForm({ trip }: TripFormProps) {
       return;
     }
 
-    if (selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
+    if (parsed.data.passengers > 0 && selectedOccupants(parsed.data.passengers).length < parsed.data.passengers) {
       toast.error("Selecione todos os passageiros da viagem.");
       return;
     }
