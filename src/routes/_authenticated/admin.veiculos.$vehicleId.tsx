@@ -81,6 +81,7 @@ function FichaVeiculo() {
   const queryClient = useQueryClient();
 
   const [maintOpen, setMaintOpen] = useState(false);
+  const [odometerOpen, setOdometerOpen] = useState(false);
   const [preventiveOpen, setPreventiveOpen] = useState(false);
   const [selectedMaintType, setSelectedMaintType] = useState<string>('OIL');
   const [finishing, setFinishing] = useState<BlockRow | null>(null);
