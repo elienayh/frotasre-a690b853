@@ -5,6 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { TripDrawer } from "@/components/TripDrawer";
+import { DayTripsDialog } from "@/components/DayTripsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,20 +47,47 @@ const MONTHS = [
 const STATUSES = ["PENDENTE", "APROVADA", "PROGRAMADA", "EM_ANDAMENTO", "CONCLUIDA"];
 const ALL = "__all__";
 
+type ViewMode = "Mês" | "Semana" | "Dia" | "Lista";
+const VIEW_MODES: ViewMode[] = ["Semana", "Dia", "Mês", "Lista"];
+
 function dayKey(value: string | Date): string {
   const d = new Date(value);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function startOfDay(value: Date): Date {
+  const d = new Date(value);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(value: Date, amount: number): Date {
+  const d = new Date(value);
+  d.setDate(d.getDate() + amount);
+  return d;
+}
+
+function startOfWeek(value: Date): Date {
+  const d = startOfDay(value);
+  return addDays(d, -d.getDay());
+}
+
+const LONG_DATE = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
 function CalendarioViagens() {
-  const { isAdmin, isSuperAdmin, isCoordinator } = useAuth();
+  const { isAdmin, isSuperAdmin, isCoordinator, profile } = useAuth();
   const today = new Date();
   const navigate = useNavigate();
-  const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [cursor, setCursor] = useState(startOfDay(today));
   const [tripId, setTripId] = useState<string | null>(null);
-  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<"Mês" | "Semana" | "Dia" | "Lista">("Mês");
+  const [viewMode, setViewMode] = useState<ViewMode>("Mês");
 
   const [fDestino, setFDestino] = useState("");
   const [fCidade, setFCidade] = useState(ALL);
@@ -71,23 +99,32 @@ function CalendarioViagens() {
   const { data: cities = [] } = useCities();
   const { data: vehicles = [] } = useVehicles();
 
-  const gridStart = useMemo(() => {
-    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    const start = new Date(first);
-    start.setDate(first.getDate() - first.getDay());
-    start.setHours(0, 0, 0, 0);
-    return start;
-  }, [cursor]);
+  // Somente usuários com perfil ativo podem iniciar uma solicitação.
+  const canCreate = Boolean(profile);
 
-  const gridEnd = useMemo(() => {
-    const end = new Date(gridStart);
-    end.setDate(gridStart.getDate() + 42);
-    return end;
-  }, [gridStart]);
+  /** Intervalo carregado do banco: uma única fonte de dados para os quatro modos. */
+  const range = useMemo(() => {
+    if (viewMode === "Dia") {
+      const start = startOfDay(cursor);
+      return { start, end: addDays(start, 1) };
+    }
+    if (viewMode === "Semana") {
+      const start = startOfWeek(cursor);
+      return { start, end: addDays(start, 7) };
+    }
+    if (viewMode === "Lista") {
+      const start = startOfDay(new Date(cursor.getFullYear(), cursor.getMonth(), 1));
+      const end = startOfDay(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
+      return { start, end };
+    }
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const start = startOfWeek(first);
+    return { start, end: addDays(start, 42) };
+  }, [cursor, viewMode]);
 
   const { data: trips = [], isLoading } = useAgendaTrips(
-    gridStart.toISOString(),
-    gridEnd.toISOString(),
+    range.start.toISOString(),
+    range.end.toISOString(),
   );
 
   const filtered = useMemo(
@@ -114,9 +151,9 @@ function CalendarioViagens() {
   const stats = useMemo(() => {
     return {
       total: filtered.length,
-      aprovadas: filtered.filter(t => t.status === "APROVADA" || t.status === "PROGRAMADA").length,
-      aguardando: filtered.filter(t => t.status === "PENDENTE").length,
-      emAndamento: filtered.filter(t => t.status === "EM_ANDAMENTO").length,
+      aprovadas: filtered.filter((t) => t.status === "APROVADA" || t.status === "PROGRAMADA").length,
+      aguardando: filtered.filter((t) => t.status === "PENDENTE").length,
+      emAndamento: filtered.filter((t) => t.status === "EM_ANDAMENTO").length,
     };
   }, [filtered]);
 
@@ -131,43 +168,46 @@ function CalendarioViagens() {
     return count;
   }, [fCidade, fSetor, fVeiculo, fStatus, fDestino, fMotorista]);
 
+  /** Índice dia → viagens, considerando viagens que atravessam vários dias. */
   const byDay = useMemo(() => {
     const map = new Map<string, AgendaTrip[]>();
-    for (const t of filtered) {
-      const key = dayKey(t.departure_at);
+    const push = (key: string, trip: AgendaTrip) => {
       const list = map.get(key);
-      if (list) list.push(t);
-      else map.set(key, [t]);
-    }
+      if (!list) map.set(key, [trip]);
+      else if (!list.some((x) => x.id === trip.id)) list.push(trip);
+    };
     for (const t of filtered) {
-      const depKey = dayKey(t.departure_at);
+      push(dayKey(t.departure_at), t);
       const retKey = dayKey(t.return_at);
-      if (depKey !== retKey) {
-        const d = new Date(t.departure_at);
-        d.setDate(d.getDate() + 1);
-        while (dayKey(d) <= retKey) {
-           const key = dayKey(d);
-           const list = map.get(key);
-           if (list) {
-             if (!list.find(x => x.id === t.id)) list.push(t);
-           } else {
-             map.set(key, [t]);
-           }
-           d.setDate(d.getDate() + 1);
-        }
+      let d = addDays(new Date(t.departure_at), 1);
+      while (dayKey(d) <= retKey) {
+        push(dayKey(d), t);
+        d = addDays(d, 1);
       }
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => new Date(a.departure_at).getTime() - new Date(b.departure_at).getTime());
     }
     return map;
   }, [filtered]);
 
-  const days = useMemo(
+  const monthDays = useMemo(() => {
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const start = startOfWeek(first);
+    return Array.from({ length: 42 }, (_, i) => addDays(start, i));
+  }, [cursor]);
+
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(cursor);
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  }, [cursor]);
+
+  const listTrips = useMemo(
     () =>
-      Array.from({ length: 42 }, (_, i) => {
-        const d = new Date(gridStart);
-        d.setDate(gridStart.getDate() + i);
-        return d;
-      }),
-    [gridStart],
+      [...filtered].sort(
+        (a, b) => new Date(a.departure_at).getTime() - new Date(b.departure_at).getTime(),
+      ),
+    [filtered],
   );
 
   const clearFilters = () => {
@@ -179,7 +219,28 @@ function CalendarioViagens() {
     setFMotorista("");
   };
 
+  const step = (direction: 1 | -1) => {
+    if (viewMode === "Dia") setCursor(addDays(cursor, direction));
+    else if (viewMode === "Semana") setCursor(addDays(cursor, direction * 7));
+    else setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + direction, 1));
+  };
+
+  const openDay = (d: Date) => setSelectedDay(startOfDay(d));
+
+  const createTripForDate = (d: Date) => {
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    setSelectedDay(null);
+    navigate({ to: "/solicitacoes/nova", search: { initialDate: iso } });
+  };
+
   const todayKey = dayKey(today);
+
+  const periodLabel =
+    viewMode === "Dia"
+      ? LONG_DATE.format(cursor)
+      : viewMode === "Semana"
+        ? `${startOfWeek(cursor).getDate()} – ${addDays(startOfWeek(cursor), 6).getDate()} de ${MONTHS[addDays(startOfWeek(cursor), 6).getMonth()]}`
+        : `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`;
 
   return (
     <AppShell
@@ -189,7 +250,7 @@ function CalendarioViagens() {
       actions={
         <div className="flex items-center gap-4">
           {(isAdmin || isSuperAdmin || isCoordinator) && (
-            <div className="hidden md:flex items-center gap-6 mr-6 bg-card/50 px-6 py-2 rounded-2xl border border-border/40">
+            <div className="mr-6 hidden items-center gap-6 rounded-2xl border border-border/40 bg-card/50 px-6 py-2 md:flex">
               <Stat label="Total" value={stats.total} color="text-foreground" />
               <Stat label="Aprovadas" value={stats.aprovadas} color="text-emerald-500" />
               <Stat label="Aguardando" value={stats.aguardando} color="text-amber-500" />
@@ -204,54 +265,44 @@ function CalendarioViagens() {
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
                 "rounded-xl font-bold transition-all",
-                activeFiltersCount > 0 && "shadow-lg shadow-primary/20"
+                activeFiltersCount > 0 && "shadow-lg shadow-primary/20",
               )}
             >
               <Filter className="mr-2 h-4 w-4" />
               Filtros
               {activeFiltersCount > 0 && (
-                <span className="ml-2 rounded-full bg-primary-foreground text-primary px-1.5 py-0.5 text-[10px] font-black">
+                <span className="ml-2 rounded-full bg-primary-foreground px-1.5 py-0.5 text-[10px] font-black text-primary">
                   {activeFiltersCount}
                 </span>
               )}
             </Button>
 
-            <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl">
-              {["Semana", "Dia", "Mês", "Lista"].map((m) => (
+            <div className="flex items-center gap-1 rounded-xl bg-muted/30 p-1">
+              {VIEW_MODES.map((m) => (
                 <Button
                   key={m}
                   variant={viewMode === m ? "secondary" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode(m as any)}
-                  className="rounded-lg text-xs font-bold"
+                  aria-pressed={viewMode === m}
+                  onClick={() => setViewMode(m)}
+                  className={cn(
+                    "rounded-lg text-xs font-bold",
+                    viewMode === m && "shadow-sm ring-1 ring-border/60",
+                  )}
                 >
                   {m}
                 </Button>
               ))}
             </div>
 
-            <div className="flex items-center gap-1 ml-2">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Mês anterior"
-                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-              >
+            <div className="ml-2 flex items-center gap-1">
+              <Button variant="outline" size="icon" aria-label="Período anterior" onClick={() => step(-1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
-              >
+              <Button variant="outline" size="sm" onClick={() => setCursor(startOfDay(new Date()))}>
                 Hoje
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Próximo mês"
-                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-              >
+              <Button variant="outline" size="icon" aria-label="Próximo período" onClick={() => step(1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -261,239 +312,435 @@ function CalendarioViagens() {
     >
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 shadow-inner">
             <CalendarDays className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h2 className="font-display text-4xl font-black tracking-tight text-foreground flex items-center gap-4">
-              {MONTHS[cursor.getMonth()]}
-              <span className="text-primary/30 tracking-tighter">{cursor.getFullYear()}</span>
+            <h2 className="flex items-center gap-4 font-display text-3xl font-black capitalize tracking-tight text-foreground md:text-4xl">
+              {periodLabel}
             </h2>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+            <div className="mt-1 flex items-center gap-2">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                 {isLoading ? "Sincronizando dados..." : `${filtered.length} solicitações no período`}
               </p>
             </div>
           </div>
         </div>
-        
+
         {(isAdmin || isSuperAdmin || isCoordinator) && (
-          <div className="md:hidden flex items-center gap-4 bg-card/50 px-4 py-2 rounded-2xl border border-border/40">
-              <Stat label="Viagens" value={stats.total} color="text-foreground" />
-              <Stat label="OK" value={stats.aprovadas} color="text-emerald-500" />
+          <div className="flex items-center gap-4 rounded-2xl border border-border/40 bg-card/50 px-4 py-2 md:hidden">
+            <Stat label="Viagens" value={stats.total} color="text-foreground" />
+            <Stat label="OK" value={stats.aprovadas} color="text-emerald-500" />
           </div>
         )}
       </div>
 
-      <div className={cn("grid gap-8 transition-all duration-300", showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1")}>
+      <div
+        className={cn(
+          "grid gap-8 transition-all duration-300",
+          showFilters ? "lg:grid-cols-[18rem_1fr]" : "grid-cols-1",
+        )}
+      >
         {showFilters && (
-          <aside className="space-y-6 animate-in slide-in-from-left duration-300">
-          <Card className="p-6 border-none shadow-xl bg-card/60 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <p className="flex items-center gap-2 font-display text-base font-bold text-foreground">
-                <Filter className="h-4 w-4 text-primary" /> Filtros
-              </p>
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs font-bold text-muted-foreground hover:text-primary">
-                Limpar
-              </Button>
-            </div>
-
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="f-destino" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Destino</Label>
-                <Input
-                  id="f-destino"
-                  value={fDestino}
-                  onChange={(e) => setFDestino(e.target.value)}
-                  placeholder="Escola, órgão…"
-                  className="rounded-xl border-border/40 bg-background/50"
-                />
-              </div>
-
-              <FilterSelect
-                id="f-cidade"
-                label="Cidade"
-                value={fCidade}
-                onChange={setFCidade}
-                options={cities.map((c) => ({ value: c.id, label: c.name }))}
-              />
-              <FilterSelect
-                id="f-setor"
-                label="Setor"
-                value={fSetor}
-                onChange={setFSetor}
-                options={SECTORS.map((s) => ({ value: s, label: s }))}
-              />
-              <FilterSelect
-                id="f-veiculo"
-                label="Veículo"
-                value={fVeiculo}
-                onChange={setFVeiculo}
-                options={vehicles.map((v) => ({
-                  value: v.id,
-                  label: `${v.manufacturer} ${v.model} — ${v.plate}`,
-                }))}
-              />
-              <FilterSelect
-                id="f-status"
-                label="Status"
-                value={fStatus}
-                onChange={setFStatus}
-                options={STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABEL[s] ?? s }))}
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="f-motorista" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Motorista</Label>
-                <Input
-                  id="f-motorista"
-                  value={fMotorista}
-                  onChange={(e) => setFMotorista(e.target.value)}
-                  placeholder="Nome do condutor"
-                  className="rounded-xl border-border/40 bg-background/50"
-                />
-              </div>
-
-              <div className="space-y-3 border-t border-border/40 pt-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-                  Legenda de Setores
+          <aside className="animate-in slide-in-from-left space-y-6 duration-300">
+            <Card className="border-none bg-card/60 p-6 shadow-xl backdrop-blur-xl">
+              <div className="mb-6 flex items-center justify-between">
+                <p className="flex items-center gap-2 font-display text-base font-bold text-foreground">
+                  <Filter className="h-4 w-4 text-primary" /> Filtros
                 </p>
-                <ul className="space-y-2">
-                  {SECTORS.map((s) => (
-                    <li key={s} className="flex items-center gap-3 text-sm font-medium text-foreground/80">
-                      <span className={cn("h-3 w-3 rounded-full shadow-sm", sectorColor(s).dot)} />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-xs font-bold text-muted-foreground hover:text-primary"
+                >
+                  Limpar
+                </Button>
               </div>
-            </div>
-          </Card>
-        </aside>
+
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="f-destino"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70"
+                  >
+                    Destino
+                  </Label>
+                  <Input
+                    id="f-destino"
+                    value={fDestino}
+                    onChange={(e) => setFDestino(e.target.value)}
+                    placeholder="Escola, órgão…"
+                    className="rounded-xl border-border/40 bg-background/50"
+                  />
+                </div>
+
+                <FilterSelect
+                  id="f-cidade"
+                  label="Cidade"
+                  value={fCidade}
+                  onChange={setFCidade}
+                  options={cities.map((c) => ({ value: c.id, label: c.name }))}
+                />
+                <FilterSelect
+                  id="f-setor"
+                  label="Setor"
+                  value={fSetor}
+                  onChange={setFSetor}
+                  options={SECTORS.map((s) => ({ value: s, label: s }))}
+                />
+                <FilterSelect
+                  id="f-veiculo"
+                  label="Veículo"
+                  value={fVeiculo}
+                  onChange={setFVeiculo}
+                  options={vehicles.map((v) => ({
+                    value: v.id,
+                    label: `${v.manufacturer} ${v.model} — ${v.plate}`,
+                  }))}
+                />
+                <FilterSelect
+                  id="f-status"
+                  label="Status"
+                  value={fStatus}
+                  onChange={setFStatus}
+                  options={STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABEL[s] ?? s }))}
+                />
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="f-motorista"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70"
+                  >
+                    Motorista
+                  </Label>
+                  <Input
+                    id="f-motorista"
+                    value={fMotorista}
+                    onChange={(e) => setFMotorista(e.target.value)}
+                    placeholder="Nome do condutor"
+                    className="rounded-xl border-border/40 bg-background/50"
+                  />
+                </div>
+
+                <div className="space-y-3 border-t border-border/40 pt-6">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                    Legenda de Setores
+                  </p>
+                  <ul className="space-y-2">
+                    {SECTORS.map((s) => (
+                      <li
+                        key={s}
+                        className="flex items-center gap-3 text-sm font-medium text-foreground/80"
+                      >
+                        <span className={cn("h-3 w-3 rounded-full shadow-sm", sectorColor(s).dot)} />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Card>
+          </aside>
         )}
 
         <section className="min-w-0 space-y-6">
-          <Card className="overflow-hidden border-none shadow-2xl bg-card/60 backdrop-blur-xl rounded-3xl">
-            <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
-              {WEEKDAYS.map((w) => (
-                <div
-                  key={w}
-                  className="px-2 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70"
-                >
-                  {w}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7">
-              {days.map((d) => {
-                const key = dayKey(d);
-                const items = byDay.get(key) ?? [];
-                const outside = d.getMonth() !== cursor.getMonth();
-                const isToday = key === todayKey;
-                const expanded = expandedDay === key;
-                const shown = expanded ? items : items.slice(0, 3);
-                
-                return (
+          {viewMode === "Mês" && (
+            <Card className="overflow-hidden rounded-3xl border-none bg-card/60 shadow-2xl backdrop-blur-xl">
+              <div className="grid grid-cols-7 border-b border-border/40 bg-muted/30">
+                {WEEKDAYS.map((w) => (
                   <div
-                    key={key}
-                    className={cn(
-                      "min-h-[180px] border-b border-r border-border/40 p-3 last:border-r-0 transition-colors duration-200 group cursor-pointer",
-                      outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
-                    )}
-                    onClick={() => {
-                      const isoDate = d.toISOString().split('T')[0];
-                      navigate({ to: "/solicitacoes/nova", search: { initialDate: isoDate } });
-                    }}
+                    key={w}
+                    className="px-2 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70"
                   >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span
-                        className={cn(
-                          "inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-black transition-all duration-300 relative",
-                          isToday
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110"
-                            : outside
-                              ? "text-muted-foreground/40"
-                              : "text-foreground group-hover:text-primary",
-                        )}
-                      >
-                        {d.getDate()}
-                      </span>
-                      {isToday && (
-                        <div className="flex flex-col items-end">
-                          <span className="text-[8px] font-black uppercase tracking-tighter text-primary px-1.5 py-0.5 rounded-full bg-primary/10">Hoje</span>
-                        </div>
+                    {w}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {monthDays.map((d) => {
+                  const key = dayKey(d);
+                  const items = byDay.get(key) ?? [];
+                  const outside = d.getMonth() !== cursor.getMonth();
+                  const isToday = key === todayKey;
+                  const shown = items.slice(0, 3);
+
+                  return (
+                    <div
+                      key={key}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openDay(d)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openDay(d);
+                        }
+                      }}
+                      className={cn(
+                        "group min-h-[180px] cursor-pointer border-b border-r border-border/40 p-3 transition-colors duration-200 last:border-r-0",
+                        outside ? "bg-muted/10 opacity-50" : "hover:bg-accent/20",
                       )}
-                    </div>
-                    
-                    <ul className="space-y-2">
-                      {shown.map((t) => {
-                        const color = sectorColor(t.requester?.sector);
-                        return (
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <span
+                          className={cn(
+                            "relative inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-black transition-all duration-300",
+                            isToday
+                              ? "scale-110 bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                              : outside
+                                ? "text-muted-foreground/40"
+                                : "text-foreground group-hover:text-primary",
+                          )}
+                        >
+                          {d.getDate()}
+                        </span>
+                        {isToday && (
+                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter text-primary">
+                            Hoje
+                          </span>
+                        )}
+                      </div>
+
+                      <ul className="space-y-2">
+                        {shown.map((t) => (
                           <li key={t.id}>
+                            <TripChip trip={t} onOpen={() => setTripId(t.id)} />
+                          </li>
+                        ))}
+                        {items.length > 3 ? (
+                          <li>
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setTripId(t.id);
+                                openDay(d);
                               }}
-                              className={cn(
-                                "w-full rounded-xl border border-l-4 px-2.5 py-2.5 text-left transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm",
-                                color.chip,
-                                color.border,
-                                "bg-opacity-95 backdrop-blur-sm"
-                              )}
+                              className="w-full rounded-xl px-2 py-2 text-center text-[10px] font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/10"
                             >
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className={cn("text-[10px] font-black tracking-widest uppercase", color.text)}>
-                                  {fmtTime(t.departure_at)}
-                                </span>
-                                <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
-                              </div>
-                              <span className={cn("block font-black text-xs uppercase tracking-tight leading-none mb-1", color.text)}>
-                                {tripCity(t)}
-                              </span>
-                              <span className="block truncate opacity-70 font-semibold text-[10px] leading-tight">
-                                {t.destination_text}
-                              </span>
+                              + {items.length - 3} viagens
                             </button>
                           </li>
-                        );
-                      })}
-                      {items.length > 3 ? (
-                        <li>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedDay(expanded ? null : key);
-                            }}
-                            className="w-full rounded-xl px-2 py-2 text-center text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
-                          >
-                            {expanded ? "ver menos" : `+ ${items.length - 3} viagens`}
-                          </button>
-                        </li>
-                      ) : null}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
+                        ) : null}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {viewMode === "Semana" && (
+            <Card className="overflow-hidden rounded-3xl border-none bg-card/60 shadow-2xl backdrop-blur-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-7">
+                {weekDays.map((d) => {
+                  const key = dayKey(d);
+                  const items = byDay.get(key) ?? [];
+                  const isToday = key === todayKey;
+                  return (
+                    <div
+                      key={key}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openDay(d)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openDay(d);
+                        }
+                      }}
+                      className="min-h-[220px] cursor-pointer border-b border-r border-border/40 p-3 transition-colors last:border-r-0 hover:bg-accent/20"
+                    >
+                      <div className="mb-3 flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-black",
+                            isToday
+                              ? "bg-primary text-primary-foreground"
+                              : "text-foreground",
+                          )}
+                        >
+                          {d.getDate()}
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+                          {WEEKDAYS[d.getDay()]}
+                        </span>
+                      </div>
+                      <ul className="space-y-2">
+                        {items.map((t) => (
+                          <li key={t.id}>
+                            <TripChip trip={t} onOpen={() => setTripId(t.id)} />
+                          </li>
+                        ))}
+                        {items.length === 0 ? (
+                          <li className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+                            Livre
+                          </li>
+                        ) : null}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {viewMode === "Dia" && (
+            <Card className="rounded-3xl border-none bg-card/60 p-6 shadow-2xl backdrop-blur-xl">
+              <div className="mb-5 flex items-center justify-between">
+                <p className="font-display text-lg font-black capitalize text-foreground">
+                  {LONG_DATE.format(cursor)}
+                </p>
+                {canCreate && (
+                  <Button size="sm" className="rounded-xl font-bold" onClick={() => createTripForDate(cursor)}>
+                    + Nova viagem
+                  </Button>
+                )}
+              </div>
+              <ul className="space-y-3">
+                {(byDay.get(dayKey(cursor)) ?? []).map((t) => (
+                  <li key={t.id}>
+                    <TripRow trip={t} onOpen={() => setTripId(t.id)} />
+                  </li>
+                ))}
+                {(byDay.get(dayKey(cursor)) ?? []).length === 0 && (
+                  <li className="py-12 text-center text-sm font-medium text-muted-foreground">
+                    Nenhuma viagem programada para este dia.
+                  </li>
+                )}
+              </ul>
+            </Card>
+          )}
+
+          {viewMode === "Lista" && (
+            <Card className="rounded-3xl border-none bg-card/60 p-6 shadow-2xl backdrop-blur-xl">
+              <ul className="space-y-3">
+                {listTrips.map((t) => (
+                  <li key={t.id}>
+                    <TripRow trip={t} onOpen={() => setTripId(t.id)} showDate />
+                  </li>
+                ))}
+                {listTrips.length === 0 && (
+                  <li className="py-12 text-center text-sm font-medium text-muted-foreground">
+                    Nenhuma viagem no período selecionado.
+                  </li>
+                )}
+              </ul>
+            </Card>
+          )}
         </section>
       </div>
+
+      <DayTripsDialog
+        date={selectedDay}
+        trips={selectedDay ? (byDay.get(dayKey(selectedDay)) ?? []) : []}
+        canCreate={canCreate}
+        onClose={() => setSelectedDay(null)}
+        onSelectTrip={(id) => {
+          setSelectedDay(null);
+          setTripId(id);
+        }}
+        onCreateTrip={createTripForDate}
+      />
 
       <TripDrawer tripId={tripId} onClose={() => setTripId(null)} />
     </AppShell>
   );
 }
 
+/** Card compacto de viagem usado nas visões Mês e Semana. */
+function TripChip({ trip, onOpen }: { trip: AgendaTrip; onOpen: () => void }) {
+  const color = sectorColor(trip.requester?.sector);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpen();
+      }}
+      className={cn(
+        "w-full rounded-xl border border-l-4 px-2.5 py-2.5 text-left shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-95",
+        color.chip,
+        color.border,
+        "bg-opacity-95 backdrop-blur-sm",
+      )}
+    >
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className={cn("text-[10px] font-black uppercase tracking-widest", color.text)}>
+          {fmtTime(trip.departure_at)}
+        </span>
+        <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
+      </div>
+      <span
+        className={cn(
+          "mb-1 block text-xs font-black uppercase leading-none tracking-tight",
+          color.text,
+        )}
+      >
+        {tripCity(trip)}
+      </span>
+      <span className="block truncate text-[10px] font-semibold leading-tight opacity-70">
+        {trip.destination_text}
+      </span>
+    </button>
+  );
+}
+
+/** Linha detalhada de viagem usada nas visões Dia e Lista. */
+function TripRow({
+  trip,
+  onOpen,
+  showDate = false,
+}: {
+  trip: AgendaTrip;
+  onOpen: () => void;
+  showDate?: boolean;
+}) {
+  const color = sectorColor(trip.requester?.sector);
+  const date = new Date(trip.departure_at);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        "flex w-full items-start gap-4 rounded-2xl border border-l-4 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-accent/40",
+        color.border,
+      )}
+    >
+      <span className="shrink-0 text-left">
+        {showDate && (
+          <span className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+            {date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+          </span>
+        )}
+        <span className={cn("block text-sm font-black tabular-nums", color.text)}>
+          {fmtTime(trip.departure_at)}
+        </span>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-black uppercase tracking-tight text-foreground">
+          {tripCity(trip)}
+        </span>
+        <span className="block truncate text-xs font-medium text-muted-foreground">
+          {trip.destination_text}
+        </span>
+        <span className="mt-1 block truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+          {tripDriverName(trip)} · {trip.requester?.sector ?? "—"}
+        </span>
+      </span>
+      <span className="shrink-0 text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">
+        {TRIP_STATUS_LABEL[trip.status] ?? trip.status}
+      </span>
+    </button>
+  );
+}
+
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex flex-col items-center min-w-[70px]">
-      <span className={cn("text-xl font-black tracking-tighter leading-none", color)}>
-        {value}
-      </span>
-      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mt-1">
+    <div className="flex min-w-[70px] flex-col items-center">
+      <span className={cn("text-xl font-black leading-none tracking-tighter", color)}>{value}</span>
+      <span className="mt-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
         {label}
       </span>
     </div>
@@ -515,13 +762,17 @@ function FilterSelect({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">{label}</Label>
+      <Label htmlFor={id} className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
+        {label}
+      </Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger id={id} className="rounded-xl border-border/40 bg-background/50">
           <SelectValue placeholder="Todos" />
         </SelectTrigger>
         <SelectContent className="rounded-2xl border-border/40 backdrop-blur-xl">
-          <SelectItem value={ALL} className="rounded-xl">Todos</SelectItem>
+          <SelectItem value={ALL} className="rounded-xl">
+            Todos
+          </SelectItem>
           {options.map((o) => (
             <SelectItem key={o.value} value={o.value} className="rounded-xl">
               {o.label}
@@ -532,4 +783,3 @@ function FilterSelect({
     </div>
   );
 }
-
