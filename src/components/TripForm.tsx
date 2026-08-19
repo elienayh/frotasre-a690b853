@@ -56,7 +56,7 @@ export function TripForm({ trip }: TripFormProps) {
   const [busy, setBusy] = useState(false);
   const [stops, setStops] = useState<StopValue[]>([newStop()]);
   const [allowsRides, setAllowsRides] = useState<boolean>(trip?.allows_rides ?? true);
-  const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 1);
+  const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 0);
   const [occupantIds, setOccupantIds] = useState<(string | null)[]>([]);
   const [review, setReview] = useState<FormValues | null>(null);
 
@@ -151,6 +151,14 @@ export function TripForm({ trip }: TripFormProps) {
   }
 
   const occupancy = calculateTripOccupancy(stops, occupantIds, 5);
+
+  // Um motorista definido em um trecho nunca pode ocupar também um campo de passageiro adicional.
+  useEffect(() => {
+    const driverIds = new Set(occupancy.uniqueDriverIds);
+    if (!occupantIds.some((id) => id && driverIds.has(id))) return;
+    setOccupantIds((prev) => prev.map((id) => (id && driverIds.has(id) ? null : id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [occupancy.uniqueDriverIds.join(",")]);
 
   function selectedOccupants(count: number): string[] {
     return occupantIds.slice(0, count).filter(Boolean) as string[];
@@ -493,6 +501,10 @@ export function TripForm({ trip }: TripFormProps) {
                 value={occupantIds}
                 onChange={setOccupantIds}
                 exclude={occupancy.uniqueDriverIds}
+                lockedDrivers={occupancy.uniqueDriverIds.map((id) => ({
+                  id,
+                  label: people.find((p) => p.id === id)?.full_name ?? "Motorista",
+                })).map((d) => ({ id: d.id, name: d.label }))}
               />
             </CardContent>
           </Card>

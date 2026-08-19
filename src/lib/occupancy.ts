@@ -45,7 +45,8 @@ export function calculateTripOccupancy(
   const uniquePassengers = Array.from(pIds).filter(id => !driverIds.has(id));
 
   const driversCount = uniqueDrivers.length || 1; // Se nenhum definido, reserva 1 vaga para "DAFI DEFINIR"
-  const passengersCount = pIds.size; // Usamos todos os passageiros selecionados
+  // Motoristas nunca são recontados como passageiros (pessoas únicas).
+  const passengersCount = uniquePassengers.length;
   const totalPeople = driversCount + passengersCount;
 
   return {
