@@ -816,8 +816,18 @@ function FichaVeiculo() {
                   <Input id="f-cost" name="total_cost" type="number" step="0.01" min={0} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="f-odo">Hodômetro</Label>
-                  <Input id="f-odo" name="odometer" type="number" min={0} />
+                  <Label htmlFor="f-odo">Hodômetro no Abastecimento (KM)</Label>
+                  <Input 
+                    id="f-odo" 
+                    name="odometer" 
+                    type="number" 
+                    min={0} 
+                    defaultValue={vehicle?.odometer ?? 0}
+                    className="border-primary/20"
+                  />
+                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter italic">
+                    KM atual do veículo: {vehicle?.odometer?.toLocaleString()} km
+                  </p>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="f-station">Posto</Label>
