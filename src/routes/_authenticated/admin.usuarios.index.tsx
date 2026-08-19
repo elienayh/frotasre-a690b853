@@ -80,7 +80,7 @@ function UsuariosList() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, is_active, is_coordinator, is_sre_driver, is_driver_certified, cnh_expires_at")
+        .select("id, full_name, registration, sector, is_active, is_coordinator, is_sre_driver, is_driver_certified, cnh_expires_at, mobile")
         .order("full_name");
       if (error) throw error;
       return data as Profile[];
