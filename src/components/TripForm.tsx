@@ -82,7 +82,7 @@ export function TripForm({ trip }: TripFormProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_occupants")
-        .select("id, user_id, is_external")
+        .select("id, user_id, is_external, is_driver")
         .eq("trip_id", trip!.id || "")
         .order("created_at");
       if (error) throw error;
@@ -92,9 +92,13 @@ export function TripForm({ trip }: TripFormProps) {
 
   useEffect(() => {
     if (!savedOccupants) return;
-    const ids = savedOccupants.filter((o) => !o.is_external).map((o) => o.user_id);
+    // Motoristas são controlados pelo campo do trecho, nunca pela lista de passageiros.
+    const ids = savedOccupants
+      .filter((o) => !o.is_external && !o.is_driver)
+      .map((o) => o.user_id);
     if (ids.length > 0) setOccupantIds(ids);
   }, [savedOccupants]);
+
 
   useEffect(() => {
     if (!trip) return;
