@@ -99,8 +99,8 @@ export const syncAuthProfiles = createServerFn({ method: "POST" })
     const rows = missing.map((u) => {
       const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
       const fullName =
-        (typeof meta.full_name === "string" && meta.full_name) ||
-        (typeof meta.name === "string" && meta.name) ||
+        (typeof meta['full_name'] === "string" && meta['full_name']) ||
+        (typeof meta['name'] === "string" && meta['name']) ||
         u.email ||
         "Usuário sem nome";
       return {
