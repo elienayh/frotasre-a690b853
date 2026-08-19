@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useServerFn } from "@tanstack/react-start";
-import { getUsersEmails } from "@/integrations/supabase/admin.functions";
+import { getUsersEmails, syncAuthProfiles } from "@/integrations/supabase/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios/")({
   component: UsuariosList,
@@ -74,10 +74,18 @@ function UsuariosList() {
   }, [search?.pending]);
 
   const fetchEmails = useServerFn(getUsersEmails);
+  const syncProfiles = useServerFn(syncAuthProfiles);
 
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
     queryKey: ["profiles-list"],
     queryFn: async () => {
+      // Garante que toda conta institucional autenticada possua cadastro interno
+      // antes da listagem (idempotente: nunca duplica nem altera perfis existentes).
+      try {
+        await syncProfiles({ data: undefined });
+      } catch (e) {
+        console.warn("Sincronização de contas institucionais indisponível:", e);
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, registration, sector, is_active, is_coordinator, is_sre_driver, is_driver_certified, cnh_expires_at, mobile")
