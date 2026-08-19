@@ -56,7 +56,7 @@ export function TripForm({ trip }: TripFormProps) {
   const [busy, setBusy] = useState(false);
   const [stops, setStops] = useState<StopValue[]>([newStop()]);
   const [allowsRides, setAllowsRides] = useState<boolean>(trip?.allows_rides ?? true);
-  const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 1);
+  const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 0);
   const [occupantIds, setOccupantIds] = useState<(string | null)[]>([]);
   const [review, setReview] = useState<FormValues | null>(null);
 
