@@ -58,7 +58,8 @@ function AuthCallbackPage() {
           // Direciona para a página de edição do próprio perfil
           navigate({ to: `/admin/usuarios/${user.id}`, replace: true });
         } else {
-          toast.success(`Bem-vindo, ${user.user_metadata.full_name || 'Servidor'}!`);
+          const fullName = (user.user_metadata as any).full_name || 'Servidor';
+          toast.success(`Bem-vindo, ${fullName}!`);
           navigate({ to: "/agenda-publica", replace: true });
         }
       } else {
