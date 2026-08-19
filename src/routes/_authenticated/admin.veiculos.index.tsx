@@ -304,12 +304,21 @@ function Veiculos() {
         v.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.model.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const maintenanceStatus = (v as any).maintenance_status;
+      const isOverdue = (km: number | null | undefined, next: number | null | undefined) => {
+        return next && next > 0 && km >= next;
+      };
+
+      const hasCriticalMaintenance = 
+        isOverdue(v.odometer, v.next_oil_change_km) ||
+        isOverdue(v.odometer, v.next_tire_change_km) ||
+        isOverdue(v.odometer, v.next_alignment_km) ||
+        isOverdue(v.odometer, v.next_balancing_km);
+
       // Explicitly check for 'pending' or 'true' to support both types of URL params
       const isPendingRequested = search?.filter === 'pending' || search?.pending === 'true';
       
       const matchesFilter = isPendingRequested
-        ? (maintenanceStatus === 'VENCIDA' || maintenanceStatus === 'CRÍTICO')
+        ? hasCriticalMaintenance
         : true;
 
       return matchesSearch && matchesFilter;
