@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AuditTimeline } from "@/components/AuditTimeline";
 import { VehicleMaintenanceCard } from "@/components/VehicleMaintenanceCard";
+import { TripMileageDialog } from "@/components/TripMileageDialog";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ function FichaVeiculo() {
   const queryClient = useQueryClient();
 
   const [maintOpen, setMaintOpen] = useState(false);
+  const [odometerOpen, setOdometerOpen] = useState(false);
   const [preventiveOpen, setPreventiveOpen] = useState(false);
   const [selectedMaintType, setSelectedMaintType] = useState<string>('OIL');
   const [finishing, setFinishing] = useState<BlockRow | null>(null);
@@ -320,10 +322,21 @@ function FichaVeiculo() {
         .from("vehicles")
         .update({
           ...(typeMap[type] || {}),
-          ...(performedKm > (vehicle?.odometer ?? 0) ? { odometer: performedKm } : {})
         })
         .eq("id", vehicleId);
       if (vehError) throw vehError;
+
+      // Chama RPC para atualizar odômetro central se o realizado for maior
+      if (performedKm > (vehicle?.odometer ?? 0)) {
+        const { error: odoError } = await supabase.rpc("update_vehicle_odometer", {
+          _vehicle_id: vehicleId,
+          _new_value: performedKm,
+          _recorded_by: (await supabase.auth.getUser()).data.user?.id || "",
+          _origin: "maintenance_preventive",
+          _reason: "Manutenção preventiva realizada: " + type
+        });
+        if (odoError) throw odoError;
+      }
     },
     onSuccess: () => {
       toast.success("Manutenção registrada com sucesso!");
@@ -351,15 +364,28 @@ function FichaVeiculo() {
 
   const addFuel = useMutation({
     mutationFn: async (form: FormData) => {
+      const odometerValue = Number(form.get("odometer"));
       const { error } = await supabase.from("fuel_records").insert({
         vehicle_id: vehicleId,
         filled_at: new Date(String(form.get("filled_at") || todayInput())).toISOString(),
         liters: Number(form.get("liters")) || null,
         total_cost: Number(form.get("total_cost")) || null,
-        odometer: Number(form.get("odometer")) || null,
+        odometer: odometerValue || null,
         station: String(form.get("station") || "") || null,
       });
       if (error) throw new Error(error.message);
+
+      // Atualiza odômetro oficial via RPC se informado e for maior
+      if (odometerValue && odometerValue > (vehicle?.odometer || 0)) {
+        const { error: odoError } = await supabase.rpc("update_vehicle_odometer", {
+          _vehicle_id: vehicleId,
+          _new_value: odometerValue,
+          _recorded_by: (await supabase.auth.getUser()).data.user?.id || "",
+          _origin: "fueling",
+          _reason: "Abastecimento registrado em " + (String(form.get("station") || "") || "Posto")
+        });
+        if (odoError) throw odoError;
+      }
     },
     onSuccess: () => {
       toast.success("Abastecimento registrado.");
@@ -378,6 +404,14 @@ function FichaVeiculo() {
             <Link to="/admin/veiculos">
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl border-border/40"
+            onClick={() => setOdometerOpen(true)}
+          >
+            <Gauge className="mr-1.5 h-4 w-4" /> Atualizar Odômetro
           </Button>
           <Button
             variant="outline"
@@ -402,6 +436,13 @@ function FichaVeiculo() {
         </div>
       }
     >
+      <TripMileageDialog 
+        vehicle={vehicle}
+        isOpen={odometerOpen}
+        onOpenChange={setOdometerOpen}
+        mode="manual"
+        onSuccess={invalidate}
+      />
       <div className="mb-8 flex flex-wrap items-center gap-4">
         <StatusBadge status={vehicle?.base_status ?? "DISPONIVEL"} kind="fleet" className="px-4 py-1.5" />
         <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
@@ -775,8 +816,18 @@ function FichaVeiculo() {
                   <Input id="f-cost" name="total_cost" type="number" step="0.01" min={0} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="f-odo">Hodômetro</Label>
-                  <Input id="f-odo" name="odometer" type="number" min={0} />
+                  <Label htmlFor="f-odo">Hodômetro no Abastecimento (KM)</Label>
+                  <Input 
+                    id="f-odo" 
+                    name="odometer" 
+                    type="number" 
+                    min={0} 
+                    defaultValue={vehicle?.odometer ?? 0}
+                    className="border-primary/20"
+                  />
+                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter italic">
+                    KM atual do veículo: {vehicle?.odometer?.toLocaleString()} km
+                  </p>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="f-station">Posto</Label>

@@ -415,6 +415,7 @@ export type Database = {
           new_value: number
           old_value: number | null
           origin: string
+          reason: string | null
           recorded_at: string
           recorded_by: string | null
           trip_id: string | null
@@ -425,6 +426,7 @@ export type Database = {
           new_value: number
           old_value?: number | null
           origin: string
+          reason?: string | null
           recorded_at?: string
           recorded_by?: string | null
           trip_id?: string | null
@@ -435,6 +437,7 @@ export type Database = {
           new_value?: number
           old_value?: number | null
           origin?: string
+          reason?: string | null
           recorded_at?: string
           recorded_by?: string | null
           trip_id?: string | null
@@ -1648,6 +1651,17 @@ export type Database = {
       trip_label: {
         Args: { _trip: Database["public"]["Tables"]["trip_requests"]["Row"] }
         Returns: string
+      }
+      update_vehicle_odometer: {
+        Args: {
+          _new_value: number
+          _origin: string
+          _reason?: string
+          _recorded_by: string
+          _trip_id?: string
+          _vehicle_id: string
+        }
+        Returns: undefined
       }
       vehicle_label: { Args: { _vehicle_id: string }; Returns: string }
     }
