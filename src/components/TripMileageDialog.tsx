@@ -87,7 +87,7 @@ export function TripMileageDialog({
       const { error: rpcError } = await supabase.rpc("update_vehicle_odometer", {
         _vehicle_id: vehicle.id,
         _new_value: km,
-        _recorded_by: user?.id,
+        _recorded_by: user?.id ?? "",
         _origin: mode === "start" ? "trip_start" : mode === "end" ? "trip_end" : "manual_adjustment",
         _trip_id: trip?.id || null,
         _reason: mode === "manual" ? reason : mode === "start" ? "Início de viagem" : "Finalização de viagem"
