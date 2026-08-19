@@ -453,9 +453,10 @@ export function TripForm({ trip }: TripFormProps) {
                     required
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    O motorista já é contabilizado automaticamente.
+                    O motorista já é contabilizado automaticamente como 1 pessoa. Capacidade: 1 + 4 passageiros.
                   </p>
                 </div>
+
                 <div className="space-y-2">
                   <Label>Ocupação Total do Veículo</Label>
                   <div
@@ -477,9 +478,7 @@ export function TripForm({ trip }: TripFormProps) {
                       </span>
                     </div>
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      ({occupancy.driversCount} motorista{occupancy.driversCount > 1 ? "s" : ""} +{" "}
-                      {occupancy.passengersCount} passageiro{occupancy.passengersCount !== 1 ? "s" : ""}
-                      )
+                      (1 motorista + {occupancy.passengersCount} passageiros)
                     </p>
                   </div>
                 </div>
