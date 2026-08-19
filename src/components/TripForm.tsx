@@ -493,6 +493,10 @@ export function TripForm({ trip }: TripFormProps) {
                 value={occupantIds}
                 onChange={setOccupantIds}
                 exclude={occupancy.uniqueDriverIds}
+                lockedDrivers={occupancy.uniqueDriverIds.map((id) => ({
+                  id,
+                  label: people.find((p) => p.id === id)?.full_name ?? "Motorista",
+                })).map((d) => ({ id: d.id, name: d.label }))}
               />
             </CardContent>
           </Card>
