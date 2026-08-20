@@ -21,6 +21,8 @@ export interface Profile {
   cnh_expires_at: string | null;
   cnh_first_at: string | null;
   cnh_notes: string | null;
+  profile_completed_at: string | null;
+  admin_reviewed_at: string | null;
 }
 
 interface AuthState {
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, is_driver_certified, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at, cnh_first_at, cnh_notes")
+        .select("id, full_name, registration, sector, phone, is_active, is_coordinator, is_sre_driver, is_driver_certified, cpf, birth_date, mobile, cnh_number, cnh_categories, cnh_issued_at, cnh_expires_at, cnh_first_at, cnh_notes, profile_completed_at, admin_reviewed_at")
         .eq("id", userId)
         .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
