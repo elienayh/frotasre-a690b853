@@ -519,6 +519,8 @@ export type Database = {
         Row: {
           address: string | null
           address_number: string | null
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
           birth_date: string | null
           city: string | null
           cnh_categories: string[]
@@ -539,6 +541,7 @@ export type Database = {
           is_sre_driver: boolean
           mobile: string | null
           phone: string | null
+          profile_completed_at: string | null
           registration: string | null
           sector: string | null
           state: string | null
@@ -548,6 +551,8 @@ export type Database = {
         Insert: {
           address?: string | null
           address_number?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
           birth_date?: string | null
           city?: string | null
           cnh_categories?: string[]
@@ -568,6 +573,7 @@ export type Database = {
           is_sre_driver?: boolean
           mobile?: string | null
           phone?: string | null
+          profile_completed_at?: string | null
           registration?: string | null
           sector?: string | null
           state?: string | null
@@ -577,6 +583,8 @@ export type Database = {
         Update: {
           address?: string | null
           address_number?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
           birth_date?: string | null
           city?: string | null
           cnh_categories?: string[]
@@ -597,13 +605,22 @@ export type Database = {
           is_sre_driver?: boolean
           mobile?: string | null
           phone?: string | null
+          profile_completed_at?: string | null
           registration?: string | null
           sector?: string | null
           state?: string | null
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_admin_reviewed_by_fkey"
+            columns: ["admin_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ride_requests: {
         Row: {
@@ -1578,6 +1595,7 @@ export type Database = {
       }
       is_sre_driver: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
+      mark_user_reviewed: { Args: { _user_id: string }; Returns: undefined }
       notify_users: {
         Args: {
           _body: string

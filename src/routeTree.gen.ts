@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAgendaPublicaRouteImport } from './routes/_authenticated/agenda-publica'
+import { Route as AuthenticatedCompletarCadastroRouteImport } from './routes/_authenticated/completar-cadastro'
 import { Route as AuthenticatedOrganizacaoRouteImport } from './routes/_authenticated/organizacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSetorRouteImport } from './routes/_authenticated/setor'
@@ -51,6 +52,12 @@ const AuthenticatedAgendaPublicaRoute =
   AuthenticatedAgendaPublicaRouteImport.update({
     id: '/agenda-publica',
     path: '/agenda-publica',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCompletarCadastroRoute =
+  AuthenticatedCompletarCadastroRouteImport.update({
+    id: '/completar-cadastro',
+    path: '/completar-cadastro',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOrganizacaoRoute =
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/completar-cadastro': typeof AuthenticatedCompletarCadastroRoute
   '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/setor': typeof AuthenticatedSetorRoute
@@ -192,6 +200,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/completar-cadastro': typeof AuthenticatedCompletarCadastroRoute
   '/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/setor': typeof AuthenticatedSetorRoute
@@ -217,6 +226,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/_authenticated/agenda-publica': typeof AuthenticatedAgendaPublicaRoute
+  '/_authenticated/completar-cadastro': typeof AuthenticatedCompletarCadastroRoute
   '/_authenticated/organizacao': typeof AuthenticatedOrganizacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/setor': typeof AuthenticatedSetorRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/agenda-publica'
+    | '/completar-cadastro'
     | '/organizacao'
     | '/painel'
     | '/setor'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/agenda-publica'
+    | '/completar-cadastro'
     | '/organizacao'
     | '/painel'
     | '/setor'
@@ -291,6 +303,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/agenda-publica'
+    | '/_authenticated/completar-cadastro'
     | '/_authenticated/organizacao'
     | '/_authenticated/painel'
     | '/_authenticated/setor'
@@ -346,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/agenda-publica'
       fullPath: '/agenda-publica'
       preLoaderRoute: typeof AuthenticatedAgendaPublicaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/completar-cadastro': {
+      id: '/_authenticated/completar-cadastro'
+      path: '/completar-cadastro'
+      fullPath: '/completar-cadastro'
+      preLoaderRoute: typeof AuthenticatedCompletarCadastroRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/organizacao': {
@@ -503,6 +523,7 @@ const AuthenticatedAdminUsuariosRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaPublicaRoute: typeof AuthenticatedAgendaPublicaRoute
+  AuthenticatedCompletarCadastroRoute: typeof AuthenticatedCompletarCadastroRoute
   AuthenticatedOrganizacaoRoute: typeof AuthenticatedOrganizacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedSetorRoute: typeof AuthenticatedSetorRoute
@@ -523,6 +544,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaPublicaRoute: AuthenticatedAgendaPublicaRoute,
+  AuthenticatedCompletarCadastroRoute: AuthenticatedCompletarCadastroRoute,
   AuthenticatedOrganizacaoRoute: AuthenticatedOrganizacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedSetorRoute: AuthenticatedSetorRoute,

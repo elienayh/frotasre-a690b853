@@ -32,11 +32,11 @@ export function usePendingCounts() {
           .from("vehicles")
           .select("id, odometer, next_oil_change_km, next_tire_change_km, next_oil_filter_change_km, next_air_filter_change_km, next_alignment_km, next_balancing_km")
           .eq("is_active", true),
-        // 3. USUÁRIOS: Inativos (aguardando ativação)
+        // 3. USUÁRIOS: Novos cadastros ainda não visualizados administrativamente
         supabase
           .from("profiles")
           .select("id", { count: "exact", head: true })
-          .eq("is_active", false),
+          .is("admin_reviewed_at", null),
       ]);
 
       const pendingVehicles = (vehiclesRes.data || []).filter(v => {
