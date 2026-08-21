@@ -174,6 +174,33 @@ function UsuarioEdicao() {
         </Button>
       </div>
 
+      {!(profile as any).admin_reviewed_at && (
+        <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-blue-500/30 bg-blue-500/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Badge className="h-5 px-2 text-[10px] bg-blue-500 text-white hover:bg-blue-500">NOVO USUÁRIO</Badge>
+              {!(profile as any).profile_completed_at && (
+                <Badge variant="outline" className="h-5 px-2 text-[10px] border-orange-500/40 text-orange-500">
+                  Cadastro incompleto
+                </Badge>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Primeiro acesso institucional ainda não conferido pela administração.
+            </p>
+          </div>
+          <Button
+            className="rounded-xl"
+            disabled={markReviewed.isPending}
+            onClick={() => markReviewed.mutate()}
+          >
+            {markReviewed.isPending ? "Registrando..." : "Marcar como visualizado"}
+          </Button>
+        </div>
+      )}
+
+
+
       <Tabs defaultValue="dados" className="space-y-6">
         <TabsList className="bg-muted/50 p-1 rounded-2xl h-12">
           <TabsTrigger value="dados" className="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10"><UserIcon className="mr-2 h-4 w-4" /> Dados</TabsTrigger>
