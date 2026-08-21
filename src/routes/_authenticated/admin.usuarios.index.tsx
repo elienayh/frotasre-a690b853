@@ -32,6 +32,8 @@ interface Profile {
   is_sre_driver: boolean;
   is_driver_certified: boolean;
   cnh_expires_at: string | null;
+  admin_reviewed_at: string | null;
+  profile_completed_at: string | null;
 }
 
 function UsuariosList() {
@@ -46,6 +48,7 @@ function UsuariosList() {
     coordinator: false,
     driver: false,
     certified: false,
+    novos: false,
     // Only apply pending filter if explicitly passed as true
     active: search?.pending === true ? false : true,
     inactive: search?.pending === true ? true : false,
@@ -88,7 +91,7 @@ function UsuariosList() {
       }
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, registration, sector, is_active, is_coordinator, is_sre_driver, is_driver_certified, cnh_expires_at, mobile")
+        .select("id, full_name, registration, sector, is_active, is_coordinator, is_sre_driver, is_driver_certified, cnh_expires_at, mobile, admin_reviewed_at, profile_completed_at")
         .order("full_name");
       if (error) throw error;
       return data as Profile[];
@@ -144,10 +147,18 @@ function UsuariosList() {
         (!filters.coordinator || p.is_coordinator) &&
         (!filters.driver || p.is_sre_driver) &&
         (!filters.certified || p.is_driver_certified) &&
+        (!filters.novos || !p.admin_reviewed_at) &&
         ((filters.active && p.is_active) || (filters.inactive && !p.is_active) || (!filters.active && !filters.inactive));
 
       return matchesSearch && matchesFilters;
-    });
+    })
+      // Novos cadastros (ainda não visualizados) aparecem sempre no topo.
+      .sort((a, b) => {
+        const aNew = a.admin_reviewed_at ? 1 : 0;
+        const bNew = b.admin_reviewed_at ? 1 : 0;
+        if (aNew !== bNew) return aNew - bNew;
+        return (a.full_name || "").localeCompare(b.full_name || "");
+      });
   }, [profiles, roles, emails, searchTerm, filters, isLoading]);
 
   return (
@@ -212,7 +223,18 @@ function UsuariosList() {
                         <UserX className="h-3 w-3 text-destructive" /> Inativos
                       </Label>
                     </div>
+                    <div className="flex items-center space-x-2 p-2 hover:bg-accent/50 rounded-xl transition-colors">
+                      <Checkbox
+                        id="novos"
+                        checked={filters.novos}
+                        onCheckedChange={(c) => setFilters(f => ({ ...f, novos: !!c }))}
+                      />
+                      <Label htmlFor="novos" className="text-sm font-medium flex items-center gap-2 cursor-pointer w-full">
+                        <span className="h-2 w-2 rounded-full bg-blue-500" /> Novos (não visualizados)
+                      </Label>
+                    </div>
                   </div>
+
                   
                   <div className="h-[1px] bg-border/40 my-2" />
                   
@@ -248,6 +270,7 @@ function UsuariosList() {
                       coordinator: false,
                       driver: false,
                       certified: false,
+                      novos: false,
                       active: true,
                       inactive: false,
                     })}
@@ -304,6 +327,7 @@ function UsuariosList() {
                       coordinator: false,
                       driver: false,
                       certified: false,
+                      novos: false,
                       active: true,
                       inactive: false,
                     });
@@ -321,7 +345,8 @@ function UsuariosList() {
                 params={{ userId: p.id }}
                 className={cn(
                   "group relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-3 backdrop-blur-md transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:bg-card/60 hover:-translate-y-0.5",
-                  !p.is_active && "opacity-75 grayscale-[0.5]"
+                  !p.is_active && "opacity-75 grayscale-[0.5]",
+                  !p.admin_reviewed_at && "border-blue-500/40 bg-blue-500/5 ring-1 ring-blue-500/20"
                 )}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0 flex-1">
@@ -330,6 +355,14 @@ function UsuariosList() {
                       <p className="font-display font-bold text-foreground truncate uppercase group-hover:text-primary transition-colors">
                         {p.full_name || "Sem nome"}
                       </p>
+                      {!p.admin_reviewed_at && (
+                        <Badge className="h-4 px-1.5 text-[8px] bg-blue-500 text-white hover:bg-blue-500">NOVO</Badge>
+                      )}
+                      {!p.profile_completed_at && (
+                        <Badge variant="outline" className="h-4 px-1.5 text-[8px] border-orange-500/40 text-orange-500">
+                          CADASTRO INCOMPLETO
+                        </Badge>
+                      )}
                       {!p.is_active && (
                         <Badge variant="destructive" className="h-4 px-1 text-[8px]">INATIVO</Badge>
                       )}
