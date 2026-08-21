@@ -270,6 +270,7 @@ function UsuariosList() {
                       coordinator: false,
                       driver: false,
                       certified: false,
+                      novos: false,
                       active: true,
                       inactive: false,
                     })}
@@ -326,6 +327,7 @@ function UsuariosList() {
                       coordinator: false,
                       driver: false,
                       certified: false,
+                      novos: false,
                       active: true,
                       inactive: false,
                     });
