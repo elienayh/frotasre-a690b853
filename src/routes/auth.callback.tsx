@@ -40,10 +40,10 @@ function AuthCallbackPage() {
           return;
         }
 
-        // Verificar se o perfil está completo
+        // Verificar se o cadastro interno foi concluído
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("registration, sector, cpf")
+          .select("profile_completed_at")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -51,13 +51,15 @@ function AuthCallbackPage() {
           console.error("Erro ao carregar perfil no callback:", profileError);
         }
 
-        const isProfileIncomplete = !profile || !profile.registration || !profile.sector || !profile.cpf;
-
-        if (isProfileIncomplete) {
-          toast.info("Identificamos seu acesso institucional. Por favor, complete seu cadastro.");
-          // Direciona para a página de edição do próprio perfil
-          navigate({ to: `/admin/usuarios/${user.id}`, replace: true });
+        if (!profile || !profile.profile_completed_at) {
+          toast.info("Identificamos seu acesso institucional. Complete seu cadastro para continuar.");
+          navigate({ to: "/completar-cadastro", replace: true });
         } else {
+          const fullName = (user.user_metadata as any).full_name || 'Servidor';
+          toast.success(`Bem-vindo, ${fullName}!`);
+          navigate({ to: "/agenda-publica", replace: true });
+        }
+      } else {
           const fullName = (user.user_metadata as any).full_name || 'Servidor';
           toast.success(`Bem-vindo, ${fullName}!`);
           navigate({ to: "/agenda-publica", replace: true });
