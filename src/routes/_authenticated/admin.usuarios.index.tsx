@@ -223,7 +223,18 @@ function UsuariosList() {
                         <UserX className="h-3 w-3 text-destructive" /> Inativos
                       </Label>
                     </div>
+                    <div className="flex items-center space-x-2 p-2 hover:bg-accent/50 rounded-xl transition-colors">
+                      <Checkbox
+                        id="novos"
+                        checked={filters.novos}
+                        onCheckedChange={(c) => setFilters(f => ({ ...f, novos: !!c }))}
+                      />
+                      <Label htmlFor="novos" className="text-sm font-medium flex items-center gap-2 cursor-pointer w-full">
+                        <span className="h-2 w-2 rounded-full bg-blue-500" /> Novos (não visualizados)
+                      </Label>
+                    </div>
                   </div>
+
                   
                   <div className="h-[1px] bg-border/40 my-2" />
                   
