@@ -128,6 +128,21 @@ function UsuarioEdicao() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  /** Confirma que o administrador já analisou este novo cadastro. */
+  const markReviewed = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("mark_user_reviewed", { _user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Usuário marcado como visualizado.");
+      queryClient.invalidateQueries({ queryKey: ["profile-detail", userId] });
+      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+
 
   if (isLoading) return <AppShell title="Carregando..." description="Buscando dados no servidor..."><div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></AppShell>;
   if (!profile) return (
