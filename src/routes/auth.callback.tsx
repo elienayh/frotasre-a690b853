@@ -60,11 +60,6 @@ function AuthCallbackPage() {
           navigate({ to: "/agenda-publica", replace: true });
         }
       } else {
-          const fullName = (user.user_metadata as any).full_name || 'Servidor';
-          toast.success(`Bem-vindo, ${fullName}!`);
-          navigate({ to: "/agenda-publica", replace: true });
-        }
-      } else {
         // Sem sessão após o tempo de espera
         navigate({ to: "/auth", replace: true });
       }
