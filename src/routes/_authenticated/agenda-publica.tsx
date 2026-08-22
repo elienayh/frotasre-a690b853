@@ -650,8 +650,21 @@ function CalendarioViagens() {
 }
 
 /** Card compacto de viagem usado nas visões Mês e Semana. */
-function TripChip({ trip, onOpen }: { trip: AgendaTrip; onOpen: () => void }) {
+function TripChip({
+  trip,
+  onOpen,
+  maxDestinations = 3,
+}: {
+  trip: AgendaTrip;
+  onOpen: () => void;
+  /** Limite de destinos exibidos; o excedente vira "+ X destinos". */
+  maxDestinations?: number;
+}) {
   const color = sectorColor(trip.requester?.sector);
+  const destinations = tripDestinations(trip);
+  const shown = destinations.slice(0, maxDestinations);
+  const extra = destinations.length - shown.length;
+  const seats = tripSeats(trip);
   return (
     <button
       type="button"
