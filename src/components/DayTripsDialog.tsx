@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 
 import {
   Dialog,
@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { tripCity, type AgendaTrip } from "@/hooks/useAgenda";
+import { tripCity, tripDestinations, tripSeats, type AgendaTrip } from "@/hooks/useAgenda";
 import { fmtTime, TRIP_STATUS_LABEL } from "@/lib/frota";
 import { sectorColor } from "@/lib/setores";
 import { cn } from "@/lib/utils";
@@ -65,6 +65,8 @@ export function DayTripsDialog({
           ) : (
             ordered.map((t) => {
               const color = sectorColor(t.requester?.sector);
+              const destinations = tripDestinations(t);
+              const seats = tripSeats(t);
               return (
                 <button
                   key={t.id}
@@ -82,12 +84,22 @@ export function DayTripsDialog({
                     <span className="block truncate text-sm font-black uppercase tracking-tight text-foreground">
                       {tripCity(t)}
                     </span>
-                    <span className="block truncate text-xs font-medium text-muted-foreground">
-                      {t.destination_text}
+                    <span className="mt-0.5 block text-xs font-medium text-muted-foreground">
+                      {destinations.map((dest, i) => (
+                        <span key={`${dest}-${i}`} className="block truncate">
+                          • {dest}
+                        </span>
+                      ))}
                     </span>
                   </span>
-                  <span className="shrink-0 text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">
-                    {TRIP_STATUS_LABEL[t.status] ?? t.status}
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">
+                      {TRIP_STATUS_LABEL[t.status] ?? t.status}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                      <Users className="h-3 w-3" aria-hidden />
+                      {seats.label}
+                    </span>
                   </span>
                 </button>
               );

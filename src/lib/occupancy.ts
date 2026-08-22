@@ -1,5 +1,69 @@
 import { StopValue } from "@/components/TripStops";
 
+/** Capacidade padrão de um veículo da frota (1 motorista + 4 passageiros). */
+export const DEFAULT_CAPACITY = 5;
+
+/** Linha mínima de ocupante necessária para o cálculo de vagas. */
+export interface OccupantLike {
+  user_id?: string | null;
+  is_external?: boolean | null;
+  is_driver?: boolean | null;
+  status?: string | null;
+}
+
+/** Trecho mínimo necessário para identificar condutores do itinerário. */
+export interface StopLike {
+  driver_user_id?: string | null;
+}
+
+export interface SeatInfo {
+  capacity: number;
+  occupied: number;
+  available: number;
+  /** Texto pronto no singular/plural: "1 vaga" / "3 vagas". */
+  label: string;
+}
+
+/**
+ * Fonte única de cálculo de vagas: capacidade do veículo menos as pessoas
+ * únicas já confirmadas (motoristas dos trechos + ocupantes não recusados).
+ */
+export function calculateSeats(
+  occupants: OccupantLike[] | null | undefined,
+  stops: StopLike[] | null | undefined,
+  capacity?: number | null,
+): SeatInfo {
+  const cap = capacity && capacity > 0 ? capacity : DEFAULT_CAPACITY;
+
+  const people = new Set<string>();
+  let anonymous = 0;
+
+  (stops ?? []).forEach((s) => {
+    const id = s.driver_user_id;
+    if (id && id !== "DAFI") people.add(`u:${id}`);
+  });
+
+  (occupants ?? []).forEach((o) => {
+    if ((o.status ?? "").toUpperCase() === "RECUSADO") return;
+    if (o.user_id) {
+      people.add(`u:${o.user_id}`);
+      return;
+    }
+    // Ocupantes externos (sem conta) contam como pessoas distintas.
+    anonymous += 1;
+  });
+
+  const occupied = Math.min(cap, people.size + anonymous);
+  const available = Math.max(0, cap - occupied);
+
+  return {
+    capacity: cap,
+    occupied,
+    available,
+    label: `${available} ${available === 1 ? "vaga" : "vagas"}`,
+  };
+}
+
 export interface TripOccupancy {
   driversCount: number;
   passengersCount: number;

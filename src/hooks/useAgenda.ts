@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { calculateSeats, type SeatInfo } from "@/lib/occupancy";
 
 const TRIP_SELECT = `
   id, code, status, departure_at, return_at, destination_text, purpose, passengers,
@@ -14,7 +16,9 @@ const TRIP_SELECT = `
   assigned:profiles!trip_requests_assigned_driver_user_id_fkey(full_name),
   approver:profiles!trip_requests_approved_by_fkey(full_name),
   organizer:profiles!trip_requests_organized_by_fkey(full_name),
-  approved_at, organized_at, rejection_reason
+  approved_at, organized_at, rejection_reason,
+  trip_stops(position, place_text, city_text, driver_user_id, destination:destinations(name), city:cities(name)),
+  trip_occupants(user_id, is_external, is_driver, status)
 `;
 
 
@@ -57,6 +61,46 @@ export interface AgendaTrip {
   rejection_reason: string | null;
   odometer_start: number | null;
   odometer_end: number | null;
+  trip_stops: {
+    position: number;
+    place_text: string | null;
+    city_text: string | null;
+    driver_user_id: string | null;
+    destination: { name: string } | null;
+    city: { name: string } | null;
+  }[] | null;
+  trip_occupants: {
+    user_id: string | null;
+    is_external: boolean | null;
+    is_driver: boolean | null;
+    status: string | null;
+  }[] | null;
+}
+
+/**
+ * Lista ordenada e sem repetições dos destinos reais da viagem.
+ * Deriva dos trechos cadastrados; usa o destino textual da solicitação
+ * apenas quando não existirem trechos.
+ */
+export function tripDestinations(trip: AgendaTrip): string[] {
+  const stops = [...(trip.trip_stops ?? [])].sort((a, b) => a.position - b.position);
+  const names = stops
+    .map((s) => s.destination?.name ?? s.place_text ?? s.city?.name ?? s.city_text ?? "")
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  const unique: string[] = [];
+  names.forEach((n) => {
+    if (unique[unique.length - 1] !== n && !unique.includes(n)) unique.push(n);
+  });
+
+  if (unique.length > 0) return unique;
+  return trip.destination_text ? [trip.destination_text] : [];
+}
+
+/** Vagas disponíveis da viagem, usando a regra central de ocupação. */
+export function tripSeats(trip: AgendaTrip): SeatInfo {
+  return calculateSeats(trip.trip_occupants, trip.trip_stops, trip.vehicles?.capacity);
 }
 
 
@@ -75,6 +119,25 @@ export function tripDriverName(trip: AgendaTrip): string {
 
 /** Viagens dentro de um intervalo, com veículo, condutor e setor do solicitante. */
 export function useAgendaTrips(startIso: string, endIso: string) {
+  const queryClient = useQueryClient();
+
+  // Vagas e itinerário refletem mudanças de ocupantes/trechos sem refresh manual.
+  useEffect(() => {
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ["agenda-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda-trip"] });
+    };
+    const channel = supabase
+      .channel("agenda-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "trip_occupants" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "trip_stops" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "trip_requests" }, invalidate)
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["agenda-trips", startIso, endIso],
     queryFn: async (): Promise<AgendaTrip[]> => {
