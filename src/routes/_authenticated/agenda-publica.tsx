@@ -679,23 +679,39 @@ function TripChip({
         "bg-opacity-95 backdrop-blur-sm",
       )}
     >
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className={cn("text-[10px] font-black uppercase tracking-widest", color.text)}>
           {fmtTime(trip.departure_at)}
         </span>
-        <span className={cn("h-1.5 w-1.5 rounded-full", color.dot)} />
+        <span className="flex shrink-0 items-center gap-1 text-[9px] font-bold uppercase tracking-tight text-muted-foreground">
+          <Users className="h-3 w-3" aria-hidden />
+          {seats.label}
+        </span>
       </div>
       <span
         className={cn(
-          "mb-1 block text-xs font-black uppercase leading-none tracking-tight",
+          "mb-1 block truncate text-xs font-black uppercase leading-none tracking-tight",
           color.text,
         )}
       >
         {tripCity(trip)}
       </span>
-      <span className="block truncate text-[10px] font-semibold leading-tight opacity-70">
-        {trip.destination_text}
-      </span>
+      <ul className="space-y-0.5">
+        {shown.map((d, i) => (
+          <li
+            key={`${d}-${i}`}
+            className="flex items-start gap-1 text-[10px] font-semibold leading-tight opacity-70"
+          >
+            <span aria-hidden>•</span>
+            <span className="truncate">{d}</span>
+          </li>
+        ))}
+        {extra > 0 ? (
+          <li className="text-[10px] font-bold leading-tight opacity-60">
+            + {extra} {extra === 1 ? "destino" : "destinos"}
+          </li>
+        ) : null}
+      </ul>
     </button>
   );
 }
