@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { calculateSeats, type SeatInfo } from "@/lib/occupancy";
@@ -118,6 +119,25 @@ export function tripDriverName(trip: AgendaTrip): string {
 
 /** Viagens dentro de um intervalo, com veículo, condutor e setor do solicitante. */
 export function useAgendaTrips(startIso: string, endIso: string) {
+  const queryClient = useQueryClient();
+
+  // Vagas e itinerário refletem mudanças de ocupantes/trechos sem refresh manual.
+  useEffect(() => {
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ["agenda-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda-trip"] });
+    };
+    const channel = supabase
+      .channel("agenda-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "trip_occupants" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "trip_stops" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "trip_requests" }, invalidate)
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["agenda-trips", startIso, endIso],
     queryFn: async (): Promise<AgendaTrip[]> => {
