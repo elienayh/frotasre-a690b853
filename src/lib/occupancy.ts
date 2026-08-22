@@ -43,15 +43,14 @@ export function calculateSeats(
     if (id && id !== "DAFI") people.add(`u:${id}`);
   });
 
-  (occupants ?? []).forEach((o, index) => {
+  (occupants ?? []).forEach((o) => {
     if ((o.status ?? "").toUpperCase() === "RECUSADO") return;
     if (o.user_id) {
       people.add(`u:${o.user_id}`);
       return;
     }
-    if (o.is_external) anonymous += 1;
-    else if (o.is_driver) anonymous += 1;
-    else anonymous += index === -1 ? 1 : 1;
+    // Ocupantes externos (sem conta) contam como pessoas distintas.
+    anonymous += 1;
   });
 
   const occupied = Math.min(cap, people.size + anonymous);
