@@ -68,7 +68,7 @@ function ViagensDoSetor() {
                     <p className="text-sm text-muted-foreground">
                       {t.profiles?.full_name ?? t.requester_name ?? "Servidor"} ·{" "}
                       {fmtDate(t.departure_at)} · saída {fmtTime(t.departure_at)} · retorno{" "}
-                      {fmtTime(t.return_at)} · {t.passengers} ocupante(s)
+                      {fmtTime(t.return_at)} · {(t.passengers ?? 0) + 1} ocupante(s)
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">{t.purpose}</p>
                   </div>
