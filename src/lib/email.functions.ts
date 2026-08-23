@@ -107,7 +107,7 @@ export const notifyTripDecision = createServerFn({ method: "POST" })
         <p><strong>Solicitação:</strong> #${trip.code}</p>
         <p><strong>Data da viagem:</strong> ${dateStr}</p>
         <p><strong>Destino principal:</strong> ${trip.city_text || '---'}</p>
-        <p><strong>Status:</strong> ${data.status}</p>
+        <p><strong>Status:</strong> ${data.status === "APROVADA" ? "Aprovada" : data.status === "REJEITADA" ? "Indisponível" : "Ajuste"}</p>
         
         ${isApproved ? `
           <p><strong>Veículo:</strong> ${data.vehicleName || 'A DEFINIR'}</p>
