@@ -64,7 +64,8 @@ export const TRIP_STATUS_LABEL: Record<string, string> = {
   EM_ANDAMENTO: "Em andamento",
   CONCLUIDA: "Concluída",
   CANCELADA: "Cancelada",
-  REJEITADA: "Rejeitada",
+  // Valor interno mantido como REJEITADA; exibição humanizada para o usuário.
+  REJEITADA: "Indisponível",
 
 };
 
