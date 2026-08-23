@@ -25,8 +25,11 @@ export interface SeatInfo {
 }
 
 /**
- * Fonte única de cálculo de vagas: capacidade do veículo menos as pessoas
- * únicas já confirmadas (motoristas dos trechos + ocupantes não recusados).
+ * Fonte única de cálculo de vagas.
+ *
+ * Regra: toda viagem reserva 1 vaga de motorista (mesmo quando ainda "a definir
+ * pela DAFI") + os passageiros extras confirmados. Motoristas nunca são
+ * recontados como passageiros.
  */
 export function calculateSeats(
   occupants: OccupantLike[] | null | undefined,
@@ -35,25 +38,34 @@ export function calculateSeats(
 ): SeatInfo {
   const cap = capacity && capacity > 0 ? capacity : DEFAULT_CAPACITY;
 
-  const people = new Set<string>();
-  let anonymous = 0;
-
+  // 1. Motoristas identificados (trechos + ocupantes marcados como motorista).
+  const drivers = new Set<string>();
   (stops ?? []).forEach((s) => {
     const id = s.driver_user_id;
-    if (id && id !== "DAFI") people.add(`u:${id}`);
+    if (id && id !== "DAFI") drivers.add(id);
   });
-
   (occupants ?? []).forEach((o) => {
     if ((o.status ?? "").toUpperCase() === "RECUSADO") return;
+    if (o.is_driver && o.user_id) drivers.add(o.user_id);
+  });
+
+  // 2. Passageiros extras únicos (excluindo quem já ocupa vaga de motorista).
+  const passengers = new Set<string>();
+  let anonymous = 0;
+  (occupants ?? []).forEach((o) => {
+    if ((o.status ?? "").toUpperCase() === "RECUSADO") return;
+    if (o.is_driver) return;
     if (o.user_id) {
-      people.add(`u:${o.user_id}`);
+      if (!drivers.has(o.user_id)) passengers.add(o.user_id);
       return;
     }
     // Ocupantes externos (sem conta) contam como pessoas distintas.
     anonymous += 1;
   });
 
-  const occupied = Math.min(cap, people.size + anonymous);
+  // 3. Sempre há ao menos 1 vaga de motorista reservada.
+  const driverSeats = Math.max(1, drivers.size);
+  const occupied = Math.min(cap, driverSeats + passengers.size + anonymous);
   const available = Math.max(0, cap - occupied);
 
   return {
@@ -63,6 +75,7 @@ export function calculateSeats(
     label: `${available} ${available === 1 ? "vaga" : "vagas"}`,
   };
 }
+
 
 export interface TripOccupancy {
   driversCount: number;
