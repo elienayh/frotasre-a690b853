@@ -133,21 +133,21 @@ function AdminSolicitacoes() {
       await supabase.from("trip_history").insert({
         trip_id: id,
         actor_id: user?.id ?? null,
-        action: kind === "REJEITADA" ? "Solicitação rejeitada" : "Solicitação enviada para correção",
+        action: kind === "REJEITADA" ? "Solicitação marcada como indisponível" : "Solicitação enviada para correção",
         details: reason
       });
 
       // Notificação interna
       await supabase.from("notifications").insert({
         user_id: decision?.trip.requester_id || "00000000-0000-0000-0000-000000000000",
-        title: `Solicitação #${decision?.trip.code} ${kind === "REJEITADA" ? "rejeitada" : "precisa de correção"}`,
+        title: `Solicitação #${decision?.trip.code} ${kind === "REJEITADA" ? "indisponível" : "precisa de correção"}`,
         body: `Motivo: ${reason}`,
         type: "system",
         trip_id: id
       });
     },
     onSuccess: () => {
-      toast.success(decision?.kind === "REJEITADA" ? "Solicitação rejeitada." : "Solicitação enviada para correção.");
+      toast.success(decision?.kind === "REJEITADA" ? "Solicitação marcada como indisponível." : "Solicitação enviada para correção.");
       // Envio de e-mail assíncrono para recusa ou correção
       if (decision) {
         void notifyEmail({
@@ -471,7 +471,7 @@ function AdminSolicitacoes() {
             <DialogTitle className={cn(decision?.kind === "REJEITADA" && "text-destructive flex items-center gap-2")}>
               {decision?.kind === "REJEITADA" ? (
                 <>
-                  <XCircle className="h-5 w-5" /> Rejeitar Solicitação
+                  <XCircle className="h-5 w-5" /> Marcar como indisponível
                 </>
               ) : "Solicitar Correção"}
             </DialogTitle>
@@ -483,7 +483,7 @@ function AdminSolicitacoes() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="reason">
-                Motivo da {decision?.kind === "REJEITADA" ? "rejeição" : "correção"}
+                Motivo da {decision?.kind === "REJEITADA" ? "indisponibilidade" : "correção"}
               </Label>
               <Textarea
                 id="reason"
@@ -512,7 +512,7 @@ function AdminSolicitacoes() {
               }}
               disabled={decide.isPending || !rejectionReason.trim()}
             >
-              {decide.isPending ? "Processando..." : decision?.kind === "REJEITADA" ? "Confirmar rejeição" : "Confirmar"}
+              {decide.isPending ? "Processando..." : decision?.kind === "REJEITADA" ? "Confirmar indisponibilidade" : "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>

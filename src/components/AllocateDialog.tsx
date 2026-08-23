@@ -424,7 +424,7 @@ export function AllocateDialog({ trip, onClose, onReject }: AllocateDialogProps)
                   onClick={() => onReject(trip)}
                   type="button"
                 >
-                  Rejeitar
+                  Marcar como indisponível
                 </Button>
               )}
               <Button
