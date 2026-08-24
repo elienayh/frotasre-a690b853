@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Car, MapPin, Users, Mail } from "lucide-react";
+import { Car, MapPin, Users, Mail, Trash2 } from "lucide-react";
 import { notifyRideDecision } from "@/lib/email.functions";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { fmtDate, fmtTime, friendlyDbError, type TripRow } from "@/lib/frota";
 import { sectorColor } from "@/lib/setores";
 import { cn } from "@/lib/utils";
@@ -34,7 +44,7 @@ export interface TripDrawerProps {
 
 /** Painel lateral com os detalhes da viagem, carona e ações administrativas. */
 export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
   const notifyRideEmail = useServerFn(notifyRideDecision);
   const { data: trip, isLoading } = useAgendaTrip(tripId);
@@ -55,6 +65,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [mileageMode, setMileageMode] = useState<"start" | "end">("start");
   const [mileageOpen, setMileageOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: rides = [] } = useQuery({
     queryKey: ["trip-rides", tripId],
@@ -70,6 +81,28 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   });
 
   const invalidate = () => void queryClient.invalidateQueries();
+
+  /**
+   * Exclusão definitiva da viagem. A permissão real é validada no banco
+   * (política de exclusão restrita ao Super Admin) e a auditoria é gravada
+   * automaticamente por gatilho, permanecendo mesmo após a exclusão.
+   */
+  const deleteTrip = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("trip_requests").delete().eq("id", tripId!);
+      if (error) throw new Error(friendlyDbError(error.message));
+    },
+    onSuccess: () => {
+      toast.success("Viagem excluída. O registro de auditoria foi mantido.");
+      setConfirmDelete(false);
+      invalidate();
+      onClose();
+    },
+    onError: (e: Error) => {
+      toast.error(e.message || "Exclusão não permitida para o seu perfil.");
+      setConfirmDelete(false);
+    },
+  });
 
   const askRide = useMutation({
     mutationFn: async ({ seats, reason }: { seats: number; reason: string }) => {
@@ -508,6 +541,31 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   </section>
                 </>
               ) : null}
+
+              {isSuperAdmin ? (
+                <>
+                  <Separator />
+                  <section className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                    <h3 className="font-display text-sm font-semibold text-destructive">
+                      Zona de perigo · Super Admin
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      A exclusão remove a viagem e todos os dados relacionados (trechos,
+                      ocupantes, caronas e histórico). A ação é irreversível e fica registrada
+                      permanentemente na auditoria.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                      onClick={() => setConfirmDelete(true)}
+                      disabled={deleteTrip.isPending}
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" /> Excluir viagem definitivamente
+                    </Button>
+                  </section>
+                </>
+              ) : null}
             </div>
           ) : null}
         </SheetContent>
@@ -523,6 +581,31 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
         mode={mileageMode}
         onSuccess={invalidate}
       />
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir viagem definitivamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {trip
+                ? `Viagem #${trip.code} · ${trip.destination_text}. `
+                : ""}
+              Esta ação remove permanentemente a viagem e todos os dados relacionados
+              (trechos, ocupantes, pedidos de carona e histórico da viagem). Não é possível
+              desfazer. A exclusão ficará registrada na auditoria com o seu nome, data e hora.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTrip.mutate()}
+            >
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
