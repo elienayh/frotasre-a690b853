@@ -65,6 +65,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   const [allocating, setAllocating] = useState<TripRow | null>(null);
   const [mileageMode, setMileageMode] = useState<"start" | "end">("start");
   const [mileageOpen, setMileageOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: rides = [] } = useQuery({
     queryKey: ["trip-rides", tripId],
@@ -80,6 +81,28 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
   });
 
   const invalidate = () => void queryClient.invalidateQueries();
+
+  /**
+   * Exclusão definitiva da viagem. A permissão real é validada no banco
+   * (política de exclusão restrita ao Super Admin) e a auditoria é gravada
+   * automaticamente por gatilho, permanecendo mesmo após a exclusão.
+   */
+  const deleteTrip = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("trip_requests").delete().eq("id", tripId!);
+      if (error) throw new Error(friendlyDbError(error.message));
+    },
+    onSuccess: () => {
+      toast.success("Viagem excluída. O registro de auditoria foi mantido.");
+      setConfirmDelete(false);
+      invalidate();
+      onClose();
+    },
+    onError: (e: Error) => {
+      toast.error(e.message || "Exclusão não permitida para o seu perfil.");
+      setConfirmDelete(false);
+    },
+  });
 
   const askRide = useMutation({
     mutationFn: async ({ seats, reason }: { seats: number; reason: string }) => {
