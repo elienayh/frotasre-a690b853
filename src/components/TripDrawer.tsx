@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Car, MapPin, Users, Mail } from "lucide-react";
+import { Car, MapPin, Users, Mail, Trash2 } from "lucide-react";
 import { notifyRideDecision } from "@/lib/email.functions";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { fmtDate, fmtTime, friendlyDbError, type TripRow } from "@/lib/frota";
 import { sectorColor } from "@/lib/setores";
 import { cn } from "@/lib/utils";
@@ -34,7 +44,7 @@ export interface TripDrawerProps {
 
 /** Painel lateral com os detalhes da viagem, carona e ações administrativas. */
 export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
   const notifyRideEmail = useServerFn(notifyRideDecision);
   const { data: trip, isLoading } = useAgendaTrip(tripId);
