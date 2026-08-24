@@ -541,6 +541,31 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   </section>
                 </>
               ) : null}
+
+              {isSuperAdmin ? (
+                <>
+                  <Separator />
+                  <section className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                    <h3 className="font-display text-sm font-semibold text-destructive">
+                      Zona de perigo · Super Admin
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      A exclusão remove a viagem e todos os dados relacionados (trechos,
+                      ocupantes, caronas e histórico). A ação é irreversível e fica registrada
+                      permanentemente na auditoria.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                      onClick={() => setConfirmDelete(true)}
+                      disabled={deleteTrip.isPending}
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" /> Excluir viagem definitivamente
+                    </Button>
+                  </section>
+                </>
+              ) : null}
             </div>
           ) : null}
         </SheetContent>
