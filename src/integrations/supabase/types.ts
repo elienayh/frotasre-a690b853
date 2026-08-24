@@ -109,6 +109,39 @@ export type Database = {
           },
         ]
       }
+      deletion_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          snapshot: Json | null
+          summary: string | null
+        }
+        Insert: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          snapshot?: Json | null
+          summary?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          snapshot?: Json | null
+          summary?: string | null
+        }
+        Relationships: []
+      }
       destinations: {
         Row: {
           address: string | null
