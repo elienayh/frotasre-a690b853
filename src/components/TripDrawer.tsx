@@ -581,6 +581,31 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
         mode={mileageMode}
         onSuccess={invalidate}
       />
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir viagem definitivamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {trip
+                ? `Viagem #${trip.code} · ${trip.destination_text}. `
+                : ""}
+              Esta ação remove permanentemente a viagem e todos os dados relacionados
+              (trechos, ocupantes, pedidos de carona e histórico da viagem). Não é possível
+              desfazer. A exclusão ficará registrada na auditoria com o seu nome, data e hora.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTrip.mutate()}
+            >
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
