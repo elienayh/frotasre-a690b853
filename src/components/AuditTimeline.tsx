@@ -1,8 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtDateTime } from "@/lib/frota";
-import { Activity, Lock } from "lucide-react";
+import { Activity, Lock, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const ENTITY_LABEL: Record<string, string> = {
+  trip_requests: "Viagem/Solicitação",
+  trip_stops: "Trecho da viagem",
+  trip_occupants: "Ocupante da viagem",
+  ride_requests: "Pedido de carona",
+  daily_schedules: "Escala do dia",
+  schedule_assignments: "Atendimento da escala",
+  schedule_incidents: "Ocorrência da escala",
+  fuel_records: "Abastecimento",
+  vehicle_blocks: "Bloqueio de veículo",
+};
 
 interface AuditTimelineProps {
   entityId: string;
@@ -80,9 +92,19 @@ export function AuditTimeline({ entityId, entityType }: AuditTimelineProps) {
           <div key={item.id} className="relative pl-8">
             <span className={cn(
               "absolute left-0 top-1 flex h-5 w-5 items-center justify-center rounded-full border bg-background",
-              item.type === "permission" ? "text-warning" : "text-primary"
+              item.type === "deletion"
+                ? "text-destructive"
+                : item.type === "permission"
+                  ? "text-warning"
+                  : "text-primary"
             )}>
-              {item.type === "permission" ? <Lock className="h-3 w-3" /> : <Activity className="h-3 w-3" />}
+              {item.type === "deletion" ? (
+                <Trash2 className="h-3 w-3" />
+              ) : item.type === "permission" ? (
+                <Lock className="h-3 w-3" />
+              ) : (
+                <Activity className="h-3 w-3" />
+              )}
             </span>
             <div className="flex flex-col">
               <span className="text-[10px] text-muted-foreground">
