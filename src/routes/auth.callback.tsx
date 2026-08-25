@@ -15,10 +15,20 @@ function AuthCallbackPage() {
     let mounted = true;
 
     const handleAuthCallback = async () => {
-      // Pequeno delay para garantir que o hash (#) seja processado pelo cliente Supabase
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Aguarda o cliente Supabase processar o retorno do OAuth (hash/code).
+      // Faz polling curto em vez de um delay fixo: assim nunca caímos em
+      // "sem sessão" prematuramente e voltamos para a tela de login.
+      let data: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"] = { session: null };
+      let error: Awaited<ReturnType<typeof supabase.auth.getSession>>["error"] = null;
 
-      const { data, error } = await supabase.auth.getSession();
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        const result = await supabase.auth.getSession();
+        data = result.data;
+        error = result.error;
+        if (!mounted) return;
+        if (error || data.session) break;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
       
       if (!mounted) return;
 

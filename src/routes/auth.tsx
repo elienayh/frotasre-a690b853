@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthSplash } from "@/components/AuthSplash";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -72,6 +73,12 @@ function AuthPage() {
       toast.error("Erro ao iniciar login com Google.");
       setBusy(false);
     }
+  }
+
+  // Enquanto a sessão está sendo verificada — ou já existe e o redirecionamento
+  // está em andamento — nunca renderizamos a tela de login (evita o flash pós-OAuth).
+  if (loading || session) {
+    return <AuthSplash message={session ? "Entrando no sistema..." : "Verificando sua sessão..."} />;
   }
 
   return (
