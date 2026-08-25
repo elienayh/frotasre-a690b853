@@ -29,13 +29,23 @@ export function AuditTimeline({ entityId, entityType }: AuditTimelineProps) {
           type: "trip"
         }));
       } else {
-        const { data, error } = await supabase
-          .from("permission_history")
-          .select("*, actor:profiles!permission_history_actor_id_fkey(full_name)")
-          .eq("target_user_id", entityId)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        return data.map(item => ({
+        // Histórico de permissões (usuário como alvo) + exclusões realizadas por ele.
+        const [permissions, deletions] = await Promise.all([
+          supabase
+            .from("permission_history")
+            .select("*, actor:profiles!permission_history_actor_id_fkey(full_name)")
+            .eq("target_user_id", entityId)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("deletion_audit")
+            .select("id, created_at, entity_type, entity_id, summary, action")
+            .eq("actor_id", entityId)
+            .order("created_at", { ascending: false }),
+        ]);
+        if (permissions.error) throw permissions.error;
+        if (deletions.error) throw deletions.error;
+
+        const permissionItems = (permissions.data ?? []).map(item => ({
           id: item.id,
           date: item.created_at,
           actor: item.actor?.full_name ?? "Sistema",
@@ -43,6 +53,19 @@ export function AuditTimeline({ entityId, entityType }: AuditTimelineProps) {
           details: item.field_changed ? `${item.field_changed}: ${item.old_value} → ${item.new_value}` : "",
           type: "permission"
         }));
+
+        const deletionItems = (deletions.data ?? []).map(item => ({
+          id: item.id,
+          date: item.created_at,
+          actor: "Exclusão realizada por este usuário",
+          action: `EXCLUSÃO · ${ENTITY_LABEL[item.entity_type] ?? item.entity_type}`,
+          details: `${item.summary ?? "Registro"} · ID original: ${item.entity_id ?? "—"}`,
+          type: "deletion"
+        }));
+
+        return [...permissionItems, ...deletionItems].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
       }
     }
   });
