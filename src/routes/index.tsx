@@ -4,6 +4,7 @@ import { ArrowRight, Bus, CalendarCheck, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/useAuth";
+import { AuthSplash } from "@/components/AuthSplash";
 
 import { Button } from "@/components/ui/button";
 
@@ -54,6 +55,11 @@ function Index() {
       void navigate({ to: "/agenda-publica", replace: true });
     }
   }, [loading, session, navigate]);
+
+  // Sessão em verificação ou já autenticado: exibe splash em vez da landing.
+  if (loading || session) {
+    return <AuthSplash message={session ? "Abrindo o Cronograma..." : "Carregando..."} />;
+  }
 
   return (
     <div className="min-h-screen bg-background selection:bg-primary selection:text-primary-foreground">
