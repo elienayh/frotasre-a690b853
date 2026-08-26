@@ -242,6 +242,29 @@ function CalendarioViagens() {
 
   const todayKey = dayKey(today);
 
+  /** Posicionamento automático na semana atual (apenas carga inicial ou "Hoje"). */
+  const todayCellRef = useRef<HTMLDivElement | null>(null);
+  const didInitialScroll = useRef(false);
+  const [scrollToken, setScrollToken] = useState(0);
+
+  useEffect(() => {
+    if (viewMode !== "Mês") return;
+    if (didInitialScroll.current && scrollToken === 0) return;
+    if (isLoading) return;
+
+    const raf = requestAnimationFrame(() => {
+      const el = todayCellRef.current;
+      if (!el) return;
+      el.scrollIntoView({
+        block: "center",
+        behavior: didInitialScroll.current ? "smooth" : "auto",
+      });
+      didInitialScroll.current = true;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [viewMode, scrollToken, isLoading, trips.length]);
+
+
   const periodLabel =
     viewMode === "Dia"
       ? LONG_DATE.format(cursor)
