@@ -565,7 +565,9 @@ export function TripForm({ trip }: TripFormProps) {
                   id,
                   label: people.find((p) => p.id === id)?.full_name ?? "Motorista",
                 })).map((d) => ({ id: d.id, name: d.label }))}
+                allowExternal={canAddExternal}
               />
+
             </CardContent>
           </Card>
 
