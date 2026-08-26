@@ -137,3 +137,20 @@ export function calculateTripOccupancy(
     uniquePassengerIds: uniquePassengers,
   };
 }
+
+/**
+ * Prefixo usado nos campos de ocupantes do formulário para marcar uma pessoa
+ * que não possui cadastro no sistema (ocupante externo). Ao salvar, esses
+ * valores são gravados em `trip_occupants` com `is_external = true`.
+ */
+export const EXTERNAL_PREFIX = "ext:";
+
+/** Indica se o valor de um campo de ocupante representa um ocupante externo. */
+export function isExternalOccupant(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.startsWith(EXTERNAL_PREFIX);
+}
+
+/** Nome informado manualmente para um ocupante externo. */
+export function externalOccupantName(value: string): string {
+  return value.slice(EXTERNAL_PREFIX.length).trim();
+}
