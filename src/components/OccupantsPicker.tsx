@@ -121,6 +121,8 @@ export function OccupantsPicker({
                   options={optionsFor(index)}
                   value={external ? null : selected}
                   customLabel={external ? externalOccupantName(selected!) : null}
+                  onSelect={(option) => setSlot(index, option.value)}
+
                   {...(allowExternal
                     ? {
                         onCustom: (text: string) =>
