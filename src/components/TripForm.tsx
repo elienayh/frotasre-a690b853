@@ -390,9 +390,12 @@ export function TripForm({ trip }: TripFormProps) {
 
   if (review) {
     const list = validStops();
-    const names = selectedOccupants(review.passengers).map(
-      (id) => people.find((p) => p.id === id)?.full_name ?? "—",
+    const names = selectedOccupants(review.passengers).map((id) =>
+      isExternalOccupant(id)
+        ? `${externalOccupantName(id)} (externo)`
+        : (people.find((p) => p.id === id)?.full_name ?? "—"),
     );
+
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <Card>
