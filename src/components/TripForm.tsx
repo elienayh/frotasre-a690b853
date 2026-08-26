@@ -292,11 +292,19 @@ export function TripForm({ trip }: TripFormProps) {
         const driverIds = new Set(
           list.map((s) => s.driverUserId).filter(Boolean) as string[],
         );
-        const passengerIds = chosen.filter((id) => !driverIds.has(id));
+        // Nomes digitados manualmente (pessoas sem cadastro) usam a mesma
+        // estrutura de ocupante externo já existente na tabela.
+        const externalNames = chosen
+          .filter(isExternalOccupant)
+          .map((value) => externalOccupantName(value))
+          .filter((name) => name.length > 0);
+        const passengerIds = chosen.filter(
+          (id) => !isExternalOccupant(id) && !driverIds.has(id),
+        );
 
         const { data: existing } = await supabase
           .from("trip_occupants")
-          .select("id, user_id, is_external, is_driver")
+          .select("id, user_id, is_external, is_driver, external_name")
           .eq("trip_id", tripId);
 
         const current = (existing ?? []).filter((o) => !o.is_external);
@@ -305,6 +313,13 @@ export function TripForm({ trip }: TripFormProps) {
           (o) => o.user_id && !o.is_driver && !passengerIds.includes(o.user_id),
         );
         const toAdd = passengerIds.filter((id) => !currentIds.includes(id));
+
+        const currentExternal = (existing ?? [])
+          .filter((o) => o.is_external)
+          .map((o) => (o.external_name ?? "").trim().toLowerCase());
+        const externalToAdd = externalNames.filter(
+          (name) => !currentExternal.includes(name.toLowerCase()),
+        );
 
         if (toRemove.length > 0) {
           await supabase
@@ -315,20 +330,32 @@ export function TripForm({ trip }: TripFormProps) {
               toRemove.map((o) => o.id),
             );
         }
-        if (toAdd.length > 0) {
-          const { error: occError } = await supabase.from("trip_occupants").insert(
-            toAdd.map((id) => ({
-              trip_id: tripId,
-              user_id: id,
-              is_external: false,
-              added_by: user?.id ?? null,
-            })),
-          );
+        const rowsToInsert = [
+          ...toAdd.map((id) => ({
+            trip_id: tripId,
+            user_id: id,
+            is_external: false,
+            external_name: null as string | null,
+            added_by: user?.id ?? null,
+          })),
+          ...externalToAdd.map((name) => ({
+            trip_id: tripId,
+            user_id: null,
+            is_external: true,
+            external_name: name,
+            added_by: user?.id ?? null,
+          })),
+        ];
+        if (rowsToInsert.length > 0) {
+          const { error: occError } = await supabase
+            .from("trip_occupants")
+            .insert(rowsToInsert);
           // Duplicidade aqui significa que o ocupante já existe: não é erro para o usuário.
           if (occError && !/duplicate key value/i.test(occError.message)) {
             throw new Error(occError.message);
           }
         }
+
 
 
         // Envio de e-mail assíncrono para o setor de transportes
