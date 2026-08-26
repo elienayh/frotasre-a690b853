@@ -24,6 +24,11 @@ export interface OccupantsPickerProps {
   exclude?: string[] | undefined;
   /** Motoristas definidos nos trechos, exibidos como posições bloqueadas. */
   lockedDrivers?: LockedDriver[] | undefined;
+  /**
+   * Permite registrar uma pessoa sem cadastro (ocupante externo) digitando o
+   * nome. Disponível apenas para motoristas credenciados e administradores.
+   */
+  allowExternal?: boolean | undefined;
 }
 
 /**
@@ -36,7 +41,9 @@ export function OccupantsPicker({
   onChange,
   exclude = [],
   lockedDrivers = [],
+  allowExternal = false,
 }: OccupantsPickerProps) {
+
   const { data: people = [] } = usePeople();
 
   const slots = useMemo(() => {
