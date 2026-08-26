@@ -18,7 +18,12 @@ import { OccupantsPicker } from "@/components/OccupantsPicker";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
-import { calculateTripOccupancy } from "@/lib/occupancy";
+import {
+  calculateTripOccupancy,
+  externalOccupantName,
+  isExternalOccupant,
+} from "@/lib/occupancy";
+
 import { cn } from "@/lib/utils";
 
 const schema = z
