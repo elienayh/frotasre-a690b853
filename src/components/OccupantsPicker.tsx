@@ -5,6 +5,8 @@ import { ComboBox, type ComboOption } from "@/components/ComboBox";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { usePeople } from "@/hooks/useFrotaOptions";
+import { EXTERNAL_PREFIX, externalOccupantName, isExternalOccupant } from "@/lib/occupancy";
+
 
 /** Motorista já definido em um trecho: ocupa vaga automaticamente e não é editável aqui. */
 export interface LockedDriver {
