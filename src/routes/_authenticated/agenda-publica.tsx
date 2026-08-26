@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Filter, Users } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -329,7 +329,11 @@ function CalendarioViagens() {
               <Button variant="outline" size="icon" aria-label="Período anterior" onClick={() => step(-1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setCursor(startOfDay(new Date()))}>
+              <Button variant="outline" size="sm" onClick={() => {
+                  setCursor(startOfDay(new Date()));
+                  setScrollToken((t) => t + 1);
+                }}
+              >
                 Hoje
               </Button>
               <Button variant="outline" size="icon" aria-label="Próximo período" onClick={() => step(1)}>
@@ -499,6 +503,7 @@ function CalendarioViagens() {
                   return (
                     <div
                       key={key}
+                      ref={isToday ? todayCellRef : undefined}
                       role="button"
                       tabIndex={0}
                       onClick={() => openDay(d)}
