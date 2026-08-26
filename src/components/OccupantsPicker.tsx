@@ -109,28 +109,54 @@ export function OccupantsPicker({
             </div>
           </li>
         ))}
-        {slots.map((selected, index) => (
-          <li key={index} className="flex items-center gap-2">
-            <span className="w-5 shrink-0 text-sm text-muted-foreground">
-              {lockedDrivers.length + index + 1}.
-            </span>
-            <div className="min-w-0 flex-1">
-              <ComboBox
-                options={optionsFor(index)}
-                value={selected}
-                onSelect={(option) => setSlot(index, option.value)}
-                placeholder="Selecionar usuário"
-                searchPlaceholder="Buscar por nome, matrícula ou setor…"
-                emptyText="Nenhum usuário encontrado."
-              />
-            </div>
-          </li>
-        ))}
+        {slots.map((selected, index) => {
+          const external = isExternalOccupant(selected);
+          return (
+            <li key={index} className="flex items-center gap-2">
+              <span className="w-5 shrink-0 text-sm text-muted-foreground">
+                {lockedDrivers.length + index + 1}.
+              </span>
+              <div className="min-w-0 flex-1">
+                <ComboBox
+                  options={optionsFor(index)}
+                  value={external ? null : selected}
+                  customLabel={external ? externalOccupantName(selected!) : null}
+                  {...(allowExternal
+                    ? {
+                        onCustom: (text: string) =>
+                          setSlot(index, `${EXTERNAL_PREFIX}${text}`),
+                        customPrefix: "Adicionar ocupante externo",
+                      }
+                    : {})}
+                  placeholder="Selecionar usuário"
+                  searchPlaceholder={
+                    allowExternal
+                      ? "Buscar usuário ou digitar nome do externo…"
+                      : "Buscar por nome, matrícula ou setor…"
+                  }
+                  emptyText="Nenhum usuário encontrado."
+                />
+              </div>
+              {external ? (
+                <Badge
+                  variant="secondary"
+                  className="h-5 shrink-0 px-1.5 text-[9px] font-black uppercase tracking-widest"
+                >
+                  Externo
+                </Badge>
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
       <p className="text-xs text-muted-foreground">
         O motorista é incluído automaticamente e só pode ser alterado no campo “Motorista” do
-        destino. Ocupantes externos são incluídos pela DAFI após o envio.
+        destino.{" "}
+        {allowExternal
+          ? "Se a pessoa não tiver cadastro, digite o nome e escolha “Adicionar ocupante externo”."
+          : "Ocupantes externos são incluídos pela DAFI após o envio."}
       </p>
     </div>
   );
 }
+
