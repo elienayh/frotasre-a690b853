@@ -47,7 +47,10 @@ export interface TripFormProps {
 export function TripForm({ trip }: TripFormProps) {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/solicitacoes/nova" }) as any;
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin, isSuperAdmin } = useAuth();
+  // Motoristas credenciados e administradores podem incluir pessoas sem cadastro.
+  const canAddExternal = Boolean(isAdmin || isSuperAdmin || profile?.is_driver_certified);
+
   const notifyEmail = useServerFn(notifyNewTripRequest);
   const { data: cities = [] } = useCities();
   const { data: places = [] } = usePlaces();
