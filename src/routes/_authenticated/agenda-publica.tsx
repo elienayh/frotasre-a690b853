@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Filter, Users } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -242,6 +242,29 @@ function CalendarioViagens() {
 
   const todayKey = dayKey(today);
 
+  /** Posicionamento automático na semana atual (apenas carga inicial ou "Hoje"). */
+  const todayCellRef = useRef<HTMLDivElement | null>(null);
+  const didInitialScroll = useRef(false);
+  const [scrollToken, setScrollToken] = useState(0);
+
+  useEffect(() => {
+    if (viewMode !== "Mês") return;
+    if (didInitialScroll.current && scrollToken === 0) return;
+    if (isLoading) return;
+
+    const raf = requestAnimationFrame(() => {
+      const el = todayCellRef.current;
+      if (!el) return;
+      el.scrollIntoView({
+        block: "center",
+        behavior: didInitialScroll.current ? "smooth" : "auto",
+      });
+      didInitialScroll.current = true;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [viewMode, scrollToken, isLoading, trips.length]);
+
+
   const periodLabel =
     viewMode === "Dia"
       ? LONG_DATE.format(cursor)
@@ -306,7 +329,11 @@ function CalendarioViagens() {
               <Button variant="outline" size="icon" aria-label="Período anterior" onClick={() => step(-1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setCursor(startOfDay(new Date()))}>
+              <Button variant="outline" size="sm" onClick={() => {
+                  setCursor(startOfDay(new Date()));
+                  setScrollToken((t) => t + 1);
+                }}
+              >
                 Hoje
               </Button>
               <Button variant="outline" size="icon" aria-label="Próximo período" onClick={() => step(1)}>
@@ -476,6 +503,7 @@ function CalendarioViagens() {
                   return (
                     <div
                       key={key}
+                      ref={isToday ? todayCellRef : undefined}
                       role="button"
                       tabIndex={0}
                       onClick={() => openDay(d)}
