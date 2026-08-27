@@ -323,22 +323,26 @@ export function TripForm({ trip }: TripFormProps) {
         );
         const toAdd = passengerIds.filter((id) => !currentIds.includes(id));
 
-        const currentExternal = (existing ?? [])
-          .filter((o) => o.is_external)
-          .map((o) => (o.external_name ?? "").trim().toLowerCase());
+        const externalRows = (existing ?? []).filter((o) => o.is_external);
+        const currentExternal = externalRows.map((o) =>
+          (o.external_name ?? "").trim().toLowerCase(),
+        );
+        const keptExternal = externalNames.map((n) => n.toLowerCase());
         const externalToAdd = externalNames.filter(
           (name) => !currentExternal.includes(name.toLowerCase()),
         );
+        // Na edição, externos retirados da lista também são removidos.
+        const externalToRemove = trip
+          ? externalRows.filter(
+              (o) => !keptExternal.includes((o.external_name ?? "").trim().toLowerCase()),
+            )
+          : [];
 
-        if (toRemove.length > 0) {
-          await supabase
-            .from("trip_occupants")
-            .delete()
-            .in(
-              "id",
-              toRemove.map((o) => o.id),
-            );
+        const idsToDelete = [...toRemove, ...externalToRemove].map((o) => o.id);
+        if (idsToDelete.length > 0) {
+          await supabase.from("trip_occupants").delete().in("id", idsToDelete);
         }
+
         const rowsToInsert = [
           ...toAdd.map((id) => ({
             trip_id: tripId,
