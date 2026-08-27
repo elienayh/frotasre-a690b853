@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Car, MapPin, Users, Mail, Trash2 } from "lucide-react";
@@ -483,6 +485,27 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
                   )
                 ) : null}
               </section>
+
+              {trip.requester_id === user?.id &&
+              ["PENDENTE", "CORRECAO"].includes(trip.status) ? (
+                <>
+                  <Separator />
+                  <section className="space-y-2">
+                    <h3 className="font-display text-sm font-semibold">Minha solicitação</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Enquanto aguarda a análise da DAFI, você pode ajustar datas, motivo,
+                      destinos e ocupantes desta mesma solicitação.
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/solicitacoes/$tripId/editar" params={{ tripId: trip.id }}>
+                        Editar solicitação
+                      </Link>
+                    </Button>
+                  </section>
+                </>
+              ) : null}
+
+
 
               {isAdmin ? (
                 <>

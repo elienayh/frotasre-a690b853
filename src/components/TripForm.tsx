@@ -20,9 +20,11 @@ import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
 import {
   calculateTripOccupancy,
+  EXTERNAL_PREFIX,
   externalOccupantName,
   isExternalOccupant,
 } from "@/lib/occupancy";
+
 
 import { cn } from "@/lib/utils";
 
@@ -90,7 +92,7 @@ export function TripForm({ trip }: TripFormProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_occupants")
-        .select("id, user_id, is_external, is_driver")
+        .select("id, user_id, is_external, is_driver, external_name")
         .eq("trip_id", trip!.id || "")
         .order("created_at");
       if (error) throw error;
@@ -101,11 +103,18 @@ export function TripForm({ trip }: TripFormProps) {
   useEffect(() => {
     if (!savedOccupants) return;
     // Motoristas são controlados pelo campo do trecho, nunca pela lista de passageiros.
+    // Ocupantes externos voltam para o formulário com o prefixo padrão.
     const ids = savedOccupants
-      .filter((o) => !o.is_external && !o.is_driver)
-      .map((o) => o.user_id);
+      .filter((o) => !o.is_driver)
+      .map((o) =>
+        o.is_external
+          ? `${EXTERNAL_PREFIX}${(o.external_name ?? "").trim()}`
+          : o.user_id,
+      )
+      .filter((v): v is string => Boolean(v) && v !== EXTERNAL_PREFIX);
     if (ids.length > 0) setOccupantIds(ids);
   }, [savedOccupants]);
+
 
 
   useEffect(() => {
@@ -314,22 +323,26 @@ export function TripForm({ trip }: TripFormProps) {
         );
         const toAdd = passengerIds.filter((id) => !currentIds.includes(id));
 
-        const currentExternal = (existing ?? [])
-          .filter((o) => o.is_external)
-          .map((o) => (o.external_name ?? "").trim().toLowerCase());
+        const externalRows = (existing ?? []).filter((o) => o.is_external);
+        const currentExternal = externalRows.map((o) =>
+          (o.external_name ?? "").trim().toLowerCase(),
+        );
+        const keptExternal = externalNames.map((n) => n.toLowerCase());
         const externalToAdd = externalNames.filter(
           (name) => !currentExternal.includes(name.toLowerCase()),
         );
+        // Na edição, externos retirados da lista também são removidos.
+        const externalToRemove = trip
+          ? externalRows.filter(
+              (o) => !keptExternal.includes((o.external_name ?? "").trim().toLowerCase()),
+            )
+          : [];
 
-        if (toRemove.length > 0) {
-          await supabase
-            .from("trip_occupants")
-            .delete()
-            .in(
-              "id",
-              toRemove.map((o) => o.id),
-            );
+        const idsToDelete = [...toRemove, ...externalToRemove].map((o) => o.id);
+        if (idsToDelete.length > 0) {
+          await supabase.from("trip_occupants").delete().in("id", idsToDelete);
         }
+
         const rowsToInsert = [
           ...toAdd.map((id) => ({
             trip_id: tripId,
