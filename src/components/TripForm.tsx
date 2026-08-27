@@ -20,9 +20,11 @@ import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
 import {
   calculateTripOccupancy,
+  EXTERNAL_PREFIX,
   externalOccupantName,
   isExternalOccupant,
 } from "@/lib/occupancy";
+
 
 import { cn } from "@/lib/utils";
 
