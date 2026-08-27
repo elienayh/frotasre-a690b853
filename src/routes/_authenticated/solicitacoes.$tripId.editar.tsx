@@ -11,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/solicitacoes/$tripId/edita
 
 function EditarSolicitacao() {
   const { tripId } = Route.useParams();
+  const { user, isAdmin, isSuperAdmin, isCoordinator } = useAuth();
 
   const { data: trip, isLoading } = useQuery({
     queryKey: ["trip", tripId],
@@ -25,6 +26,12 @@ function EditarSolicitacao() {
     },
   });
 
+  // O solicitante pode editar enquanto a viagem aguarda análise; após a
+  // aprovação valem as regras atuais (somente DAFI/administração).
+  const pending = trip ? ["PENDENTE", "CORRECAO"].includes(trip.status) : false;
+  const isOwner = Boolean(trip && user && trip.requester_id === user.id);
+  const canEdit = isAdmin || isSuperAdmin || ((isOwner || isCoordinator) && pending);
+
   return (
     <AppShell
       title="Editar Solicitação"
@@ -34,9 +41,15 @@ function EditarSolicitacao() {
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : !trip ? (
         <p className="text-sm text-muted-foreground">Solicitação não encontrada.</p>
+      ) : !canEdit ? (
+        <p className="text-sm text-muted-foreground">
+          Esta solicitação já foi analisada e não pode mais ser editada por você. Fale com a
+          DAFI para qualquer ajuste.
+        </p>
       ) : (
         <TripForm trip={trip} />
       )}
     </AppShell>
   );
 }
+
