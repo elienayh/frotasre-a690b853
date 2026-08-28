@@ -104,7 +104,12 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
             if (item.label === "Usuários") return {};
             return prev;
           }}
-          onClick={onNavigate}
+          onClick={() => {
+            if (item.label === "Cronograma") {
+              window.dispatchEvent(new CustomEvent("agenda:scroll-to-today"));
+            }
+            onNavigate?.();
+          }}
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
             active
