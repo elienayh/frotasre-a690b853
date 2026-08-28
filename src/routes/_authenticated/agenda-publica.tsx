@@ -264,6 +264,20 @@ function CalendarioViagens() {
     return () => cancelAnimationFrame(raf);
   }, [viewMode, scrollToken, isLoading, trips.length]);
 
+  /** Volta para hoje e centraliza quando o menu Cronograma é clicado. */
+  const scrollToToday = useCallback(() => {
+    setCursor(startOfDay(today));
+    setViewMode("Mês");
+    setScrollToken((t) => t + 1);
+  }, [today]);
+
+  useEffect(() => {
+    const handler = () => scrollToToday();
+    window.addEventListener("agenda:scroll-to-today", handler);
+    return () => window.removeEventListener("agenda:scroll-to-today", handler);
+  }, [scrollToToday]);
+
+
 
   const periodLabel =
     viewMode === "Dia"
