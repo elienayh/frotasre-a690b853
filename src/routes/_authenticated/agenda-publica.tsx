@@ -88,7 +88,7 @@ const LONG_DATE = new Intl.DateTimeFormat("pt-BR", {
 
 function CalendarioViagens() {
   const { isAdmin, isSuperAdmin, isCoordinator, profile } = useAuth();
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(startOfDay(today));
   const [tripId, setTripId] = useState<string | null>(null);
