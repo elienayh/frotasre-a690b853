@@ -105,7 +105,7 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
             return prev;
           }}
           onClick={() => {
-            if (item.label === "Cronograma") {
+            if (active && item.label === "Cronograma") {
               window.dispatchEvent(new CustomEvent("agenda:scroll-to-today"));
             }
             onNavigate?.();
