@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Filter, Users } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -88,7 +88,7 @@ const LONG_DATE = new Intl.DateTimeFormat("pt-BR", {
 
 function CalendarioViagens() {
   const { isAdmin, isSuperAdmin, isCoordinator, profile } = useAuth();
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(startOfDay(today));
   const [tripId, setTripId] = useState<string | null>(null);
@@ -263,6 +263,20 @@ function CalendarioViagens() {
     });
     return () => cancelAnimationFrame(raf);
   }, [viewMode, scrollToken, isLoading, trips.length]);
+
+  /** Volta para hoje e centraliza quando o menu Cronograma é clicado. */
+  const scrollToToday = useCallback(() => {
+    setCursor(startOfDay(today));
+    setViewMode("Mês");
+    setScrollToken((t) => t + 1);
+  }, [today]);
+
+  useEffect(() => {
+    const handler = () => scrollToToday();
+    window.addEventListener("agenda:scroll-to-today", handler);
+    return () => window.removeEventListener("agenda:scroll-to-today", handler);
+  }, [scrollToToday]);
+
 
 
   const periodLabel =
