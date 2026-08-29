@@ -133,9 +133,13 @@ export function AllocateDialog({ trip, onClose, onReject }: AllocateDialogProps)
       ...tripStops.map((s) => ({ driver_user_id: s.driver_user_id })),
       { driver_user_id: driverUserId },
     ],
-    tripOccupants.filter((o) => !o.is_external && !o.is_driver).map((o) => o.user_id),
+    tripOccupants
+      .filter((o) => (o.status ?? "").toUpperCase() !== "RECUSADO" && !o.is_driver)
+      // Ocupantes externos não possuem user_id: usam um token único para contarem como pessoas.
+      .map((o) => (o.is_external ? `ext:${o.id}` : o.user_id)),
     capacity,
   );
+
   const occupants = occupancy.passengersCount;
   const driverSeats = occupancy.driversCount;
   const totalSeats = occupancy.totalPeople;
