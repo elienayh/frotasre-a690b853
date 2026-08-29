@@ -78,7 +78,9 @@ export function OccupantsList({
       hint: [p.sector, p.registration].filter(Boolean).join(" · ") || undefined,
     }));
 
-  const mine = occupants.find((o) => o.user_id === user?.id && o.status === "CONFIRMADO");
+  // Ocupantes removidos permanecem apenas para visualização/auditoria.
+  const activeOccupants = occupants.filter((o) => !o.removed_at);
+  const removedOccupants = occupants.filter((o) => Boolean(o.removed_at));
 
   return (
     <div className={cn("space-y-3", className)}>
