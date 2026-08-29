@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
 import { occupantName, useOccupantMutations, useTripOccupants } from "@/hooks/useOccupants";
 import { cn } from "@/lib/utils";
-import { calculateTripOccupancy } from "@/lib/occupancy";
+import { calculateTripOccupancy, isOccupantActive } from "@/lib/occupancy";
 import { useTripStops } from "@/hooks/useTripStops";
 
 export interface OccupantsListProps {
@@ -62,7 +62,7 @@ export function OccupantsList({
   const occupancy = calculateTripOccupancy(
     stops,
     occupants
-      .filter((o) => (o.status ?? "").toUpperCase() !== "RECUSADO" && !o.is_driver)
+      .filter((o) => isOccupantActive(o) && !o.is_driver)
       // Ocupantes externos não possuem user_id: usam um token único para contarem como pessoas.
       .map((o) => (o.is_external ? `ext:${o.id}` : o.user_id)),
     5
@@ -78,7 +78,9 @@ export function OccupantsList({
       hint: [p.sector, p.registration].filter(Boolean).join(" · ") || undefined,
     }));
 
-  const mine = occupants.find((o) => o.user_id === user?.id && o.status === "CONFIRMADO");
+  // Ocupantes removidos permanecem apenas para visualização/auditoria.
+  const activeOccupants = occupants.filter((o) => !o.removed_at);
+  const removedOccupants = occupants.filter((o) => Boolean(o.removed_at));
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -97,11 +99,11 @@ export function OccupantsList({
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando ocupantes…</p>
-      ) : occupants.length === 0 ? (
+      ) : activeOccupants.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum ocupante registrado.</p>
       ) : (
         <ul className="space-y-2">
-          {occupants.map((o) => (
+          {activeOccupants.map((o) => (
             <li
               key={o.id}
               className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm"
@@ -166,6 +168,34 @@ export function OccupantsList({
             </li>
           ))}
         </ul>
+      )}
+
+      {removedOccupants.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+            Passageiros removidos
+          </h4>
+          <ul className="space-y-1">
+            {removedOccupants.map((o) => (
+              <li
+                key={o.id}
+                className="flex items-center gap-2 rounded-md border border-dashed border-border/60 px-3 py-1.5 text-sm"
+              >
+                <span className="font-medium text-muted-foreground/70 line-through">
+                  {occupantName(o)}
+                </span>
+                {o.is_external && (
+                  <Badge variant="outline" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 uppercase">
+                    Externo
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="text-[9px] font-black tracking-widest px-1 py-0 h-4 uppercase">
+                  {o.status === "RECUSADO" ? "Recusou" : "Removido"}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {canManage && occupancy.remaining > 0 && (

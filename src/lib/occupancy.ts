@@ -3,12 +3,27 @@ import { StopValue } from "@/components/TripStops";
 /** Capacidade padrão de um veículo da frota (1 motorista + 4 passageiros). */
 export const DEFAULT_CAPACITY = 5;
 
+/** Status que retiram o ocupante da contagem de vagas (mas preservam o registro). */
+export const INACTIVE_OCCUPANT_STATUSES = ["RECUSADO", "REMOVIDO"] as const;
+
+/** Indica se o ocupante ainda ocupa uma vaga na viagem. */
+export function isOccupantActive(
+  occupant: { status?: string | null; removed_at?: string | null } | null | undefined,
+): boolean {
+  if (!occupant) return false;
+  if (occupant.removed_at) return false;
+  return !INACTIVE_OCCUPANT_STATUSES.includes(
+    (occupant.status ?? "").toUpperCase() as (typeof INACTIVE_OCCUPANT_STATUSES)[number],
+  );
+}
+
 /** Linha mínima de ocupante necessária para o cálculo de vagas. */
 export interface OccupantLike {
   user_id?: string | null;
   is_external?: boolean | null;
   is_driver?: boolean | null;
   status?: string | null;
+  removed_at?: string | null;
 }
 
 /** Trecho mínimo necessário para identificar condutores do itinerário. */
@@ -45,7 +60,7 @@ export function calculateSeats(
     if (id && id !== "DAFI") drivers.add(id);
   });
   (occupants ?? []).forEach((o) => {
-    if ((o.status ?? "").toUpperCase() === "RECUSADO") return;
+    if (!isOccupantActive(o)) return;
     if (o.is_driver && o.user_id) drivers.add(o.user_id);
   });
 
@@ -53,7 +68,7 @@ export function calculateSeats(
   const passengers = new Set<string>();
   let anonymous = 0;
   (occupants ?? []).forEach((o) => {
-    if ((o.status ?? "").toUpperCase() === "RECUSADO") return;
+    if (!isOccupantActive(o)) return;
     if (o.is_driver) return;
     if (o.user_id) {
       if (!drivers.has(o.user_id)) passengers.add(o.user_id);

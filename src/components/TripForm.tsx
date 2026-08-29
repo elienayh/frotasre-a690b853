@@ -92,7 +92,7 @@ export function TripForm({ trip }: TripFormProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_occupants")
-        .select("id, user_id, is_external, is_driver, external_name")
+        .select("id, user_id, is_external, is_driver, external_name, removed_at")
         .eq("trip_id", trip!.id || "")
         .order("created_at");
       if (error) throw error;
@@ -105,7 +105,7 @@ export function TripForm({ trip }: TripFormProps) {
     // Motoristas são controlados pelo campo do trecho, nunca pela lista de passageiros.
     // Ocupantes externos voltam para o formulário com o prefixo padrão.
     const ids = savedOccupants
-      .filter((o) => !o.is_driver)
+      .filter((o) => !o.is_driver && !o.removed_at)
       .map((o) =>
         o.is_external
           ? `${EXTERNAL_PREFIX}${(o.external_name ?? "").trim()}`

@@ -16,11 +16,13 @@ export interface OccupantRow {
   notes: string | null;
   status: string;
   declined_at: string | null;
+  removed_at: string | null;
+  removed_by: string | null;
   profile: { full_name: string; sector: string | null; registration: string | null } | null;
 }
 
 const SELECT =
-  "id, trip_id, user_id, is_external, is_driver, external_name, external_document, external_phone, notes, status, declined_at, profile:profiles!trip_occupants_user_id_fkey(full_name, sector, registration)";
+  "id, trip_id, user_id, is_external, is_driver, external_name, external_document, external_phone, notes, status, declined_at, removed_at, removed_by, profile:profiles!trip_occupants_user_id_fkey(full_name, sector, registration)";
 
 /** Ocupantes vinculados a uma viagem (usuários do sistema e externos). */
 export function useTripOccupants(tripId: string | null | undefined) {
@@ -86,13 +88,22 @@ export function useOccupantMutations(tripId: string | null | undefined) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Remoção lógica: o registro é preservado para histórico e auditoria.
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("trip_occupants").delete().eq("id", id);
+      const { data: session } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("trip_occupants")
+        .update({
+          status: "REMOVIDO",
+          removed_at: new Date().toISOString(),
+          removed_by: session.user?.id ?? null,
+        })
+        .eq("id", id);
       if (error) throw new Error(friendlyDbError(error.message));
     },
     onSuccess: () => {
-      toast.success("Ocupante removido.");
+      toast.success("Passageiro removido da lista (registro preservado).");
       refresh();
     },
     onError: (e: Error) => toast.error(e.message),
