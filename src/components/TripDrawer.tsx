@@ -57,7 +57,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_occupants")
-        .select("user_id, is_external")
+        .select("id, user_id, is_external, is_driver, status")
         .eq("trip_id", tripId!);
       if (error) throw error;
       return data ?? [];
