@@ -25,7 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePeople } from "@/hooks/useFrotaOptions";
 import { useTripOccupants } from "@/hooks/useOccupants";
 import { useTripStops } from "@/hooks/useTripStops";
-import { calculateTripOccupancy } from "@/lib/occupancy";
+import { calculateTripOccupancy, isOccupantActive } from "@/lib/occupancy";
 import { cn } from "@/lib/utils";
 
 import {

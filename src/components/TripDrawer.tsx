@@ -37,7 +37,7 @@ import { fmtDate, fmtTime, friendlyDbError, type TripRow } from "@/lib/frota";
 import { sectorColor } from "@/lib/setores";
 import { cn } from "@/lib/utils";
 import { useTripStops } from "@/hooks/useTripStops";
-import { calculateTripOccupancy } from "@/lib/occupancy";
+import { calculateTripOccupancy, isOccupantActive } from "@/lib/occupancy";
 
 export interface TripDrawerProps {
   tripId: string | null;
@@ -57,7 +57,7 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trip_occupants")
-        .select("id, user_id, is_external, is_driver, status")
+        .select("id, user_id, is_external, is_driver, status, removed_at")
         .eq("trip_id", tripId!);
       if (error) throw error;
       return data ?? [];

@@ -18,7 +18,7 @@ const TRIP_SELECT = `
   organizer:profiles!trip_requests_organized_by_fkey(full_name),
   approved_at, organized_at, rejection_reason,
   trip_stops(position, place_text, city_text, driver_user_id, destination:destinations(name), city:cities(name)),
-  trip_occupants(user_id, is_external, is_driver, status)
+  trip_occupants(user_id, is_external, is_driver, status, removed_at)
 `;
 
 
