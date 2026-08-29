@@ -134,7 +134,7 @@ export function AllocateDialog({ trip, onClose, onReject }: AllocateDialogProps)
       { driver_user_id: driverUserId },
     ],
     tripOccupants
-      .filter((o) => (o.status ?? "").toUpperCase() !== "RECUSADO" && !o.is_driver)
+      .filter((o) => isOccupantActive(o) && !o.is_driver)
       // Ocupantes externos não possuem user_id: usam um token único para contarem como pessoas.
       .map((o) => (o.is_external ? `ext:${o.id}` : o.user_id)),
     capacity,
