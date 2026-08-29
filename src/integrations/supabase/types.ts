@@ -998,6 +998,8 @@ export type Database = {
           is_driver: boolean | null
           is_external: boolean
           notes: string | null
+          removed_at: string | null
+          removed_by: string | null
           status: string
           trip_id: string
           updated_at: string
@@ -1014,6 +1016,8 @@ export type Database = {
           is_driver?: boolean | null
           is_external?: boolean
           notes?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
           status?: string
           trip_id: string
           updated_at?: string
@@ -1030,6 +1034,8 @@ export type Database = {
           is_driver?: boolean | null
           is_external?: boolean
           notes?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
           status?: string
           trip_id?: string
           updated_at?: string
@@ -1039,6 +1045,13 @@ export type Database = {
           {
             foreignKeyName: "trip_occupants_added_by_fkey"
             columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_occupants_removed_by_fkey"
+            columns: ["removed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
