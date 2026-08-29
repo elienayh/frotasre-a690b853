@@ -160,9 +160,13 @@ export function TripDrawer({ tripId, onClose }: TripDrawerProps) {
 
   const occupancy = calculateTripOccupancy(
     tripStops,
-    occupantsData.filter(o => !o.is_external).map(o => o.user_id),
+    occupantsData
+      .filter((o) => (o.status ?? "").toUpperCase() !== "RECUSADO" && !o.is_driver)
+      // Ocupantes externos não possuem user_id: usam um token único para contarem como pessoas.
+      .map((o) => (o.is_external ? `ext:${o.id}` : o.user_id)),
     5
   );
+
 
   const alreadyAsked = rides.some((r) => r.requester_id === user?.id);
   const color = sectorColor(trip?.requester?.sector);
