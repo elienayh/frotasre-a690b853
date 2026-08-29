@@ -61,9 +61,13 @@ export function OccupantsList({
 
   const occupancy = calculateTripOccupancy(
     stops,
-    occupants.filter(o => !o.is_external).map(o => o.user_id),
+    occupants
+      .filter((o) => (o.status ?? "").toUpperCase() !== "RECUSADO" && !o.is_driver)
+      // Ocupantes externos não possuem user_id: usam um token único para contarem como pessoas.
+      .map((o) => (o.is_external ? `ext:${o.id}` : o.user_id)),
     5
   );
+
 
   const taken = new Set(occupants.map((o) => o.user_id).filter(Boolean) as string[]);
   const options = people
