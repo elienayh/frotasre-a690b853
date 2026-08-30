@@ -219,6 +219,18 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
       const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
       const badge = getBadge(item.label);
 
+      if (item.label === "Veículos") {
+        return (
+          <VehicleNavItem
+            key={item.to}
+            item={item}
+            isCollapsed={isCollapsed}
+            onNavigate={onNavigate}
+            badge={badge}
+          />
+        );
+      }
+
       return (
         <Link
           key={item.to}
