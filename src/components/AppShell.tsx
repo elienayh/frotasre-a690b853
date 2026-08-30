@@ -19,13 +19,14 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useState, type ReactNode, useEffect } from "react";
+import { useState, type ReactNode, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useVehicles } from "@/hooks/useFleet";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { NotificationsBell } from "@/components/NotificationsBell";
