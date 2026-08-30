@@ -67,11 +67,22 @@ function VehicleNavItem({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
   const [open, setOpen] = useState(false);
+  const [menuTop, setMenuTop] = useState(0);
+  const [menuLeft, setMenuLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemRef = useRef<HTMLDivElement | null>(null);
   const { data: vehicles = [], isLoading } = useVehicles();
 
   const handleEnter = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    const rect = itemRef.current?.getBoundingClientRect();
+    if (rect) {
+      setMenuLeft(rect.right + 6);
+      // Garante que o submenu não ultrapasse a borda inferior da tela
+      const desired = rect.top - 6;
+      const maxTop = window.innerHeight - 340;
+      setMenuTop(Math.max(8, Math.min(desired, maxTop)));
+    }
     setOpen(true);
   };
 
@@ -87,6 +98,7 @@ function VehicleNavItem({
 
   return (
     <div
+      ref={itemRef}
       className="relative"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
@@ -131,10 +143,8 @@ function VehicleNavItem({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15 }}
-            className={cn(
-              "absolute left-full top-0 z-50 ml-1 min-w-[16rem] max-w-[20rem] rounded-xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl",
-              isCollapsed ? "top-[-4px]" : "top-[-6px]"
-            )}
+            style={{ position: "fixed", top: menuTop, left: menuLeft }}
+            className="z-[70] min-w-[16rem] max-w-[20rem] rounded-xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl"
           >
             <div className="mb-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
               Selecionar veículo
