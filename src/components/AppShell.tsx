@@ -60,8 +60,8 @@ function VehicleNavItem({
   badge,
 }: {
   item: NavItem;
-  isCollapsed?: boolean;
-  onNavigate?: () => void;
+  isCollapsed?: boolean | undefined;
+  onNavigate?: (() => void) | undefined;
   badge: ReactNode;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
