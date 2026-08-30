@@ -67,11 +67,22 @@ function VehicleNavItem({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
   const [open, setOpen] = useState(false);
+  const [menuTop, setMenuTop] = useState(0);
+  const [menuLeft, setMenuLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemRef = useRef<HTMLDivElement | null>(null);
   const { data: vehicles = [], isLoading } = useVehicles();
 
   const handleEnter = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    const rect = itemRef.current?.getBoundingClientRect();
+    if (rect) {
+      setMenuLeft(rect.right + 6);
+      // Garante que o submenu não ultrapasse a borda inferior da tela
+      const desired = rect.top - 6;
+      const maxTop = window.innerHeight - 340;
+      setMenuTop(Math.max(8, Math.min(desired, maxTop)));
+    }
     setOpen(true);
   };
 
@@ -87,6 +98,7 @@ function VehicleNavItem({
 
   return (
     <div
+      ref={itemRef}
       className="relative"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
