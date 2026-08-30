@@ -19,13 +19,14 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useState, type ReactNode, useEffect } from "react";
+import { useState, type ReactNode, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useVehicles } from "@/hooks/useFleet";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -51,6 +52,130 @@ const ADMIN_ITEMS: NavItem[] = [
   { to: "/admin/cidades", label: "Cidades", icon: Building2 },
   { to: "/admin/destinos", label: "Locais de Destino", icon: MapPin },
 ];
+
+function VehicleNavItem({
+  item,
+  isCollapsed,
+  onNavigate,
+  badge,
+}: {
+  item: NavItem;
+  isCollapsed?: boolean | undefined;
+  onNavigate?: (() => void) | undefined;
+  badge: ReactNode;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { data: vehicles = [], isLoading } = useVehicles();
+
+  const handleEnter = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setOpen(true);
+  };
+
+  const handleLeave = () => {
+    timerRef.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      <Link
+        to={item.to}
+        search={{}}
+        onClick={() => {
+          if (active) {
+            window.dispatchEvent(new CustomEvent("agenda:scroll-to-today"));
+          }
+          onNavigate?.();
+        }}
+        className={cn(
+          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
+          active
+            ? "bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20"
+            : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
+          isCollapsed && "justify-center px-0"
+        )}
+      >
+        <item.icon
+          className={cn(
+            "h-5 w-5 shrink-0",
+            active ? "text-white" : "group-hover:scale-110 transition-transform"
+          )}
+          aria-hidden="true"
+        />
+        {!isCollapsed && <span className="truncate">{item.label}</span>}
+        {badge}
+        {isCollapsed && (
+          <div className="absolute left-full ml-4 hidden group-hover:block z-50 rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md border whitespace-nowrap">
+            {item.label}
+          </div>
+        )}
+      </Link>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.15 }}
+            className={cn(
+              "absolute left-full top-0 z-50 ml-1 min-w-[16rem] max-w-[20rem] rounded-xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl",
+              isCollapsed ? "top-[-4px]" : "top-[-6px]"
+            )}
+          >
+            <div className="mb-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+              Selecionar veículo
+            </div>
+            {isLoading ? (
+              <div className="px-2 py-3 text-sm text-muted-foreground">Carregando...</div>
+            ) : vehicles.length === 0 ? (
+              <div className="px-2 py-3 text-sm text-muted-foreground">Nenhum veículo cadastrado</div>
+            ) : (
+              <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto pr-1">
+                {vehicles.map((v) => (
+                  <Link
+                    key={v.id}
+                    to="/admin/veiculos/$vehicleId"
+                    params={{ vehicleId: v.id }}
+                    onClick={() => {
+                      setOpen(false);
+                      onNavigate?.();
+                    }}
+                    className={cn(
+                      "flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                      "hover:bg-primary/10 hover:text-primary",
+                      !v.is_active && "opacity-60"
+                    )}
+                  >
+                    <span className="truncate">
+                      {v.manufacturer} {v.model}
+                    </span>
+                    <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+                      {v.plate}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigate?: () => void }) {
   const { isAdmin, isCoordinator, profile } = useAuth();
@@ -93,6 +218,18 @@ function NavList({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigat
     items.map((item) => {
       const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
       const badge = getBadge(item.label);
+
+      if (item.label === "Veículos") {
+        return (
+          <VehicleNavItem
+            key={item.to}
+            item={item}
+            isCollapsed={isCollapsed}
+            onNavigate={onNavigate}
+            badge={badge}
+          />
+        );
+      }
 
       return (
         <Link
