@@ -143,10 +143,8 @@ function VehicleNavItem({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15 }}
-            className={cn(
-              "absolute left-full top-0 z-50 ml-1 min-w-[16rem] max-w-[20rem] rounded-xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl",
-              isCollapsed ? "top-[-4px]" : "top-[-6px]"
-            )}
+            style={{ position: "fixed", top: menuTop, left: menuLeft }}
+            className="z-[70] min-w-[16rem] max-w-[20rem] rounded-xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl"
           >
             <div className="mb-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
               Selecionar veículo
