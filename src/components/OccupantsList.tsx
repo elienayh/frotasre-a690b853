@@ -131,6 +131,17 @@ export function OccupantsList({
   const { data: people = [] } = usePeople();
   const { data: stops = [], isLoading: isLoadingStops } = useTripStops(tripId);
   const { add, remove, decline } = useOccupantMutations(tripId);
+  const { data: places = [] } = usePlaces();
+  const { data: destinationLinks = [] } = useOccupantDestinations(tripId);
+  const { link: linkDestination, unlink: unlinkDestination } =
+    useOccupantDestinationMutations(tripId);
+
+  const placeOptions: ComboOption[] = places.map((p) => ({
+    value: p.id,
+    label: p.name,
+    hint: p.city ?? undefined,
+  }));
+
 
   const [newUserId, setNewUserId] = useState<string | null>(null);
   const [externalOpen, setExternalOpen] = useState(false);
