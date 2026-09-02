@@ -106,8 +106,9 @@ export function OccupantsList({
           {activeOccupants.map((o) => (
             <li
               key={o.id}
-              className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm"
+              className="space-y-2 rounded-md border border-border px-3 py-2 text-sm"
             >
+              <div className="flex items-center justify-between gap-3">
               <span className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span
@@ -165,8 +166,19 @@ export function OccupantsList({
                   Recusar participação
                 </Button>
               )}
+              </div>
+
+              <OccupantDestinations
+                links={destinationLinks.filter((l) => l.occupant_id === o.id)}
+                options={placeOptions}
+                canManage={canManage}
+                isPending={linkDestination.isPending}
+                onLink={(payload) => linkDestination.mutate({ occupantId: o.id, ...payload })}
+                onUnlink={(id) => unlinkDestination.mutate(id)}
+              />
             </li>
           ))}
+
         </ul>
       )}
 
