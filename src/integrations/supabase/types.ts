@@ -986,6 +986,65 @@ export type Database = {
           },
         ]
       }
+      trip_occupant_destinations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          destination_id: string
+          id: string
+          occupant_id: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          destination_id: string
+          id?: string
+          occupant_id: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          destination_id?: string
+          id?: string
+          occupant_id?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_occupant_destinations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_occupant_destinations_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_occupant_destinations_occupant_id_fkey"
+            columns: ["occupant_id"]
+            isOneToOne: false
+            referencedRelation: "trip_occupants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_occupant_destinations_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trip_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_occupants: {
         Row: {
           added_by: string | null
