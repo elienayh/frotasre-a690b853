@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { UserPlus, X } from "lucide-react";
+import { MapPin, UserPlus, X } from "lucide-react";
 
-import { ComboBox } from "@/components/ComboBox";
+import { ComboBox, type ComboOption } from "@/components/ComboBox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,98 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { usePeople } from "@/hooks/useFrotaOptions";
+import { usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { occupantName, useOccupantMutations, useTripOccupants } from "@/hooks/useOccupants";
+import {
+  useOccupantDestinationMutations,
+  useOccupantDestinations,
+  type OccupantDestinationRow,
+} from "@/hooks/useOccupantDestinations";
 import { cn } from "@/lib/utils";
 import { calculateTripOccupancy, isOccupantActive } from "@/lib/occupancy";
 import { useTripStops } from "@/hooks/useTripStops";
+
+/** Destinos vinculados a um ocupante específico (um ocupante pode ter vários). */
+function OccupantDestinations({
+  links,
+  options,
+  canManage,
+  isPending,
+  onLink,
+  onUnlink,
+}: {
+  links: OccupantDestinationRow[];
+  options: ComboOption[];
+  canManage: boolean;
+  isPending: boolean;
+  onLink: (payload: { destinationId?: string; name?: string }) => void;
+  onUnlink: (id: string) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+
+  if (!canManage && links.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5 pl-1">
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {links.map((l) => (
+            <Badge
+              key={l.id}
+              variant="outline"
+              className="gap-1 border-primary/20 bg-primary/5 py-0.5 text-[11px] font-semibold"
+            >
+              <MapPin className="h-3 w-3 opacity-70" aria-hidden="true" />
+              <span className="max-w-[220px] truncate">{l.destination?.name ?? "Destino"}</span>
+              {canManage && (
+                <button
+                  type="button"
+                  aria-label="Remover destino"
+                  className="ml-0.5 text-muted-foreground hover:text-destructive"
+                  onClick={() => onUnlink(l.id)}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {canManage &&
+        (adding ? (
+          <div className="max-w-sm">
+            <ComboBox
+              options={options}
+              value={null}
+              placeholder="Selecionar destino…"
+              searchPlaceholder="Nome do local…"
+              customPrefix="Cadastrar destino"
+              disabled={isPending}
+              onSelect={(option) => {
+                onLink({ destinationId: option.value });
+                setAdding(false);
+              }}
+              onCustom={(text) => {
+                onLink({ name: text });
+                setAdding(false);
+              }}
+            />
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-1 text-[11px] font-bold text-muted-foreground hover:text-foreground"
+            onClick={() => setAdding(true)}
+          >
+            + Adicionar destino
+          </Button>
+        ))}
+    </div>
+  );
+}
+
 
 export interface OccupantsListProps {
   tripId: string;
