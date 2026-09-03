@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { OccupantsPicker } from "@/components/OccupantsPicker";
+import { OccupantsPicker, type OccupantDestPick } from "@/components/OccupantsPicker";
+import { resolveDestinationId } from "@/hooks/useOccupantDestinations";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
@@ -68,6 +69,9 @@ export function TripForm({ trip }: TripFormProps) {
   const [allowsRides, setAllowsRides] = useState<boolean>(trip?.allows_rides ?? true);
   const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 0);
   const [occupantIds, setOccupantIds] = useState<(string | null)[]>([]);
+  // Destinos individuais por ocupante, indexados pela chave do ocupante
+  // (id do usuário ou `ext:Nome` para externos; motoristas usam o próprio id).
+  const [occupantDests, setOccupantDests] = useState<Record<string, OccupantDestPick[]>>({});
   const [review, setReview] = useState<FormValues | null>(null);
 
   // Carrega as paradas já registradas quando a solicitação está em edição.
@@ -99,6 +103,43 @@ export function TripForm({ trip }: TripFormProps) {
       return data ?? [];
     },
   });
+
+  // Destinos individuais já vinculados aos ocupantes (edição da solicitação).
+  const { data: savedOccupantDests } = useQuery({
+    queryKey: ["occupant-destinations", trip?.id],
+    enabled: Boolean(trip?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trip_occupant_destinations")
+        .select("occupant_id, destination_id")
+        .eq("trip_id", trip!.id || "")
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Converte os vínculos salvos em picks indexados pela chave do ocupante.
+  useEffect(() => {
+    if (!savedOccupants || !savedOccupantDests) return;
+    const keyByOccupantId = new Map<string, string>();
+    for (const o of savedOccupants) {
+      if (o.removed_at) continue;
+      const key = o.is_external
+        ? `${EXTERNAL_PREFIX}${(o.external_name ?? "").trim()}`
+        : o.user_id;
+      if (key && key !== EXTERNAL_PREFIX) keyByOccupantId.set(o.id, key);
+    }
+    const next: Record<string, OccupantDestPick[]> = {};
+    for (const link of savedOccupantDests) {
+      const key = keyByOccupantId.get(link.occupant_id);
+      if (!key || !link.destination_id) continue;
+      (next[key] ??= []).push({ destinationId: link.destination_id });
+    }
+    if (Object.keys(next).length > 0) {
+      setOccupantDests((prev) => (Object.keys(prev).length > 0 ? prev : next));
+    }
+  }, [savedOccupants, savedOccupantDests]);
 
   useEffect(() => {
     if (!savedOccupants) return;
@@ -369,6 +410,60 @@ export function TripForm({ trip }: TripFormProps) {
           }
         }
 
+        // Destinos individuais por ocupante: recria os vínculos a partir do
+        // estado do formulário, reutilizando/cadastrando destinos existentes.
+        const { data: finalOccupants, error: finalOccError } = await supabase
+          .from("trip_occupants")
+          .select("id, user_id, is_external, external_name, removed_at")
+          .eq("trip_id", tripId);
+        if (finalOccError) throw new Error(finalOccError.message);
+
+        const occupantIdByKey = new Map<string, string>();
+        for (const o of finalOccupants ?? []) {
+          if (o.removed_at) continue;
+          const key = o.is_external
+            ? `${EXTERNAL_PREFIX}${(o.external_name ?? "").trim()}`
+            : o.user_id;
+          if (key && key !== EXTERNAL_PREFIX) occupantIdByKey.set(key, o.id);
+        }
+
+        const { error: clearLinksError } = await supabase
+          .from("trip_occupant_destinations")
+          .delete()
+          .eq("trip_id", tripId);
+        if (clearLinksError) throw new Error(clearLinksError.message);
+
+        const linkRows: {
+          trip_id: string;
+          occupant_id: string;
+          destination_id: string;
+          created_by: string | null;
+        }[] = [];
+        for (const [key, picks] of Object.entries(occupantDests)) {
+          const occupantId = occupantIdByKey.get(key);
+          if (!occupantId) continue;
+          for (const pick of picks) {
+            const destinationId =
+              pick.destinationId ??
+              (pick.name ? await resolveDestinationId(pick.name) : null);
+            if (!destinationId) continue;
+            linkRows.push({
+              trip_id: tripId,
+              occupant_id: occupantId,
+              destination_id: destinationId,
+              created_by: user?.id ?? null,
+            });
+          }
+        }
+        if (linkRows.length > 0) {
+          const { error: linksError } = await supabase
+            .from("trip_occupant_destinations")
+            .insert(linkRows);
+          if (linksError && !/duplicate key value/i.test(linksError.message)) {
+            throw new Error(linksError.message);
+          }
+        }
+
 
 
         // Envio de e-mail assíncrono para o setor de transportes
@@ -579,6 +674,8 @@ export function TripForm({ trip }: TripFormProps) {
                   label: people.find((p) => p.id === id)?.full_name ?? "Motorista",
                 })).map((d) => ({ id: d.id, name: d.label }))}
                 allowExternal={canAddExternal}
+                destinations={occupantDests}
+                onDestinationsChange={setOccupantDests}
               />
 
             </CardContent>
