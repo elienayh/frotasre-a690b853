@@ -104,6 +104,43 @@ export function TripForm({ trip }: TripFormProps) {
     },
   });
 
+  // Destinos individuais já vinculados aos ocupantes (edição da solicitação).
+  const { data: savedOccupantDests } = useQuery({
+    queryKey: ["occupant-destinations", trip?.id],
+    enabled: Boolean(trip?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trip_occupant_destinations")
+        .select("occupant_id, destination_id")
+        .eq("trip_id", trip!.id || "")
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Converte os vínculos salvos em picks indexados pela chave do ocupante.
+  useEffect(() => {
+    if (!savedOccupants || !savedOccupantDests) return;
+    const keyByOccupantId = new Map<string, string>();
+    for (const o of savedOccupants) {
+      if (o.removed_at) continue;
+      const key = o.is_external
+        ? `${EXTERNAL_PREFIX}${(o.external_name ?? "").trim()}`
+        : o.user_id;
+      if (key && key !== EXTERNAL_PREFIX) keyByOccupantId.set(o.id, key);
+    }
+    const next: Record<string, OccupantDestPick[]> = {};
+    for (const link of savedOccupantDests) {
+      const key = keyByOccupantId.get(link.occupant_id);
+      if (!key || !link.destination_id) continue;
+      (next[key] ??= []).push({ destinationId: link.destination_id });
+    }
+    if (Object.keys(next).length > 0) {
+      setOccupantDests((prev) => (Object.keys(prev).length > 0 ? prev : next));
+    }
+  }, [savedOccupants, savedOccupantDests]);
+
   useEffect(() => {
     if (!savedOccupants) return;
     // Motoristas são controlados pelo campo do trecho, nunca pela lista de passageiros.
