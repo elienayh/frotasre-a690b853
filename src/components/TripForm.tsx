@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { OccupantsPicker } from "@/components/OccupantsPicker";
+import { OccupantsPicker, type OccupantDestPick } from "@/components/OccupantsPicker";
+import { resolveDestinationId } from "@/hooks/useOccupantDestinations";
 import { TripStops, newStop, stopLabel, type StopValue } from "@/components/TripStops";
 import { useCities, usePeople, usePlaces } from "@/hooks/useFrotaOptions";
 import { dateTimeToIso, fmtDate, friendlyDbError, todayInput, type TripRow } from "@/lib/frota";
@@ -68,6 +69,9 @@ export function TripForm({ trip }: TripFormProps) {
   const [allowsRides, setAllowsRides] = useState<boolean>(trip?.allows_rides ?? true);
   const [passengers, setPassengers] = useState<number>(trip?.passengers ?? 0);
   const [occupantIds, setOccupantIds] = useState<(string | null)[]>([]);
+  // Destinos individuais por ocupante, indexados pela chave do ocupante
+  // (id do usuário ou `ext:Nome` para externos; motoristas usam o próprio id).
+  const [occupantDests, setOccupantDests] = useState<Record<string, OccupantDestPick[]>>({});
   const [review, setReview] = useState<FormValues | null>(null);
 
   // Carrega as paradas já registradas quando a solicitação está em edição.
