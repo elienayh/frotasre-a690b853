@@ -410,6 +410,60 @@ export function TripForm({ trip }: TripFormProps) {
           }
         }
 
+        // Destinos individuais por ocupante: recria os vínculos a partir do
+        // estado do formulário, reutilizando/cadastrando destinos existentes.
+        const { data: finalOccupants, error: finalOccError } = await supabase
+          .from("trip_occupants")
+          .select("id, user_id, is_external, external_name, removed_at")
+          .eq("trip_id", tripId);
+        if (finalOccError) throw new Error(finalOccError.message);
+
+        const occupantIdByKey = new Map<string, string>();
+        for (const o of finalOccupants ?? []) {
+          if (o.removed_at) continue;
+          const key = o.is_external
+            ? `${EXTERNAL_PREFIX}${(o.external_name ?? "").trim()}`
+            : o.user_id;
+          if (key && key !== EXTERNAL_PREFIX) occupantIdByKey.set(key, o.id);
+        }
+
+        const { error: clearLinksError } = await supabase
+          .from("trip_occupant_destinations")
+          .delete()
+          .eq("trip_id", tripId);
+        if (clearLinksError) throw new Error(clearLinksError.message);
+
+        const linkRows: {
+          trip_id: string;
+          occupant_id: string;
+          destination_id: string;
+          created_by: string | null;
+        }[] = [];
+        for (const [key, picks] of Object.entries(occupantDests)) {
+          const occupantId = occupantIdByKey.get(key);
+          if (!occupantId) continue;
+          for (const pick of picks) {
+            const destinationId =
+              pick.destinationId ??
+              (pick.name ? await resolveDestinationId(pick.name) : null);
+            if (!destinationId) continue;
+            linkRows.push({
+              trip_id: tripId,
+              occupant_id: occupantId,
+              destination_id: destinationId,
+              created_by: user?.id ?? null,
+            });
+          }
+        }
+        if (linkRows.length > 0) {
+          const { error: linksError } = await supabase
+            .from("trip_occupant_destinations")
+            .insert(linkRows);
+          if (linksError && !/duplicate key value/i.test(linksError.message)) {
+            throw new Error(linksError.message);
+          }
+        }
+
 
 
         // Envio de e-mail assíncrono para o setor de transportes
@@ -620,6 +674,8 @@ export function TripForm({ trip }: TripFormProps) {
                   label: people.find((p) => p.id === id)?.full_name ?? "Motorista",
                 })).map((d) => ({ id: d.id, name: d.label }))}
                 allowExternal={canAddExternal}
+                destinations={occupantDests}
+                onDestinationsChange={setOccupantDests}
               />
 
             </CardContent>
