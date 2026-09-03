@@ -43,7 +43,7 @@ export interface LinkDestinationInput {
  * Localiza um destino pelo nome (sem diferenciar maiúsculas) e, se não existir,
  * cria um novo registro reutilizando a tabela `destinations` existente.
  */
-async function resolveDestinationId(name: string): Promise<string> {
+export async function resolveDestinationId(name: string): Promise<string> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Informe o nome do destino.");
 
