@@ -73,7 +73,7 @@ export function TripMileageDialog({
       if ((mode === "start" || mode === "end") && trip?.id) {
         const updateData: any = mode === "start" 
           ? { odometer_start: km, status: "EM_ANDAMENTO", departure_at: new Date().toISOString() }
-          : { odometer_end: km, status: "CONCLUIDA", finished_at: new Date().toISOString() };
+          : { odometer_end: km, status: "CONCLUIDA" };
 
         const { error: tripError } = await supabase
           .from("trip_requests")
